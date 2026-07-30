@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Crate — house-music track ID</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <header class="hero">
+      <div class="wrap">
+        <div class="logo">◐ crate</div>
+        <h1>Track ID for house music — <em>including the unreleased ones.</em></h1>
+        <p class="sub">
+          Shazam gives up on the tracks that never got a release. Those live in DJ sets
+          and SoundCloud rips — and in the heads of people who dig. This finds them, or
+          lets the community name them.
+        </p>
+        <span id="mode-badge" class="badge">checking…</span>
+      </div>
+    </header>
+
+    <main class="wrap">
+      <!-- IDENTIFY ------------------------------------------------------->
+      <section class="card">
+        <h2>1 · Identify a clip</h2>
+        <p class="muted">
+          Drop a short audio clip (MP3, WAV, m4a). We match it against released tracks.
+          Your audio is sent for matching and <strong>never stored</strong>.
+        </p>
+
+        <label class="drop" id="drop">
+          <input type="file" id="file" accept="audio/*" hidden />
+          <span id="drop-label">Choose or drop an audio clip</span>
+        </label>
+
+        <button id="identify-btn" class="btn primary" disabled>Identify</button>
+        <div id="identify-result" class="result" hidden></div>
+      </section>
+
+      <!-- CONTRIBUTE ----------------------------------------------------->
+      <section class="card">
+        <h2>2 · Know an unreleased track? Name it.</h2>
+        <p class="muted">
+          This is the part no other app has. We store the <strong>ID and a link</strong>
+          out to the source — never the audio file. Point us at the artist's SoundCloud.
+        </p>
+
+        <form id="submit-form" class="form">
+          <div class="row">
+            <label>Track title <input name="trackTitle" placeholder="e.g. ID – ID, or a working name" /></label>
+            <label>Artist / your best guess <input name="artistGuess" placeholder="e.g. Max Styler (unconfirmed)" /></label>
+          </div>
+          <label>Source link (SoundCloud / YouTube / set)
+            <input name="sourceUrl" placeholder="https://soundcloud.com/…" />
+          </label>
+          <label>Notes <input name="notes" placeholder="Heard at… / timestamp / why you think it's them" /></label>
+          <button class="btn primary" type="submit">Submit ID</button>
+          <div id="submit-msg" class="msg" hidden></div>
+        </form>
+      </section>
+
+      <!-- COMMUNITY FEED ------------------------------------------------->
+      <section class="card">
+        <h2>Community IDs</h2>
+        <p class="muted">Upvote the ones you can confirm. Reputation is the whole point.</p>
+        <div id="feed" class="feed"><p class="muted">Loading…</p></div>
+      </section>
+
+      <p class="stats" id="stats"></p>
+    </main>
+
+    <footer class="wrap foot">
+      <p>
+        Crate stores fingerprints, IDs and links — not audio. Unreleased music is
+        copyrighted; we send people to the artist's own page, never redistribute files.
+      </p>
+    </footer>
+
+    <script src="/app.js"></script>
+  </body>
+</html>

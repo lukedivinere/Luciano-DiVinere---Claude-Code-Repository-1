@@ -1,0 +1,115 @@
+:root {
+  --bg: #0d0b14;
+  --bg2: #141020;
+  --card: #1a1626;
+  --line: #2a2440;
+  --text: #ece9f5;
+  --muted: #9d97b8;
+  --accent: #b98bff;
+  --accent2: #6ee7d0;
+  --radius: 14px;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font: 16px/1.55 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+}
+
+.wrap { width: min(760px, 92vw); margin: 0 auto; }
+
+.hero {
+  background: radial-gradient(120% 120% at 50% -20%, #2a1f4a 0%, var(--bg2) 55%, var(--bg) 100%);
+  padding: 56px 0 40px;
+  border-bottom: 1px solid var(--line);
+}
+
+.logo { font-weight: 700; letter-spacing: .08em; color: var(--accent); margin-bottom: 20px; }
+
+.hero h1 { font-size: clamp(26px, 5vw, 40px); line-height: 1.15; margin: 0 0 14px; }
+.hero h1 em { color: var(--accent); font-style: normal; }
+.sub { color: var(--muted); max-width: 56ch; margin: 0 0 18px; }
+
+.badge {
+  display: inline-block; font-size: 13px; padding: 5px 12px; border-radius: 999px;
+  background: #241b3d; border: 1px solid var(--line); color: var(--accent2);
+}
+
+main { padding: 34px 0 10px; }
+
+.card {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 24px;
+  margin-bottom: 22px;
+}
+.card h2 { margin: 0 0 6px; font-size: 20px; }
+.muted { color: var(--muted); font-size: 14.5px; margin-top: 4px; }
+
+.drop {
+  display: flex; align-items: center; justify-content: center;
+  border: 1.5px dashed var(--line); border-radius: var(--radius);
+  padding: 30px; margin: 16px 0; cursor: pointer; text-align: center;
+  color: var(--muted); transition: border-color .15s, color .15s;
+}
+.drop:hover, .drop.hot { border-color: var(--accent); color: var(--text); }
+
+.btn {
+  border: 0; border-radius: 10px; padding: 11px 20px; font-size: 15px; font-weight: 600;
+  cursor: pointer; color: #fff; background: #2c2640;
+}
+.btn.primary { background: linear-gradient(135deg, var(--accent), #8a5cf6); }
+.btn:disabled { opacity: .45; cursor: not-allowed; }
+.btn.mini { padding: 4px 12px; font-size: 13px; border-radius: 8px; }
+
+.result {
+  margin-top: 18px; padding: 16px; border-radius: 10px;
+  background: #120f1d; border: 1px solid var(--line);
+}
+.result .hit { color: var(--accent2); font-weight: 600; }
+.result .miss { color: #ffcf8b; }
+.result a { color: var(--accent); }
+
+.form { margin-top: 16px; display: flex; flex-direction: column; gap: 12px; }
+.form .row { display: flex; gap: 12px; flex-wrap: wrap; }
+.form .row label { flex: 1 1 220px; }
+.form label { display: flex; flex-direction: column; gap: 5px; font-size: 13.5px; color: var(--muted); }
+.form input {
+  background: #120f1d; border: 1px solid var(--line); color: var(--text);
+  padding: 10px 12px; border-radius: 9px; font-size: 15px;
+}
+.form input:focus { outline: none; border-color: var(--accent); }
+.form .btn { align-self: flex-start; }
+
+.msg { font-size: 14px; padding: 8px 0; }
+.msg.ok { color: var(--accent2); }
+.msg.err { color: #ff9a9a; }
+
+.feed { margin-top: 14px; display: flex; flex-direction: column; gap: 10px; }
+.item {
+  display: flex; align-items: center; gap: 14px;
+  background: #120f1d; border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px;
+}
+.item .body { flex: 1; min-width: 0; }
+.item .t { font-weight: 600; }
+.item .a { color: var(--muted); font-size: 14px; }
+.item .n { color: var(--muted); font-size: 13px; margin-top: 3px; }
+.item a.src { color: var(--accent); font-size: 13px; word-break: break-all; }
+.vote { display: flex; flex-direction: column; align-items: center; gap: 3px; }
+.vote .count { font-size: 13px; color: var(--muted); }
+
+.stats { text-align: center; color: var(--muted); font-size: 13px; margin: 8px 0 30px; }
+
+.foot { padding: 26px 0 50px; color: var(--muted); font-size: 13px; border-top: 1px solid var(--line); }
+
+@media (prefers-color-scheme: light) {
+  :root {
+    --bg: #f6f4fb; --bg2: #efeaf9; --card: #ffffff; --line: #e2dcf0;
+    --text: #1b1730; --muted: #6a6486; --accent: #7c3aed; --accent2: #0d9488;
+  }
+  .result, .form input, .item { background: #faf8ff; }
+}
