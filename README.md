@@ -12,18 +12,36 @@ costs, legal exposure, AI-feature realism, and the phased roadmap).
 
 ## What it does
 
-1. **Identify a clip** — upload a short audio clip; it's matched against released tracks
-   via a fingerprint API. Audio is used transiently and **never stored**.
-2. **Name an unreleased track** — the community layer. Submit an ID + a link out to the
-   source (SoundCloud, a set). We store **metadata and the link only — never the audio**.
-3. **Upvote** — confirm others' IDs. Engagement here is the Phase-0 signal we care about.
+A tap-to-listen screen (like Shazam, house-centered) that fans one clip out across
+multiple sources instead of a single database.
+
+1. **Tap to ID / Auto-ID** — record from the mic once, or toggle Auto-ID to keep
+   listening on a loop (like Auto Shazam). Audio is sent for matching and **never stored
+   on the server**.
+2. **Multi-source pipeline** — each clip runs through several *adapters* (see
+   `pipeline.js`): fingerprint (AudD), 1001Tracklists-style set indexes, SoundCloud, and
+   Instagram drops. The highest-confidence real match becomes the "best guess".
+3. **My IDs (on-device history)** — every clip you ID is saved in IndexedDB **on your
+   device only**, with the recording, so you can replay it. Flag a track **"watch for
+   release"** — the hook for a later "you ID'd this months ago, it drops this weekend"
+   notification.
+4. **Instagram ID drops** — submit an Instagram post/reel URL + the unreleased IDs it
+   contains. We store the **link + metadata only, never the audio**, and it surfaces in
+   the pipeline. This is the *legal* alternative to scraping: opt-in by whoever posts.
+5. **Name an unreleased track** — the community layer. Submit an ID + a source link, and
+   upvote others'. Engagement here is the Phase-0 signal we care about.
 
 ## Non-negotiable design rules (why the code is shaped this way)
 
-- **Never host audio.** Uploads live in memory only; community entries store metadata +
-  an outbound link. Unreleased music is copyrighted — we send people to the artist's own
-  page, never redistribute files. (See VALIDATION.md §5.)
-- **AI/similarity output is always a "guess," never a fact.**
+- **Never host audio on the server.** Uploads live in memory only; community entries and
+  IG drops store metadata + an outbound link. Unreleased music is copyrighted — we send
+  people to the artist's own page, never redistribute files. (See VALIDATION.md §5.)
+- **Personal recordings stay on the user's device** (IndexedDB), never uploaded — the
+  private-history vs. public-catalog line is what keeps this legal.
+- **We do not scrape Instagram.** IG drops are opt-in submissions by URL. Real automated
+  harvesting would need the official Graph API with artist consent (roadmap).
+- **AI/similarity output is always a "guess," never a fact.** Instagram catalog entries
+  are shown as *context* and can never win the "best guess".
 
 ## Run it
 
@@ -53,11 +71,20 @@ AUDD_API_TOKEN=your_token npm start
 | Method | Route | Purpose |
 |---|---|---|
 | `GET`  | `/api/config` | Whether the fingerprint API is configured (live vs demo). |
-| `POST` | `/api/identify` | multipart `clip` → match result. Audio not persisted. |
+| `POST` | `/api/identify` | multipart `clip` → full pipeline result (`{best, sources}`). Audio not persisted. |
 | `POST` | `/api/submit` | JSON `{trackTitle, artistGuess, sourceUrl, notes}` → new community ID. |
 | `GET`  | `/api/submissions` | Recent community IDs. |
 | `POST` | `/api/submissions/:id/vote` | Upvote an ID. |
-| `GET`  | `/api/stats` | Demand counters: clips tried, IDs added, upvotes. |
+| `POST` | `/api/ig-drops` | JSON `{url, artist, trackTitle, note}` → new Instagram ID drop (URL validated). |
+| `GET`  | `/api/ig-drops` | Recent Instagram ID drops. |
+| `GET`  | `/api/stats` | Demand counters: clips tried, IDs added, upvotes, IG drops. |
+
+## Code map
+
+- `server.js` — Express app + routes.
+- `pipeline.js` — the multi-source recognition engine (one adapter per source).
+- `instagram.js` — Instagram drop ingestion (URL validation + metadata store).
+- `public/` — the front end: tap-to-ID, auto-loop, on-device history, drops, community.
 
 ## What Phase 0 is measuring
 

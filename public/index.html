@@ -2,80 +2,133 @@
 <html lang="en">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Crate — house-music track ID</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Crate — tap to ID house</title>
     <link rel="stylesheet" href="/styles.css" />
   </head>
   <body>
-    <header class="hero">
-      <div class="wrap">
-        <div class="logo">◐ crate</div>
-        <h1>Track ID for house music — <em>including the unreleased ones.</em></h1>
-        <p class="sub">
-          Shazam gives up on the tracks that never got a release. Those live in DJ sets
-          and SoundCloud rips — and in the heads of people who dig. This finds them, or
-          lets the community name them.
-        </p>
-        <span id="mode-badge" class="badge">checking…</span>
+    <!-- LISTEN SCREEN ------------------------------------------------------->
+    <section id="screen-listen" class="screen">
+      <div class="topbar">
+        <span class="brand">◐ crate</span>
+        <span id="mode-badge" class="mode">…</span>
       </div>
-    </header>
 
-    <main class="wrap">
-      <!-- IDENTIFY ------------------------------------------------------->
-      <section class="card">
-        <h2>1 · Identify a clip</h2>
-        <p class="muted">
-          Drop a short audio clip (MP3, WAV, m4a). We match it against released tracks.
-          Your audio is sent for matching and <strong>never stored</strong>.
-        </p>
+      <div class="stage">
+        <button id="orb" class="orb" aria-label="Tap to identify">
+          <span class="orb-ring r1"></span>
+          <span class="orb-ring r2"></span>
+          <span class="orb-ring r3"></span>
+          <span class="orb-core">
+            <svg viewBox="0 0 24 24" width="46" height="46" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"/>
+              <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
+              <line x1="12" y1="19" x2="12" y2="22"/>
+            </svg>
+          </span>
+        </button>
+        <h1 id="prompt" class="prompt">Tap to ID</h1>
+        <p id="subprompt" class="subprompt">Point it at the speakers. We'll listen, then dig everywhere.</p>
 
-        <label class="drop" id="drop">
-          <input type="file" id="file" accept="audio/*" hidden />
-          <span id="drop-label">Choose or drop an audio clip</span>
+        <label class="auto-toggle">
+          <input type="checkbox" id="auto-toggle" />
+          <span class="track"><span class="thumb"></span></span>
+          <span class="auto-label">Auto-ID — keep listening on a loop</span>
         </label>
 
-        <button id="identify-btn" class="btn primary" disabled>Identify</button>
-        <div id="identify-result" class="result" hidden></div>
-      </section>
+        <button id="upload-fallback" class="linkbtn">or upload a clip instead</button>
+        <input type="file" id="file" accept="audio/*" hidden />
+      </div>
 
-      <!-- CONTRIBUTE ----------------------------------------------------->
-      <section class="card">
-        <h2>2 · Know an unreleased track? Name it.</h2>
-        <p class="muted">
-          This is the part no other app has. We store the <strong>ID and a link</strong>
-          out to the source — never the audio file. Point us at the artist's SoundCloud.
-        </p>
+      <div class="foot-links">
+        <button id="open-history" class="linkbtn">◔ My IDs</button>
+        <button id="open-drops" class="linkbtn">⚡ IG Drops</button>
+        <button id="open-contribute" class="linkbtn">＋ Name ID</button>
+      </div>
+    </section>
 
-        <form id="submit-form" class="form">
-          <div class="row">
-            <label>Track title <input name="trackTitle" placeholder="e.g. ID – ID, or a working name" /></label>
-            <label>Artist / your best guess <input name="artistGuess" placeholder="e.g. Max Styler (unconfirmed)" /></label>
-          </div>
-          <label>Source link (SoundCloud / YouTube / set)
-            <input name="sourceUrl" placeholder="https://soundcloud.com/…" />
-          </label>
-          <label>Notes <input name="notes" placeholder="Heard at… / timestamp / why you think it's them" /></label>
-          <button class="btn primary" type="submit">Submit ID</button>
-          <div id="submit-msg" class="msg" hidden></div>
-        </form>
-      </section>
+    <!-- RESULTS SHEET ------------------------------------------------------->
+    <section id="screen-result" class="screen sheet" hidden>
+      <button data-back class="linkbtn back">‹ back</button>
+      <div class="result-head">
+        <p class="eyebrow">Best guess</p>
+        <h2 id="best-title">—</h2>
+        <p id="best-artist" class="best-artist"></p>
+        <span id="best-conf" class="conf"></span>
+        <a id="best-link" class="btn primary" target="_blank" rel="noopener" hidden>Open source</a>
+      </div>
 
-      <!-- COMMUNITY FEED ------------------------------------------------->
-      <section class="card">
-        <h2>Community IDs</h2>
-        <p class="muted">Upvote the ones you can confirm. Reputation is the whole point.</p>
-        <div id="feed" class="feed"><p class="muted">Loading…</p></div>
-      </section>
+      <div id="replay-row" class="replay-row" hidden>
+        <audio id="replay-audio" controls></audio>
+        <span class="replay-note">Saved to <strong>My IDs</strong>, on this device.</span>
+      </div>
 
-      <p class="stats" id="stats"></p>
-    </main>
+      <p class="sources-label">What each source found</p>
+      <div id="sources" class="sources"></div>
 
-    <footer class="wrap foot">
-      <p>
-        Crate stores fingerprints, IDs and links — not audio. Unreleased music is
-        copyrighted; we send people to the artist's own page, never redistribute files.
+      <div class="result-actions">
+        <button id="result-again" class="btn">ID another</button>
+        <button id="result-watch" class="btn ghost">☆ Watch for release</button>
+        <button id="result-contribute" class="btn ghost">Name it →</button>
+      </div>
+    </section>
+
+    <!-- HISTORY SHEET ------------------------------------------------------->
+    <section id="screen-history" class="screen sheet" hidden>
+      <button data-back class="linkbtn back">‹ back</button>
+      <h2>My IDs</h2>
+      <p class="muted">
+        Every clip you've ID'd, saved <strong>on this device only</strong>. Replay the
+        recording, or watch a track so we can tell you when it finally drops.
       </p>
-    </footer>
+      <div id="history" class="history"><p class="muted">Loading…</p></div>
+    </section>
+
+    <!-- IG DROPS SHEET ------------------------------------------------------>
+    <section id="screen-drops" class="screen sheet" hidden>
+      <button data-back class="linkbtn back">‹ back</button>
+      <h2>Instagram ID drops</h2>
+      <p class="muted">
+        Artists drop unreleased IDs on their posts all the time. Submit the post — we keep
+        the <strong>link + the IDs</strong>, never the audio, and point back to Instagram.
+        We don't scrape IG; this is opt-in by whoever posts.
+      </p>
+
+      <form id="drop-form" class="form">
+        <label>Instagram post / reel URL <input name="url" placeholder="https://instagram.com/reel/…" /></label>
+        <label>Artist <input name="artist" placeholder="e.g. Max Styler" /></label>
+        <label>Track title / ID <input name="trackTitle" placeholder="e.g. ID – ID (forthcoming)" /></label>
+        <label>Notes <input name="note" placeholder="Which drop / timestamp / label" /></label>
+        <button class="btn primary" type="submit">Add drop</button>
+        <div id="drop-msg" class="msg" hidden></div>
+      </form>
+
+      <p class="sources-label">Recent drops</p>
+      <div id="drops" class="feed"><p class="muted">Loading…</p></div>
+    </section>
+
+    <!-- CONTRIBUTE SHEET ---------------------------------------------------->
+    <section id="screen-contribute" class="screen sheet" hidden>
+      <button data-back class="linkbtn back">‹ back</button>
+      <h2>Name an unreleased track</h2>
+      <p class="muted">
+        The part no other app has. We store the <strong>ID and a link</strong> out to the
+        source — never the audio. Point us at the artist's SoundCloud.
+      </p>
+
+      <form id="submit-form" class="form">
+        <label>Track title <input name="trackTitle" placeholder="e.g. ID – ID, or a working name" /></label>
+        <label>Artist / your best guess <input name="artistGuess" placeholder="e.g. Max Styler (unconfirmed)" /></label>
+        <label>Source link <input name="sourceUrl" placeholder="https://soundcloud.com/…" /></label>
+        <label>Notes <input name="notes" placeholder="Heard at… / timestamp / why you think it's them" /></label>
+        <button class="btn primary" type="submit">Submit ID</button>
+        <div id="submit-msg" class="msg" hidden></div>
+      </form>
+
+      <p class="sources-label">Community IDs</p>
+      <div id="feed" class="feed"><p class="muted">Loading…</p></div>
+      <p class="stats" id="stats"></p>
+    </section>
 
     <script src="/app.js"></script>
   </body>

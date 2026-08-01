@@ -16,6 +16,8 @@ import multer from "multer";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
 import { readFile, writeFile, mkdir } from "node:fs/promises";
+import { runPipeline } from "./pipeline.js";
+import { addDrop, listDrops } from "./instagram.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const DATA_DIR = join(__dirname, "data");
@@ -57,53 +59,6 @@ async function bumpStat(key) {
   return stats;
 }
 
-// ---- fingerprint lookup ----------------------------------------------------
-
-// Calls AudD if a token is configured. Returns a normalized result either way.
-// Without a token we run in demo mode: we return "no fingerprint match" so the
-// unreleased-ID community flow is exercised — which is the interesting path anyway.
-async function identifyAudio(buffer, filename) {
-  if (!AUDD_TOKEN) {
-    return {
-      mode: "demo",
-      matched: false,
-      message:
-        "Demo mode (no fingerprint API key set). No released-track match — this is exactly the case where the community layer matters. Know this track? Add an ID below.",
-    };
-  }
-
-  const form = new FormData();
-  form.append("api_token", AUDD_TOKEN);
-  form.append("return", "apple_music,spotify");
-  form.append("file", new Blob([buffer]), filename || "clip.audio");
-
-  const resp = await fetch("https://api.audd.io/", { method: "POST", body: form });
-  const data = await resp.json();
-
-  if (data.status !== "success" || !data.result) {
-    return {
-      mode: "live",
-      matched: false,
-      message:
-        "No fingerprint match — likely an unreleased or edited track. Know it? Add an ID below.",
-    };
-  }
-
-  const r = data.result;
-  return {
-    mode: "live",
-    matched: true,
-    track: {
-      title: r.title,
-      artist: r.artist,
-      album: r.album,
-      releaseDate: r.release_date,
-      spotify: r.spotify?.external_urls?.spotify || null,
-      appleMusic: r.apple_music?.url || null,
-    },
-  };
-}
-
 // ---- routes ----------------------------------------------------------------
 
 app.get("/api/config", (_req, res) => {
@@ -115,16 +70,17 @@ app.get("/api/stats", async (_req, res) => {
   res.json(stats);
 });
 
-// Identify: audio is used transiently and never stored.
+// Identify: the recorded clip is fanned out across every source by the pipeline,
+// used transiently and never stored.
 app.post("/api/identify", upload.single("clip"), async (req, res) => {
   if (!req.file) return res.status(400).json({ error: "No audio clip provided." });
   await bumpStat("identifyAttempts");
   try {
-    const result = await identifyAudio(req.file.buffer, req.file.originalname);
+    const result = await runPipeline(req.file.buffer, req.file.originalname);
     res.json(result);
   } catch (err) {
     console.error("identify error:", err);
-    res.status(502).json({ error: "Fingerprint lookup failed. Try again." });
+    res.status(502).json({ error: "Recognition failed. Try again." });
   }
   // req.file.buffer goes out of scope here — audio is not persisted anywhere.
 });
@@ -160,6 +116,19 @@ app.post("/api/submit", async (req, res) => {
 app.get("/api/submissions", async (_req, res) => {
   const submissions = await readJson(SUBMISSIONS_FILE, []);
   res.json(submissions);
+});
+
+// Instagram ID drops — submit a post URL + the IDs it contains. Metadata + link only.
+app.post("/api/ig-drops", async (req, res) => {
+  const { url, artist, trackTitle, note } = req.body || {};
+  const result = await addDrop({ url, artist, trackTitle, note });
+  if (result.error) return res.status(400).json({ error: result.error });
+  await bumpStat("igDrops");
+  res.json(result);
+});
+
+app.get("/api/ig-drops", async (_req, res) => {
+  res.json(await listDrops());
 });
 
 // Upvote — the reputation/engagement signal that tells us the community loop works.

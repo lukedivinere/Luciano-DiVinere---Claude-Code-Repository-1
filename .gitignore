@@ -1,5 +1,6 @@
 node_modules/
 data/submissions.json
 data/stats.json
+data/ig_drops.json
 *.log
 .env
