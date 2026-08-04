@@ -238,21 +238,43 @@ $("#file").addEventListener("change", async (e) => {
 // ---- result rendering ------------------------------------------------------
 let lastItemId = null;
 
+// "Where to find it" — real streaming links from the match, plus honest search links for
+// SoundCloud / DJ sets / the artist's Instagram (we search rather than fake an exact URL).
+function buildLinks(best) {
+  const q = encodeURIComponent(`${best.artist} ${best.title}`);
+  const a = encodeURIComponent(best.artist);
+  const links = [];
+  if (best.spotify) links.push(["Spotify", best.spotify]);
+  if (best.appleMusic) links.push(["Apple Music", best.appleMusic]);
+  links.push(["SoundCloud", `https://soundcloud.com/search?q=${q}`]);
+  links.push(["Find in DJ sets", `https://www.google.com/search?q=${q}+site:1001tracklists.com`]);
+  links.push([`${best.artist} on Instagram`, `https://www.google.com/search?q=${a}+instagram`]);
+  return links
+    .map(([label, url]) => `<a class="rlink" href="${esc(url)}" target="_blank" rel="noopener">${esc(label)}</a>`)
+    .join("");
+}
+
 function renderResult(result, blob, opts = {}) {
   const best = result.best;
   const msgEl = $("#result-msg");
+  const cover = $("#cover");
+  const linksEl = $("#result-links");
 
-  $("#best-artist").textContent = best ? best.artist : "";
   $("#best-conf").textContent = best ? `${pct(best.confidence)} · ${best.source}` : "";
   $("#best-conf").hidden = !best;
-  const link = $("#best-link");
-  if (best && best.url) { link.href = best.url; link.hidden = false; } else link.hidden = true;
 
   if (best) {
     $("#result-eyebrow").textContent = "Best guess";
     $("#best-title").textContent = best.title;
+    $("#best-artist").textContent = best.album ? `${best.artist} · ${best.album}` : best.artist;
     msgEl.hidden = true;
+    if (best.artwork) { cover.src = best.artwork; cover.hidden = false; }
+    else { cover.hidden = true; cover.removeAttribute("src"); }
+    linksEl.innerHTML = buildLinks(best);
   } else {
+    $("#best-artist").textContent = "";
+    cover.hidden = true; cover.removeAttribute("src");
+    linksEl.innerHTML = "";
     // No match — say plainly WHAT happened so it doesn't read as "broken".
     const fp = (result.sources || []).find((s) => s.key === "fingerprint");
     let title, msg;

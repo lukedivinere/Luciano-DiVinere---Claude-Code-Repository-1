@@ -117,6 +117,16 @@ body {
 }
 .mic-select:focus { outline: none; border-color: var(--accent); }
 .result-msg { color: var(--muted); font-size: 14.5px; max-width: 44ch; margin: 4px auto 12px; line-height: 1.5; }
+.cover {
+  width: 190px; height: 190px; object-fit: cover; border-radius: 16px;
+  box-shadow: 0 10px 34px rgba(0, 0, 0, 0.34); margin: 0 auto 16px; display: block;
+}
+.result-links { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin-top: 14px; }
+.rlink {
+  font-size: 13px; padding: 7px 14px; border-radius: 999px; text-decoration: none;
+  border: 1px solid var(--line); color: var(--text); background: var(--card);
+}
+.rlink:hover { border-color: var(--accent); color: var(--accent); }
 
 .foot-links { display: flex; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
 .foot-links .linkbtn { font-size: 13.5px; padding: 8px 2px; }

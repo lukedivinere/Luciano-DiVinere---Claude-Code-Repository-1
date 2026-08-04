@@ -50,6 +50,12 @@ async function sourceFingerprint(buffer, filename) {
 
     if (data.status === "success" && data.result) {
       const r = data.result;
+      const apple = r.apple_music;
+      const spotify = r.spotify;
+      // Album art — Apple's URL is a {w}x{h} template; Spotify gives sized images.
+      let artwork = null;
+      if (apple?.artwork?.url) artwork = apple.artwork.url.replace("{w}", "500").replace("{h}", "500");
+      else if (spotify?.album?.images?.length) artwork = spotify.album.images[0].url;
       return {
         key: "fingerprint",
         label: "Fingerprint match",
@@ -61,7 +67,12 @@ async function sourceFingerprint(buffer, filename) {
             artist: r.artist,
             confidence: 0.99,
             unreleased: false,
-            url: r.spotify?.external_urls?.spotify || r.apple_music?.url || null,
+            url: spotify?.external_urls?.spotify || apple?.url || r.song_link || null,
+            spotify: spotify?.external_urls?.spotify || null,
+            appleMusic: apple?.url || null,
+            artwork,
+            album: r.album || null,
+            releaseDate: r.release_date || null,
             sourceLabel: "Released catalog",
           },
         ],
