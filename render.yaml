@@ -1,0 +1,16 @@
+# Render Blueprint — one-click deploy of the Crate Phase-0 demand test.
+# Deploy: render.com → New → Blueprint → connect this repo → Apply.
+services:
+  - type: web
+    name: crate
+    runtime: node
+    plan: free
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: NODE_VERSION
+        value: "22"
+      # Optional: paste an AudD token in the Render dashboard to turn on live
+      # released-track matching. Left unset = demo mode (community layer only).
+      - key: AUDD_API_TOKEN
+        sync: false

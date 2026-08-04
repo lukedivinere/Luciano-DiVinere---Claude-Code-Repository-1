@@ -43,7 +43,24 @@ multiple sources instead of a single database.
 - **AI/similarity output is always a "guess," never a fact.** Instagram catalog entries
   are shown as *context* and can never win the "best guess".
 
-## Run it
+## Deploy (public link for the demand test)
+
+The repo is deploy-ready via a Render Blueprint (`render.yaml`). To get a public URL:
+
+1. Go to **[render.com](https://render.com)** and sign in with GitHub (free).
+2. **New → Blueprint**, pick this repo, click **Apply**.
+3. Render reads `render.yaml`, builds, and gives you a public `https://…onrender.com` URL.
+
+Notes for the test:
+- **HTTPS matters** — the mic (tap-to-ID) only works on a secure origin, so the deployed
+  version is more functional than local.
+- **Free tier sleeps** after inactivity (~50s cold start on first hit) — fine for a Discord test.
+- **Storage is ephemeral** — community submissions/IG drops reset on redeploy. Fine for a
+  short demand test; swap in a real DB before anything durable.
+- To turn on live matching later, add an `AUDD_API_TOKEN` in the Render dashboard (no redeploy
+  needed for the env var beyond a restart).
+
+## Run it locally
 
 ```bash
 npm install
