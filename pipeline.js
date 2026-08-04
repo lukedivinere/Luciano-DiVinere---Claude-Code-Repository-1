@@ -10,10 +10,15 @@
 //   - soundcloud   : SoundCloud rips / official unreleased uploads.
 //   - instagram    : short clips DJs post that fans ID in the comments.
 //
-// IMPORTANT: only `fingerprint` is a live integration here. The scraping adapters return
-// clearly-labelled *demo* candidates so the full result UX is visible end-to-end. Real
-// Instagram/1001Tracklists/SoundCloud harvesting needs dedicated services and carries
-// ToS/legal constraints (see VALIDATION.md) — those adapters are where that work lands.
+// HONESTY RULE (ground rule #3): a source only returns a candidate when it actually has
+// one. `fingerprint` is the one live matcher (when AUDD_API_TOKEN is set). The
+// tracklists/soundcloud adapters have no live backend yet, so they report `pending` and
+// return NOTHING — they must never fabricate a guess, or the app "identifies" songs it
+// never heard. `instagram` surfaces real submitted drops as context only.
+//
+// Result: with no key, an identify honestly returns "no confident match" and drives the
+// community flow. With a key, a real released track matches; an unreleased one honestly
+// doesn't (no fingerprinter can ID it — that's what the community layer is for).
 //
 // Audio is passed through transiently and never persisted.
 
@@ -80,45 +85,27 @@ async function sourceFingerprint(buffer, filename) {
   }
 }
 
-// --- demo data for the scraping adapters -----------------------------------
-// Illustrative only — tagged `demo: true` so the UI can badge it honestly.
+// --- adapters without a live backend yet -----------------------------------
+// These deliberately return NO candidates. Fabricating one would make the app claim to
+// identify tracks it can't. When a real integration lands, it produces candidates here.
 
-const DEMO_POOL = [
-  { title: "ID - ID", artist: "Max Styler", url: "https://soundcloud.com/maxstyler", unreleased: true },
-  { title: "Untitled Dub", artist: "Chris Stussy", url: "https://soundcloud.com/chrisstussy", unreleased: true },
-  { title: "ID (Forthcoming)", artist: "Dom Dolla", url: "https://soundcloud.com/domdolla", unreleased: true },
-  { title: "Rework", artist: "John Summit", url: "https://soundcloud.com/johnsummitmusic", unreleased: true },
-];
-
-// Deterministic pick so the same clip feels consistent across a session.
-function pick(buffer, offset = 0) {
-  const seed = (buffer?.length || 7) + offset * 31;
-  return DEMO_POOL[seed % DEMO_POOL.length];
-}
-
-async function sourceTracklists(buffer) {
-  const c = pick(buffer, 1);
+async function sourceTracklists() {
   return {
     key: "tracklists",
     label: "1001Tracklists / set indexes",
-    status: "demo",
-    note: "Illustrative result — live tracklist search not yet connected.",
-    candidates: [
-      { ...c, confidence: 0.71, sourceLabel: "1001Tracklists", demo: true, url: c.url },
-    ],
+    status: "pending",
+    note: "Live tracklist search isn't connected yet.",
+    candidates: [],
   };
 }
 
-async function sourceSoundcloud(buffer) {
-  const c = pick(buffer, 2);
+async function sourceSoundcloud() {
   return {
     key: "soundcloud",
     label: "SoundCloud",
-    status: "demo",
-    note: "Illustrative result — live SoundCloud search not yet connected.",
-    candidates: [
-      { ...c, confidence: 0.64, sourceLabel: "SoundCloud upload", demo: true },
-    ],
+    status: "pending",
+    note: "Live SoundCloud search isn't connected yet.",
+    candidates: [],
   };
 }
 
@@ -158,8 +145,8 @@ async function sourceInstagram() {
 export async function runPipeline(buffer, filename) {
   const sources = await Promise.all([
     sourceFingerprint(buffer, filename),
-    sourceTracklists(buffer),
-    sourceSoundcloud(buffer),
+    sourceTracklists(),
+    sourceSoundcloud(),
     sourceInstagram(),
   ]);
 
