@@ -47,6 +47,7 @@
 
       <div class="foot-links">
         <button id="open-history" class="linkbtn">◔ My IDs</button>
+        <button id="open-enroll" class="linkbtn">🎯 Enroll unreleased</button>
         <button id="open-drops" class="linkbtn">⚡ IG Drops</button>
         <button id="open-contribute" class="linkbtn">＋ Name ID</button>
       </div>
@@ -114,6 +115,31 @@
       <div id="drops" class="feed"><p class="muted">Loading…</p></div>
     </section>
 
+    <!-- ENROLL SHEET (unreleased catalog) ----------------------------------->
+    <section id="screen-enroll" class="screen sheet" hidden>
+      <button data-back class="linkbtn back">‹ back</button>
+      <h2>Enroll an unreleased track</h2>
+      <p class="muted">
+        This is the part that catches songs no other app can. Add an unreleased track and
+        Crate learns to recognize it. We fingerprint the audio <strong>on your device</strong>
+        and store only the fingerprint + info — <strong>never the audio</strong>. Use a clean
+        15s+ clip (a SoundCloud rip, or the artist's own file).
+      </p>
+
+      <form id="enroll-form" class="form">
+        <label>Audio clip of the track <input type="file" id="enroll-file" accept="audio/*" required /></label>
+        <label>Artist <input name="artist" placeholder="e.g. Sydney Charles" /></label>
+        <label>Track title / ID <input name="title" placeholder="e.g. That Jam Is Fresh (unreleased)" /></label>
+        <label>Source link <input name="sourceUrl" placeholder="https://soundcloud.com/…" /></label>
+        <label>Notes <input name="notes" placeholder="where it's from / who played it" /></label>
+        <button class="btn primary" type="submit">Fingerprint &amp; enroll</button>
+        <div id="enroll-msg" class="msg" hidden></div>
+      </form>
+
+      <p class="sources-label">In the catalog</p>
+      <div id="catalog" class="feed"><p class="muted">Loading…</p></div>
+    </section>
+
     <!-- CONTRIBUTE SHEET ---------------------------------------------------->
     <section id="screen-contribute" class="screen sheet" hidden>
       <button data-back class="linkbtn back">‹ back</button>
@@ -137,6 +163,6 @@
       <p class="stats" id="stats"></p>
     </section>
 
-    <script src="/app.js"></script>
+    <script type="module" src="/app.js"></script>
   </body>
 </html>

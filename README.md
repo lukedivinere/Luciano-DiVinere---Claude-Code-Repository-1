@@ -94,6 +94,8 @@ AUDD_API_TOKEN=your_token npm start
 | `POST` | `/api/submissions/:id/vote` | Upvote an ID. |
 | `POST` | `/api/ig-drops` | JSON `{url, artist, trackTitle, note}` → new Instagram ID drop (URL validated). |
 | `GET`  | `/api/ig-drops` | Recent Instagram ID drops. |
+| `POST` | `/api/catalog/enroll` | JSON `{hashes, artist, title, sourceUrl, notes}` → enroll an unreleased track by fingerprint (audio never sent). |
+| `GET`  | `/api/catalog` | Tracks enrolled in the unreleased catalog. |
 | `GET`  | `/api/stats` | Demand counters: clips tried, IDs added, upvotes, IG drops. |
 
 ## Code map
@@ -101,7 +103,10 @@ AUDD_API_TOKEN=your_token npm start
 - `server.js` — Express app + routes.
 - `pipeline.js` — the multi-source recognition engine (one adapter per source).
 - `instagram.js` — Instagram drop ingestion (URL validation + metadata store).
-- `public/` — the front end: tap-to-ID, auto-loop, on-device history, drops, community.
+- `catalog.js` — Crate's own unreleased-track catalog: enroll + match by fingerprint.
+- `public/fingerprint.js` — landmark audio fingerprinting (Shazam-style); runs in the
+  browser (on-device) and the server (matching). Tested by `test-fp.mjs` (`node test-fp.mjs`).
+- `public/` — the front end: tap-to-ID, auto-loop, on-device history, enroll, drops, community.
 
 ## What Phase 0 is measuring
 

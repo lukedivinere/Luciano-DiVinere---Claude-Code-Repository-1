@@ -1,4 +1,5 @@
 // Crate front end: tap-to-ID, auto-ID loop, on-device history, community layer.
+import { decodeAndFingerprint } from "./fingerprint.js";
 
 const $ = (s) => document.querySelector(s);
 const esc = (s) =>
@@ -8,7 +9,7 @@ const pct = (c) => `${Math.round((c || 0) * 100)}%`;
 const RECORD_MS = 9000; // how long each listen captures
 
 // ---- screen navigation -----------------------------------------------------
-const screens = ["listen", "result", "history", "drops", "contribute"];
+const screens = ["listen", "result", "history", "drops", "enroll", "contribute"];
 function show(name) {
   screens.forEach((s) => ($(`#screen-${s}`).hidden = s !== name));
   window.scrollTo(0, 0);
@@ -19,6 +20,7 @@ document.querySelectorAll("[data-back]").forEach((b) =>
 $("#open-contribute").addEventListener("click", () => { loadFeed(); loadStats(); show("contribute"); });
 $("#open-history").addEventListener("click", () => { renderHistory(); show("history"); });
 $("#open-drops").addEventListener("click", () => { loadDrops(); show("drops"); });
+$("#open-enroll").addEventListener("click", () => { loadCatalog(); show("enroll"); });
 $("#result-again").addEventListener("click", () => show("listen"));
 $("#result-contribute").addEventListener("click", () => { loadFeed(); loadStats(); show("contribute"); });
 
@@ -184,6 +186,12 @@ async function handleClip(blob, { silent = false, level = null } = {}) {
   prompt.textContent = "Digging…";
   const fd = new FormData();
   fd.append("clip", blob, "clip.webm");
+  // Fingerprint the clip on-device and send the hashes so the pipeline can match it
+  // against Crate's unreleased catalog. Raw audio still never leaves for the catalog path.
+  try {
+    const hashes = await decodeAndFingerprint(await blob.arrayBuffer());
+    if (hashes && hashes.length) fd.append("hashes", JSON.stringify(hashes));
+  } catch { /* fingerprint failed (undecodable clip) — released-track path still runs */ }
   const result = await fetch("/api/identify", { method: "POST", body: fd }).then((r) => r.json());
 
   const item = {
@@ -437,6 +445,48 @@ async function loadDrops() {
     </div>`).join("");
 }
 
+// ---- enroll an unreleased track into the catalog --------------------------
+$("#enroll-form").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const form = e.target;
+  const msg = $("#enroll-msg");
+  const file = $("#enroll-file").files[0];
+  if (!file) return;
+  msg.hidden = false; msg.className = "msg"; msg.textContent = "Fingerprinting on your device…";
+  let hashes;
+  try {
+    hashes = await decodeAndFingerprint(await file.arrayBuffer());
+  } catch {
+    msg.className = "msg err"; msg.textContent = "Couldn't read that audio file. Try MP3, WAV, or m4a.";
+    return;
+  }
+  const res = await fetch("/api/catalog/enroll", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ hashes, artist: form.artist.value, title: form.title.value, sourceUrl: form.sourceUrl.value, notes: form.notes.value }),
+  }).then((r) => r.json());
+  if (res.ok) {
+    msg.className = "msg ok";
+    msg.textContent = `Enrolled ✓ (${res.hashCount} fingerprints). It'll match when someone hears it.`;
+    form.reset(); loadCatalog(); loadStats();
+  } else {
+    msg.className = "msg err"; msg.textContent = res.error || "Couldn't enroll.";
+  }
+});
+
+async function loadCatalog() {
+  const wrap = $("#catalog");
+  const items = await fetch("/api/catalog").then((r) => r.json());
+  if (!items.length) { wrap.innerHTML = '<p class="muted">No tracks enrolled yet. Add the first unreleased ID.</p>'; return; }
+  wrap.innerHTML = items.map((t) => `
+    <div class="item"><div class="body">
+      <div class="t">${esc(t.title) || "Untitled ID"}<span class="tag-unreleased">unreleased</span></div>
+      <div class="a">${esc(t.artist) || "artist unknown"}</div>
+      ${t.notes ? `<div class="n">${esc(t.notes)}</div>` : ""}
+      ${t.sourceUrl ? `<a class="src" href="${esc(t.sourceUrl)}" target="_blank" rel="noopener">${esc(t.sourceUrl)}</a>` : ""}
+    </div></div>`).join("");
+}
+
 // ---- community submit + feed ----------------------------------------------
 $("#submit-form").addEventListener("submit", async (e) => {
   e.preventDefault();
@@ -527,6 +577,7 @@ async function loadFeed() {
 async function loadStats() {
   const s = await fetch("/api/stats").then((r) => r.json());
   let line = `${s.identifyAttempts} clips tried · ${s.submissions} community IDs · ${s.votes} upvotes`;
+  if (s.enrolled) line += ` · ${s.enrolled} in catalog`;
   if (s.notifySignups) line += ` · ${s.notifySignups} on notify list`;
   $("#stats").textContent = line;
 }

@@ -23,6 +23,7 @@
 // Audio is passed through transiently and never persisted.
 
 import { recentDrops } from "./instagram.js";
+import { match as catalogMatch } from "./catalog.js";
 
 const AUDD_TOKEN = process.env.AUDD_API_TOKEN || "";
 
@@ -168,11 +169,41 @@ async function sourceInstagram() {
   };
 }
 
+// --- adapter: Crate's own unreleased catalog (self-hosted fingerprints) ----
+// The moat: matches the query fingerprint against tracks the community/artists enrolled.
+// This is how Crate recognizes UNRELEASED tracks no public database has.
+async function sourceCatalog(hashes) {
+  if (!Array.isArray(hashes) || !hashes.length) {
+    return { key: "catalog", label: "Crate catalog (unreleased)", status: "pending", note: "No fingerprint sent with this clip.", candidates: [] };
+  }
+  const m = await catalogMatch(hashes);
+  if (!m) {
+    return { key: "catalog", label: "Crate catalog (unreleased)", status: "no_match", note: "Not in the unreleased catalog yet — enroll it and it'll match next time.", candidates: [] };
+  }
+  // Map alignment strength to a confidence. A clean match sits well above the ~8 ratio floor.
+  const confidence = Math.max(0.55, Math.min(0.98, 0.55 + Math.min(m.ratio, 60) / 140));
+  return {
+    key: "catalog",
+    label: "Crate catalog (unreleased)",
+    status: "match",
+    note: "Matched a track enrolled in Crate's unreleased catalog.",
+    candidates: [{
+      title: m.title || "Untitled ID",
+      artist: m.artist || "unknown",
+      confidence,
+      unreleased: true,
+      url: m.sourceUrl || null,
+      sourceLabel: "Crate catalog",
+    }],
+  };
+}
+
 // --- orchestration ----------------------------------------------------------
 
-export async function runPipeline(buffer, filename) {
+export async function runPipeline(buffer, filename, hashes) {
   const sources = await Promise.all([
     sourceFingerprint(buffer, filename),
+    sourceCatalog(hashes),
     sourceTracklists(),
     sourceSoundcloud(),
     sourceInstagram(),

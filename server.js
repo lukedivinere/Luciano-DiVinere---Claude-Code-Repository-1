@@ -18,6 +18,7 @@ import { dirname, join } from "node:path";
 import { readFile, writeFile, mkdir } from "node:fs/promises";
 import { runPipeline } from "./pipeline.js";
 import { addDrop, listDrops } from "./instagram.js";
+import { enroll, listTracks } from "./catalog.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const DATA_DIR = join(__dirname, "data");
@@ -30,7 +31,8 @@ const PORT = process.env.PORT || 3000;
 const AUDD_TOKEN = process.env.AUDD_API_TOKEN || ""; // optional; demo mode without it
 
 const app = express();
-app.use(express.json());
+// Fingerprints (arrays of landmark hashes) can be sizable for a full track — allow room.
+app.use(express.json({ limit: "25mb" }));
 // no-cache = the browser still caches but revalidates via ETag every load, so a redeploy's
 // new JS/CSS is picked up on refresh instead of a stale copy lingering.
 app.use(express.static(join(__dirname, "public"), {
@@ -77,19 +79,34 @@ app.get("/api/stats", async (_req, res) => {
   res.json(stats);
 });
 
-// Identify: the recorded clip is fanned out across every source by the pipeline,
-// used transiently and never stored.
+// Identify: the recorded clip is fanned out across every source by the pipeline, used
+// transiently and never stored. The client also sends a fingerprint (hashes) computed
+// on-device, which the pipeline matches against Crate's unreleased catalog.
 app.post("/api/identify", upload.single("clip"), async (req, res) => {
   if (!req.file) return res.status(400).json({ error: "No audio clip provided." });
   await bumpStat("identifyAttempts");
+  let hashes = null;
+  try { if (req.body?.hashes) hashes = JSON.parse(req.body.hashes); } catch { /* ignore bad fingerprint */ }
   try {
-    const result = await runPipeline(req.file.buffer, req.file.originalname);
+    const result = await runPipeline(req.file.buffer, req.file.originalname, hashes);
     res.json(result);
   } catch (err) {
     console.error("identify error:", err);
     res.status(502).json({ error: "Recognition failed. Try again." });
   }
   // req.file.buffer goes out of scope here — audio is not persisted anywhere.
+});
+
+// Enroll an unreleased track into Crate's catalog by fingerprint (no audio stored).
+app.post("/api/catalog/enroll", async (req, res) => {
+  const result = await enroll(req.body || {});
+  if (result.error) return res.status(400).json(result);
+  await bumpStat("enrolled");
+  res.json(result);
+});
+
+app.get("/api/catalog", async (_req, res) => {
+  res.json(await listTracks());
 });
 
 // Community unreleased-ID submission. Metadata + outbound link only.
