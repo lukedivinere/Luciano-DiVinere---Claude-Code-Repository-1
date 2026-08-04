@@ -1,0 +1,418 @@
+<title>Agent SDK Explorer</title>
+<style>
+  :root {
+    --bg: #f3f4f7;
+    --surface: #ffffff;
+    --surface-2: #eceef2;
+    --ink: #1a1e26;
+    --ink-soft: #59616e;
+    --line: #dbdfe6;
+    --accent: #b4741f;
+    --accent-bright: #c8892f;
+    --accent-soft: rgba(200, 137, 47, 0.12);
+    --allow: #2f8f52;
+    --neutral: #6b7280;
+    --warn: #b4741f;
+    --deny: #c23b32;
+    --info: #3e6ba8;
+    --mono: ui-monospace, "SF Mono", "JetBrains Mono", Menlo, Consolas, monospace;
+    --sans: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    --shadow: 0 1px 2px rgba(20, 24, 33, 0.04), 0 4px 16px rgba(20, 24, 33, 0.05);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #12151b;
+      --surface: #171b22;
+      --surface-2: #1e232c;
+      --ink: #e8ebf0;
+      --ink-soft: #99a1b0;
+      --line: #2a303b;
+      --accent: #e0a24e;
+      --accent-bright: #edb266;
+      --accent-soft: rgba(224, 162, 78, 0.14);
+      --allow: #47b06b;
+      --neutral: #8b93a1;
+      --warn: #e0a24e;
+      --deny: #e05a4f;
+      --info: #6394d6;
+      --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 6px 20px rgba(0, 0, 0, 0.28);
+    }
+  }
+  :root[data-theme="light"] {
+    --bg: #f3f4f7; --surface: #ffffff; --surface-2: #eceef2; --ink: #1a1e26;
+    --ink-soft: #59616e; --line: #dbdfe6; --accent: #b4741f; --accent-bright: #c8892f;
+    --accent-soft: rgba(200,137,47,0.12); --allow: #2f8f52; --neutral: #6b7280;
+    --warn: #b4741f; --deny: #c23b32; --info: #3e6ba8;
+    --shadow: 0 1px 2px rgba(20,24,33,0.04), 0 4px 16px rgba(20,24,33,0.05);
+  }
+  :root[data-theme="dark"] {
+    --bg: #12151b; --surface: #171b22; --surface-2: #1e232c; --ink: #e8ebf0;
+    --ink-soft: #99a1b0; --line: #2a303b; --accent: #e0a24e; --accent-bright: #edb266;
+    --accent-soft: rgba(224,162,78,0.14); --allow: #47b06b; --neutral: #8b93a1;
+    --warn: #e0a24e; --deny: #e05a4f; --info: #6394d6;
+    --shadow: 0 1px 2px rgba(0,0,0,0.3), 0 6px 20px rgba(0,0,0,0.28);
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--sans);
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+    background-image:
+      linear-gradient(var(--line) 1px, transparent 1px),
+      linear-gradient(90deg, var(--line) 1px, transparent 1px);
+    background-size: 46px 46px;
+    background-position: -1px -1px;
+  }
+  body::before {
+    content: "";
+    position: fixed; inset: 0; pointer-events: none;
+    background: radial-gradient(120% 80% at 50% -10%, transparent 55%, var(--bg) 100%);
+  }
+  .wrap { max-width: 940px; margin: 0 auto; padding: 0 22px; position: relative; }
+
+  .eyebrow {
+    font-family: var(--mono);
+    font-size: 11.5px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--accent);
+    display: inline-flex; align-items: center; gap: 8px;
+  }
+  .eyebrow::before {
+    content: ""; width: 18px; height: 2px; background: var(--accent); display: inline-block;
+  }
+
+  /* ---- hero ---- */
+  header.hero { padding: 68px 0 40px; }
+  .hero-grid { display: grid; grid-template-columns: 1fr auto; gap: 32px; align-items: center; }
+  h1 {
+    font-size: clamp(30px, 5.4vw, 50px);
+    line-height: 1.02;
+    letter-spacing: -0.025em;
+    margin: 16px 0 14px;
+    text-wrap: balance;
+    font-weight: 680;
+  }
+  h1 .lib { color: var(--accent); }
+  .lede { color: var(--ink-soft); font-size: 17px; max-width: 46ch; margin: 0; }
+  .install {
+    font-family: var(--mono); font-size: 12.5px; color: var(--ink-soft);
+    margin-top: 22px; display: flex; flex-direction: column; gap: 5px;
+  }
+  .install b { color: var(--ink); font-weight: 600; }
+  .install .p { color: var(--accent); }
+
+  /* loop motif */
+  .loop { width: 168px; height: 168px; position: relative; flex: none; }
+  .loop .ring {
+    position: absolute; inset: 0; border: 1.5px dashed var(--line); border-radius: 50%;
+  }
+  .loop .spin { position: absolute; inset: 0; animation: spin 9s linear infinite; }
+  .loop .dot {
+    position: absolute; top: -5px; left: 50%; width: 10px; height: 10px; margin-left: -5px;
+    background: var(--accent-bright); border-radius: 50%;
+    box-shadow: 0 0 0 4px var(--accent-soft);
+  }
+  .loop .node {
+    position: absolute; font-family: var(--mono); font-size: 10.5px; letter-spacing: .04em;
+    color: var(--ink-soft); background: var(--surface); border: 1px solid var(--line);
+    padding: 3px 8px; border-radius: 6px; white-space: nowrap; transform: translate(-50%, -50%);
+  }
+  .loop .n1 { top: 6%; left: 50%; color: var(--ink); }
+  .loop .n2 { top: 74%; left: 90%; }
+  .loop .n3 { top: 74%; left: 10%; }
+  .loop .core {
+    position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%);
+    font-family: var(--mono); font-size: 10px; color: var(--accent); letter-spacing: .1em;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  @media (prefers-reduced-motion: reduce) { .loop .spin { animation: none; } }
+
+  /* ---- section scaffolding ---- */
+  section { padding: 26px 0; border-top: 1px solid var(--line); }
+  .sec-head { margin-bottom: 18px; }
+  .sec-head h2 { font-size: 20px; margin: 8px 0 4px; letter-spacing: -0.01em; font-weight: 640; }
+  .sec-head p { margin: 0; color: var(--ink-soft); font-size: 14.5px; max-width: 60ch; }
+
+  .card {
+    background: var(--surface); border: 1px solid var(--line); border-radius: 10px;
+    box-shadow: var(--shadow);
+  }
+
+  /* ---- router ---- */
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; }
+  .chip {
+    font-family: var(--sans); font-size: 13.5px; color: var(--ink);
+    background: var(--surface); border: 1px solid var(--line); border-radius: 8px;
+    padding: 9px 13px; cursor: pointer; transition: border-color .15s, background .15s, color .15s;
+    text-align: left;
+  }
+  .chip:hover { border-color: var(--accent); }
+  .chip[aria-pressed="true"] {
+    background: var(--accent-soft); border-color: var(--accent); color: var(--ink);
+  }
+  .router-out { margin-top: 14px; padding: 18px; }
+  .router-out .verdict {
+    font-family: var(--mono); font-size: 12px; letter-spacing: .04em; text-transform: uppercase;
+    color: var(--ink-soft);
+  }
+  .router-out .pick { font-size: 21px; font-weight: 660; margin: 6px 0 8px; letter-spacing: -0.01em; }
+  .router-out .pick.covered { color: var(--accent); }
+  .router-out .why { color: var(--ink-soft); font-size: 14.5px; margin: 0; }
+  .router-out .tag {
+    display: inline-block; margin-top: 12px; font-family: var(--mono); font-size: 11px;
+    padding: 4px 9px; border-radius: 999px; border: 1px solid var(--line); color: var(--ink-soft);
+  }
+  .router-out .tag.here { color: var(--allow); border-color: var(--allow); }
+
+  /* ---- code toggle ---- */
+  .tabs { display: inline-flex; gap: 3px; background: var(--surface-2); padding: 3px; border-radius: 8px; }
+  .tab {
+    font-family: var(--mono); font-size: 12.5px; padding: 6px 14px; border: 0; border-radius: 6px;
+    background: transparent; color: var(--ink-soft); cursor: pointer;
+  }
+  .tab[aria-selected="true"] { background: var(--surface); color: var(--ink); box-shadow: var(--shadow); }
+  pre {
+    margin: 14px 0 0; padding: 18px; overflow-x: auto; border-radius: 10px;
+    background: var(--surface); border: 1px solid var(--line);
+    font-family: var(--mono); font-size: 12.8px; line-height: 1.7; color: var(--ink);
+  }
+  pre .k { color: var(--accent); }
+  pre .c { color: var(--ink-soft); font-style: italic; }
+  pre .s { color: var(--allow); }
+  [hidden] { display: none !important; }
+
+  /* ---- permission modes ---- */
+  .modes { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; }
+  .mode { padding: 14px; position: relative; overflow: hidden; }
+  .mode .stripe { position: absolute; top: 0; left: 0; bottom: 0; width: 4px; }
+  .mode h3 { font-family: var(--mono); font-size: 13px; margin: 0 0 6px; padding-left: 8px; }
+  .mode p { margin: 0; padding-left: 8px; color: var(--ink-soft); font-size: 12.8px; }
+  .mode .risk {
+    font-family: var(--mono); font-size: 10px; letter-spacing: .08em; text-transform: uppercase;
+    padding-left: 8px; margin-top: 8px; display: block;
+  }
+
+  /* ---- capabilities ---- */
+  .caps { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 10px; }
+  .cap { padding: 14px; }
+  .cap .mono-badge {
+    font-family: var(--mono); font-size: 11px; color: var(--accent); border: 1px solid var(--line);
+    background: var(--accent-soft); width: 30px; height: 30px; border-radius: 7px;
+    display: grid; place-items: center; margin-bottom: 10px;
+  }
+  .cap b { font-size: 14px; display: block; margin-bottom: 3px; }
+  .cap span { color: var(--ink-soft); font-size: 12.8px; }
+
+  /* ---- naming rule ---- */
+  .naming { padding: 20px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .naming .frag {
+    font-family: var(--mono); font-size: 14px; padding: 8px 12px; border-radius: 7px;
+    border: 1px solid var(--line); background: var(--surface-2);
+  }
+  .naming .frag.var { color: var(--accent); border-color: var(--accent); background: var(--accent-soft); }
+  .naming .sep { font-family: var(--mono); color: var(--ink-soft); font-size: 14px; }
+  .naming .lab { font-size: 11px; color: var(--ink-soft); font-family: var(--mono); display: block; margin-top: 6px; text-align: center; letter-spacing: .04em; }
+  .naming .unit { text-align: center; }
+
+  footer {
+    border-top: 1px solid var(--line); margin-top: 20px; padding: 24px 0 60px;
+    color: var(--ink-soft); font-size: 12.5px;
+  }
+  footer .mono { font-family: var(--mono); }
+  footer a { color: var(--accent); }
+
+  @media (max-width: 680px) {
+    .hero-grid { grid-template-columns: 1fr; }
+    .loop { order: -1; }
+  }
+</style>
+
+<div class="wrap">
+  <header class="hero">
+    <div class="hero-grid">
+      <div>
+        <span class="eyebrow">Claude Agent SDK</span>
+        <h1>Claude Code,<br />as a <span class="lib">library</span>.</h1>
+        <p class="lede">
+          The agent loop that powers Claude Code — planning, tool calls, context management —
+          running inside your own process. You bring the task and your tools; the SDK runs the loop.
+        </p>
+        <div class="install">
+          <span><b class="p">pip</b> install claude-agent-sdk <span class="c"># Python 3.10+</span></span>
+          <span><b class="p">npm</b> install @anthropic-ai/claude-agent-sdk</span>
+        </div>
+      </div>
+      <div class="loop" aria-hidden="true">
+        <div class="ring"></div>
+        <div class="spin"><div class="dot"></div></div>
+        <span class="node n1">plan</span>
+        <span class="node n2">act</span>
+        <span class="node n3">observe</span>
+        <span class="core">loop</span>
+      </div>
+    </div>
+  </header>
+
+  <section id="router">
+    <div class="sec-head">
+      <span class="eyebrow">Step 1 · Route</span>
+      <h2>Which Claude tool do you actually want?</h2>
+      <p>Half of all Agent SDK confusion is picking the wrong product. Pick what you're doing:</p>
+    </div>
+    <div class="chips" role="group" aria-label="What are you building">
+      <button class="chip" data-r="agent" aria-pressed="true">Build an agent without writing the tool loop myself</button>
+      <button class="chip" data-r="cli" aria-pressed="false">Run one-off tasks in a terminal</button>
+      <button class="chip" data-r="client" aria-pressed="false">Call the model and write my own tool loop</button>
+      <button class="chip" data-r="managed" aria-pressed="false">Run long/async agents without hosting a sandbox</button>
+    </div>
+    <div class="card router-out" id="routerOut"></div>
+  </section>
+
+  <section id="code">
+    <div class="sec-head">
+      <span class="eyebrow">Step 2 · Write</span>
+      <h2>The minimal correct agent</h2>
+      <p><code>query()</code> is the one-shot entry point — pass a prompt and options, iterate the messages it streams back.</p>
+    </div>
+    <div class="tabs" role="tablist" aria-label="Language">
+      <button class="tab" role="tab" aria-selected="true" data-lang="py">python</button>
+      <button class="tab" role="tab" aria-selected="false" data-lang="ts">typescript</button>
+    </div>
+    <pre id="code-py"><span class="c"># one-shot: fire a task, stream the result</span>
+<span class="k">import</span> asyncio
+<span class="k">from</span> claude_agent_sdk <span class="k">import</span> query, ClaudeAgentOptions
+
+<span class="k">async def</span> main():
+    options = ClaudeAgentOptions(
+        system_prompt=<span class="s">"You are an expert Python developer."</span>,
+        permission_mode=<span class="s">"acceptEdits"</span>,   <span class="c"># auto-accept edits</span>
+    )
+    <span class="k">async for</span> message <span class="k">in</span> query(prompt=<span class="s">"Fix the bug in app.py"</span>, options=options):
+        print(message)
+
+asyncio.run(main())</pre>
+    <pre id="code-ts" hidden><span class="c">// one-shot: query() returns an async-iterable Query</span>
+<span class="k">import</span> { query } <span class="k">from</span> <span class="s">"@anthropic-ai/claude-agent-sdk"</span>;
+
+<span class="k">for await</span> (const message of query({
+  prompt: <span class="s">"Fix the bug in app.ts"</span>,
+  options: { permissionMode: <span class="s">"acceptEdits"</span>, maxTurns: 5 },
+})) {
+  console.log(message);
+}</pre>
+  </section>
+
+  <section id="perms">
+    <div class="sec-head">
+      <span class="eyebrow">Step 3 · Gate</span>
+      <h2>Permission modes = how much the agent may do alone</h2>
+      <p>The mode sets the default posture. For real human-in-the-loop, prefer a <code>can_use_tool</code> / <code>canUseTool</code> callback over bypassing — it approves, denies, or rewrites each call.</p>
+    </div>
+    <div class="modes">
+      <div class="card mode">
+        <span class="stripe" style="background:var(--allow)"></span>
+        <h3>plan</h3>
+        <p>Read-only. Proposes a plan, touches nothing.</p>
+        <span class="risk" style="color:var(--allow)">safest</span>
+      </div>
+      <div class="card mode">
+        <span class="stripe" style="background:var(--neutral)"></span>
+        <h3>default</h3>
+        <p>Standard prompting before actions run.</p>
+        <span class="risk" style="color:var(--neutral)">balanced</span>
+      </div>
+      <div class="card mode">
+        <span class="stripe" style="background:var(--warn)"></span>
+        <h3>acceptEdits</h3>
+        <p>Auto-accepts file edits; still gated elsewhere. <span style="opacity:.7">(Python)</span></p>
+        <span class="risk" style="color:var(--warn)">autonomous</span>
+      </div>
+      <div class="card mode">
+        <span class="stripe" style="background:var(--deny)"></span>
+        <h3>bypassPermissions</h3>
+        <p>No checks. Sandboxed, fully-trusted runs only.</p>
+        <span class="risk" style="color:var(--deny)">use with care</span>
+      </div>
+    </div>
+  </section>
+
+  <section id="caps">
+    <div class="sec-head">
+      <span class="eyebrow">In the box</span>
+      <h2>Everything that powers Claude Code, available as options</h2>
+    </div>
+    <div class="caps">
+      <div class="card cap"><div class="mono-badge">rw</div><b>Built-in tools</b><span>Read, write, edit files, run bash, search &amp; fetch the web.</span></div>
+      <div class="card cap"><div class="mono-badge">fn</div><b>Custom tools</b><span>In-process MCP via <code>create_sdk_mcp_server</code> — call your own API.</span></div>
+      <div class="card cap"><div class="mono-badge">sa</div><b>Subagents</b><span>Spawn focused agents with their own context and narrowed tools.</span></div>
+      <div class="card cap"><div class="mono-badge">hk</div><b>Hooks</b><span>Run your code at lifecycle points — policy, logging, context.</span></div>
+      <div class="card cap"><div class="mono-badge">pm</div><b>Permissions</b><span>Modes plus a per-call approve / deny / rewrite callback.</span></div>
+      <div class="card cap"><div class="mono-badge">ss</div><b>Sessions</b><span>Persist context; <code>resume</code> to continue or <code>fork</code> to branch.</span></div>
+    </div>
+  </section>
+
+  <section id="naming">
+    <div class="sec-head">
+      <span class="eyebrow">The #1 gotcha</span>
+      <h2>Custom tools are named by assembly</h2>
+      <p>A custom tool's allow-list identifier is built from the server key and the tool name. Mismatch these and the tool silently never runs.</p>
+    </div>
+    <div class="card naming">
+      <span class="frag">mcp</span>
+      <span class="sep">__</span>
+      <div class="unit"><span class="frag var">calc</span><span class="lab">server key</span></div>
+      <span class="sep">__</span>
+      <div class="unit"><span class="frag var">add</span><span class="lab">tool name</span></div>
+      <span class="sep" style="margin:0 4px">→</span>
+      <span class="frag" style="color:var(--allow);border-color:var(--allow)">allowed_tools=["mcp__calc__add"]</span>
+    </div>
+  </section>
+
+  <footer>
+    <p><span class="mono">stage-3 artifact · spec-003</span> — the clickable half of the three-stage framework. It validates the <b>agent-sdk</b> skill's content model: does routing → minimal code → permissions → the naming gotcha read clearly to someone deciding how to build on the SDK?</p>
+    <p>Facts pinned from the official docs at authoring. The SDK versions actively — verify model IDs and any unlisted option against <a href="https://code.claude.com/docs/en/agent-sdk/overview" target="_blank" rel="noopener">code.claude.com/docs/en/agent-sdk</a> rather than trusting memory.</p>
+  </footer>
+</div>
+
+<script>
+  // Product router
+  const R = {
+    agent:   { pick: "Agent SDK", covered: true,  why: "It runs the agent loop for you, in your own Python or TypeScript process. Bring the task and any custom tools; it handles planning, tool execution, and context.", tag: "This skill covers it" },
+    cli:     { pick: "Claude Code CLI", covered: false, why: "The terminal interface, built for interactive daily use and one-off tasks. You don't need a library for this.", tag: "Different tool" },
+    client:  { pick: "Client SDK (Anthropic API)", covered: false, why: "Direct model access where you implement the tool loop yourself. If you're hand-writing a loop that dispatches tool calls, this is the deliberate choice — see the claude-api skill.", tag: "Not the Agent SDK" },
+    managed: { pick: "Managed Agents", covered: false, why: "A hosted product — Anthropic runs the agent and the sandbox. Reach for it when you don't want to manage your own session or sandbox infrastructure.", tag: "Hosted product" },
+  };
+  const out = document.getElementById("routerOut");
+  function renderRouter(key) {
+    const r = R[key];
+    out.innerHTML =
+      '<div class="verdict">Recommended</div>' +
+      '<div class="pick ' + (r.covered ? "covered" : "") + '">' + r.pick + "</div>" +
+      '<p class="why">' + r.why + "</p>" +
+      '<span class="tag ' + (r.covered ? "here" : "") + '">' + r.tag + "</span>";
+  }
+  document.querySelectorAll(".chip").forEach((c) => {
+    c.addEventListener("click", () => {
+      document.querySelectorAll(".chip").forEach((x) => x.setAttribute("aria-pressed", "false"));
+      c.setAttribute("aria-pressed", "true");
+      renderRouter(c.dataset.r);
+    });
+  });
+  renderRouter("agent");
+
+  // Language toggle
+  document.querySelectorAll(".tab").forEach((t) => {
+    t.addEventListener("click", () => {
+      document.querySelectorAll(".tab").forEach((x) => x.setAttribute("aria-selected", "false"));
+      t.setAttribute("aria-selected", "true");
+      const lang = t.dataset.lang;
+      document.getElementById("code-py").hidden = lang !== "py";
+      document.getElementById("code-ts").hidden = lang !== "ts";
+    });
+  });
+</script>
