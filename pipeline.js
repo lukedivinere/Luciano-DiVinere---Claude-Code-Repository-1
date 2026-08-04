@@ -67,6 +67,22 @@ async function sourceFingerprint(buffer, filename) {
         ],
       };
     }
+
+    // AudD returns {status:"error", error:{...}} for bad token, quota, etc. Don't
+    // swallow that as a genuine "no match" — surface it so it's diagnosable.
+    if (data.status === "error") {
+      console.error("AudD API error:", data.error);
+      const msg = data.error?.error_message || "matching service error";
+      return {
+        key: "fingerprint",
+        label: "Fingerprint match",
+        status: "error",
+        note: `Matching service: ${msg}`,
+        candidates: [],
+      };
+    }
+
+    // Genuine success with no result — the track isn't in the released catalog.
     return {
       key: "fingerprint",
       label: "Fingerprint match",
@@ -75,11 +91,12 @@ async function sourceFingerprint(buffer, filename) {
       candidates: [],
     };
   } catch (err) {
+    console.error("Fingerprint lookup failed:", err);
     return {
       key: "fingerprint",
       label: "Fingerprint match",
       status: "error",
-      note: "Fingerprint lookup failed.",
+      note: "Fingerprint lookup failed (couldn't reach the matching service).",
       candidates: [],
     };
   }

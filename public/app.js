@@ -87,7 +87,17 @@ function setListeningUI(on, text) {
 }
 
 async function captureClip() {
-  const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+  // Turn OFF the voice-call processing browsers enable by default. Noise suppression,
+  // echo cancellation, and auto-gain are tuned for speech and treat music as noise —
+  // they mangle the signal and wreck fingerprint matching. We want the raw sound.
+  const stream = await navigator.mediaDevices.getUserMedia({
+    audio: {
+      echoCancellation: false,
+      noiseSuppression: false,
+      autoGainControl: false,
+      channelCount: 1,
+    },
+  });
   const rec = new MediaRecorder(stream);
   const chunks = [];
   rec.ondataavailable = (e) => e.data.size && chunks.push(e.data);
