@@ -363,7 +363,7 @@ async function loadFeed() {
   feed.innerHTML = items.map((s) => `
     <div class="item">
       <div class="body">
-        <div class="t">${esc(s.trackTitle) || "Untitled ID"}</div>
+        <div class="t">${esc(s.trackTitle) || "Untitled ID"}${s.seed ? '<span class="tag-example">example</span>' : ""}</div>
         <div class="a">${esc(s.artistGuess) || "artist unknown"}</div>
         ${s.notes ? `<div class="n">${esc(s.notes)}</div>` : ""}
         ${s.sourceUrl ? `<a class="src" href="${esc(s.sourceUrl)}" target="_blank" rel="noopener">${esc(s.sourceUrl)}</a>` : ""}

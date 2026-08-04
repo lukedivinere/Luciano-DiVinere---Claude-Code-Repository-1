@@ -1,0 +1,23 @@
+{
+  "_comment": "Starter content loaded on boot ONLY when the community store is empty. Each row shows in the app with an 'example' chip so it never reads as verified community truth. Replace these with real unreleased IDs you know from IG/Discord threads — edit this file, or just add real ones through the app's 'Name an unreleased track' form. Because Render's free storage is ephemeral, these examples reappear after a restart; that's intended, so the shared link is never an empty room.",
+  "submissions": [
+    {
+      "trackTitle": "ID - ID",
+      "artistGuess": "Max Styler — unconfirmed",
+      "sourceUrl": "",
+      "notes": "Rolling organ bassline, big-room roller. Heard in a recent festival set — best guess from the sound. (Example — replace with a real one.)"
+    },
+    {
+      "trackTitle": "Untitled Dub",
+      "artistGuess": "Chris Stussy — unconfirmed",
+      "sourceUrl": "",
+      "notes": "Hypnotic, dubby chords, swung hats. Closer of a B2B set clip. (Example.)"
+    },
+    {
+      "trackTitle": "Forthcoming ID",
+      "artistGuess": "Dom Dolla — unconfirmed",
+      "sourceUrl": "",
+      "notes": "Peak-time vocal cut, no release date yet. (Example.)"
+    }
+  ]
+}

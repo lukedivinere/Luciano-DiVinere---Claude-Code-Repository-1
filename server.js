@@ -23,6 +23,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const DATA_DIR = join(__dirname, "data");
 const SUBMISSIONS_FILE = join(DATA_DIR, "submissions.json");
 const STATS_FILE = join(DATA_DIR, "stats.json");
+const SEED_FILE = join(__dirname, "seed.json");
 
 const PORT = process.env.PORT || 3000;
 const AUDD_TOKEN = process.env.AUDD_API_TOKEN || ""; // optional; demo mode without it
@@ -142,7 +143,31 @@ app.post("/api/submissions/:id/vote", async (req, res) => {
   res.json({ ok: true, votes: entry.votes });
 });
 
-app.listen(PORT, () => {
-  console.log(`Crate uploader running on http://localhost:${PORT}`);
-  console.log(`Fingerprint API: ${AUDD_TOKEN ? "configured (live)" : "demo mode (set AUDD_API_TOKEN to enable)"}`);
+// Load starter content ONLY when the community store is empty. Because free-tier hosts
+// have ephemeral disks, this re-runs after a restart so the shared link is never an empty
+// room. Seeded rows carry `seed: true` so the UI can badge them as examples, not truth.
+async function seedIfEmpty() {
+  const seed = await readJson(SEED_FILE, null);
+  const existing = await readJson(SUBMISSIONS_FILE, []);
+  if (!seed || !Array.isArray(seed.submissions) || existing.length) return;
+  const base = Date.now();
+  const rows = seed.submissions.map((s, i) => ({
+    id: "seed-" + i,
+    trackTitle: (s.trackTitle || "").slice(0, 200),
+    artistGuess: (s.artistGuess || "").slice(0, 200),
+    sourceUrl: (s.sourceUrl || "").slice(0, 500),
+    notes: (s.notes || "").slice(0, 500),
+    votes: s.votes || 0,
+    seed: true,
+    submittedAt: new Date(base - i * 3_600_000).toISOString(),
+  }));
+  await writeJson(SUBMISSIONS_FILE, rows);
+  console.log(`Seeded ${rows.length} example community IDs.`);
+}
+
+seedIfEmpty().finally(() => {
+  app.listen(PORT, () => {
+    console.log(`Crate uploader running on http://localhost:${PORT}`);
+    console.log(`Fingerprint API: ${AUDD_TOKEN ? "configured (live)" : "demo mode (set AUDD_API_TOKEN to enable)"}`);
+  });
 });
