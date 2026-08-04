@@ -367,23 +367,62 @@ async function loadFeed() {
         <div class="a">${esc(s.artistGuess) || "artist unknown"}</div>
         ${s.notes ? `<div class="n">${esc(s.notes)}</div>` : ""}
         ${s.sourceUrl ? `<a class="src" href="${esc(s.sourceUrl)}" target="_blank" rel="noopener">${esc(s.sourceUrl)}</a>` : ""}
+        <div class="notify" data-nid="${esc(s.id)}">
+          <button class="linkbtn notify-btn">🔔 Notify me${s.watchers ? ` · ${s.watchers} waiting` : ""}</button>
+          <form class="notify-form" hidden>
+            <input type="email" placeholder="you@email.com" required />
+            <label><input type="checkbox" class="ev-named" checked /> when it's named</label>
+            <label><input type="checkbox" class="ev-drop" checked /> when it drops</label>
+            <button class="btn mini" type="submit">Save</button>
+            <span class="notify-msg"></span>
+          </form>
+        </div>
       </div>
       <div class="vote">
         <button class="btn mini" data-vote="${esc(s.id)}">▲</button>
         <span class="count">${s.votes}</span>
       </div>
     </div>`).join("");
+
   feed.querySelectorAll("[data-vote]").forEach((btn) =>
     btn.addEventListener("click", async () => {
       const res = await fetch(`/api/submissions/${btn.dataset.vote}/vote`, { method: "POST" }).then((r) => r.json());
       if (res.ok) { btn.nextElementSibling.textContent = res.votes; loadStats(); }
     })
   );
+
+  feed.querySelectorAll(".notify").forEach((box) => {
+    const btn = box.querySelector(".notify-btn");
+    const form = box.querySelector(".notify-form");
+    btn.addEventListener("click", () => { form.hidden = !form.hidden; });
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const msg = form.querySelector(".notify-msg");
+      const res = await fetch("/api/notify", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          submissionId: box.dataset.nid,
+          email: form.querySelector("input[type=email]").value,
+          onNamed: form.querySelector(".ev-named").checked,
+          onDrop: form.querySelector(".ev-drop").checked,
+        }),
+      }).then((r) => r.json());
+      if (res.ok) {
+        msg.className = "notify-msg ok"; msg.textContent = "You're on the list ✓";
+        setTimeout(() => { loadFeed(); loadStats(); }, 900);
+      } else {
+        msg.className = "notify-msg err"; msg.textContent = res.error || "Try again.";
+      }
+    });
+  });
 }
 
 async function loadStats() {
   const s = await fetch("/api/stats").then((r) => r.json());
-  $("#stats").textContent = `${s.identifyAttempts} clips tried · ${s.submissions} community IDs · ${s.votes} upvotes`;
+  let line = `${s.identifyAttempts} clips tried · ${s.submissions} community IDs · ${s.votes} upvotes`;
+  if (s.notifySignups) line += ` · ${s.notifySignups} on notify list`;
+  $("#stats").textContent = line;
 }
 
 // open a deep-linked screen if the page loaded with a hash

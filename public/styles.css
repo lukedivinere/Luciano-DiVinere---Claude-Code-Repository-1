@@ -169,6 +169,21 @@ body {
 .tag-demo { font-size: 10px; color: var(--muted); border: 1px solid var(--line); border-radius: 4px; padding: 1px 5px; margin-left: 6px; }
 .tag-example { font-size: 10px; color: var(--muted); border: 1px dashed var(--line); border-radius: 4px; padding: 1px 5px; margin-left: 6px; letter-spacing: .02em; }
 
+/* notify-me on community IDs */
+.notify { margin-top: 8px; }
+.notify-btn { padding: 2px 0; font-size: 13px; }
+.notify-form { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; margin-top: 8px; }
+.notify-form[hidden] { display: none; }  /* beat display:flex so it stays collapsed until opened */
+.notify-form input[type="email"] {
+  flex: 1 1 180px; background: var(--card); border: 1px solid var(--line); color: var(--text);
+  padding: 8px 10px; border-radius: 8px; font-size: 14px;
+}
+.notify-form input[type="email"]:focus { outline: none; border-color: var(--accent); }
+.notify-form label { display: inline-flex; align-items: center; gap: 5px; font-size: 12.5px; color: var(--muted); }
+.notify-msg { font-size: 12.5px; }
+.notify-msg.ok { color: var(--accent2); }
+.notify-msg.err { color: #ff9a9a; }
+
 .result-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 22px; }
 
 .btn {

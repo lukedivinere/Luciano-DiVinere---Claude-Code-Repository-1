@@ -23,6 +23,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const DATA_DIR = join(__dirname, "data");
 const SUBMISSIONS_FILE = join(DATA_DIR, "submissions.json");
 const STATS_FILE = join(DATA_DIR, "stats.json");
+const NOTIFICATIONS_FILE = join(DATA_DIR, "notifications.json");
 const SEED_FILE = join(__dirname, "seed.json");
 
 const PORT = process.env.PORT || 3000;
@@ -116,7 +117,40 @@ app.post("/api/submit", async (req, res) => {
 
 app.get("/api/submissions", async (_req, res) => {
   const submissions = await readJson(SUBMISSIONS_FILE, []);
-  res.json(submissions);
+  // Attach how many people asked to be notified about each ID — social proof + demand data.
+  const notifs = await readJson(NOTIFICATIONS_FILE, []);
+  const counts = {};
+  for (const n of notifs) if (n.submissionId) counts[n.submissionId] = (counts[n.submissionId] || 0) + 1;
+  res.json(submissions.map((s) => ({ ...s, watchers: counts[s.id] || 0 })));
+});
+
+// "Notify me" — capture who wants an update when an ID gets a confirmed name or a
+// release date, and how to reach them. This is the intent-capture layer; the actual send
+// is a backend job wired once those events exist (community-consensus + release-watch).
+// We store only the email + the two event flags — nothing else, for this purpose only.
+app.post("/api/notify", async (req, res) => {
+  const { submissionId, email, onNamed, onDrop } = req.body || {};
+  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    return res.status(400).json({ error: "Enter a valid email." });
+  }
+  if (!onNamed && !onDrop) {
+    return res.status(400).json({ error: "Pick at least one update to get." });
+  }
+  const subs = await readJson(SUBMISSIONS_FILE, []);
+  const sub = subs.find((s) => s.id === submissionId);
+  const list = await readJson(NOTIFICATIONS_FILE, []);
+  list.unshift({
+    id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+    submissionId: submissionId || null,
+    trackTitle: sub ? sub.trackTitle : null, // denormalized so the list is readable later
+    email: String(email).slice(0, 200).trim(),
+    onNamed: Boolean(onNamed),
+    onDrop: Boolean(onDrop),
+    createdAt: new Date().toISOString(),
+  });
+  await writeJson(NOTIFICATIONS_FILE, list.slice(0, 2000));
+  await bumpStat("notifySignups");
+  res.json({ ok: true });
 });
 
 // Instagram ID drops — submit a post URL + the IDs it contains. Metadata + link only.
