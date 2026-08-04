@@ -36,6 +36,11 @@
           <span class="auto-label">Auto-ID — keep listening on a loop</span>
         </label>
 
+        <label class="mic-row" id="mic-row" hidden>
+          <span>Mic</span>
+          <select id="mic" class="mic-select" aria-label="Microphone input"></select>
+        </label>
+
         <button id="upload-fallback" class="linkbtn">or upload a clip instead</button>
         <input type="file" id="file" accept="audio/*" hidden />
       </div>
@@ -51,10 +56,11 @@
     <section id="screen-result" class="screen sheet" hidden>
       <button data-back class="linkbtn back">‹ back</button>
       <div class="result-head">
-        <p class="eyebrow">Best guess</p>
+        <p class="eyebrow" id="result-eyebrow">Best guess</p>
         <h2 id="best-title">—</h2>
         <p id="best-artist" class="best-artist"></p>
         <span id="best-conf" class="conf"></span>
+        <p id="result-msg" class="result-msg" hidden></p>
         <a id="best-link" class="btn primary" target="_blank" rel="noopener" hidden>Open source</a>
       </div>
 

@@ -31,7 +31,12 @@ const AUDD_TOKEN = process.env.AUDD_API_TOKEN || ""; // optional; demo mode with
 
 const app = express();
 app.use(express.json());
-app.use(express.static(join(__dirname, "public")));
+// no-cache = the browser still caches but revalidates via ETag every load, so a redeploy's
+// new JS/CSS is picked up on refresh instead of a stale copy lingering.
+app.use(express.static(join(__dirname, "public"), {
+  etag: true,
+  setHeaders: (res) => res.setHeader("Cache-Control", "no-cache"),
+}));
 
 // Audio stays in RAM only — we never write it to disk. 15 MB cap keeps it to short clips.
 const upload = multer({

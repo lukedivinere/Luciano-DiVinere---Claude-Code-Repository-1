@@ -86,25 +86,66 @@ function setListeningUI(on, text) {
   if (!on) subprompt.textContent = "Point it at the speakers. We'll listen, then dig everywhere.";
 }
 
+// Which input device to record from. null = system default.
+let selectedMicId = null;
+
+// List available mics so the user can pick the right input (fixes "the phone is
+// recording instead of my computer"). Labels only appear after mic permission is granted.
+async function populateMics() {
+  try {
+    const devices = await navigator.mediaDevices.enumerateDevices();
+    const mics = devices.filter((d) => d.kind === "audioinput" && d.deviceId);
+    const row = $("#mic-row");
+    const sel = $("#mic");
+    if (mics.length < 2 || !mics.some((m) => m.label)) { row.hidden = true; return; }
+    row.hidden = false;
+    sel.innerHTML = mics.map((m) => `<option value="${esc(m.deviceId)}">${esc(m.label || "Microphone")}</option>`).join("");
+    if (selectedMicId) sel.value = selectedMicId; else selectedMicId = sel.value;
+  } catch { /* enumerateDevices unsupported — leave picker hidden */ }
+}
+$("#mic")?.addEventListener("change", (e) => { selectedMicId = e.target.value; });
+
+// Records a clip AND measures its peak audio level, so we can tell a real recording from
+// a mic that heard nothing (wrong input device / muted). Returns { blob, level }.
 async function captureClip() {
   // Turn OFF the voice-call processing browsers enable by default. Noise suppression,
   // echo cancellation, and auto-gain are tuned for speech and treat music as noise —
   // they mangle the signal and wreck fingerprint matching. We want the raw sound.
-  const stream = await navigator.mediaDevices.getUserMedia({
-    audio: {
-      echoCancellation: false,
-      noiseSuppression: false,
-      autoGainControl: false,
-      channelCount: 1,
-    },
-  });
+  const audio = {
+    echoCancellation: false,
+    noiseSuppression: false,
+    autoGainControl: false,
+    channelCount: 1,
+  };
+  if (selectedMicId) audio.deviceId = { exact: selectedMicId };
+  const stream = await navigator.mediaDevices.getUserMedia({ audio });
+  populateMics(); // labels are available now that permission is granted
+
+  // Meter the level while recording.
+  let peak = 0, meter = null, ac = null;
+  try {
+    ac = new (window.AudioContext || window.webkitAudioContext)();
+    const analyser = ac.createAnalyser();
+    analyser.fftSize = 2048;
+    ac.createMediaStreamSource(stream).connect(analyser);
+    const buf = new Uint8Array(analyser.fftSize);
+    meter = setInterval(() => {
+      analyser.getByteTimeDomainData(buf);
+      let max = 0;
+      for (let i = 0; i < buf.length; i++) { const v = Math.abs(buf[i] - 128) / 128; if (v > max) max = v; }
+      if (max > peak) peak = max;
+    }, 100);
+  } catch { /* Web Audio unavailable — skip metering, level stays 0 */ }
+
   const rec = new MediaRecorder(stream);
   const chunks = [];
   rec.ondataavailable = (e) => e.data.size && chunks.push(e.data);
   return new Promise((resolve, reject) => {
     rec.onstop = () => {
+      if (meter) clearInterval(meter);
+      if (ac) ac.close().catch(() => {});
       stream.getTracks().forEach((t) => t.stop());
-      resolve(new Blob(chunks, { type: rec.mimeType || "audio/webm" }));
+      resolve({ blob: new Blob(chunks, { type: rec.mimeType || "audio/webm" }), level: peak });
     };
     rec.onerror = reject;
     rec.start();
@@ -118,23 +159,28 @@ async function idOnce({ silent = false } = {}) {
   recording = true;
   setListeningUI(true);
   try {
-    let blob;
+    let cap;
     try {
-      blob = await captureClip();
+      cap = await captureClip();
     } catch {
       recording = false; setListeningUI(false);
       alert("Mic access denied. Use “upload a clip instead”.");
       return;
     }
-    await handleClip(blob, { silent });
+    return await handleClip(cap.blob, { silent, level: cap.level });
   } finally {
     recording = false;
     setListeningUI(false);
   }
 }
 
+// A mic that heard essentially nothing (wrong input device, muted, no sound in the room).
+// `level` is peak amplitude 0..1 from metering; null for uploaded files (can't measure).
+const SILENCE_LEVEL = 0.015;
+
 // Shared path for mic + uploaded clips.
-async function handleClip(blob, { silent = false } = {}) {
+async function handleClip(blob, { silent = false, level = null } = {}) {
+  const heardNothing = level != null && level < SILENCE_LEVEL;
   prompt.textContent = "Digging…";
   const fd = new FormData();
   fd.append("clip", blob, "clip.webm");
@@ -153,7 +199,7 @@ async function handleClip(blob, { silent = false } = {}) {
 
   // In auto mode we only surface a match; misses keep the loop quiet.
   if (silent && !result.best) return false;
-  renderResult(result, blob);
+  renderResult(result, blob, { heardNothing });
   show("result");
   return Boolean(result.best);
 }
@@ -192,14 +238,42 @@ $("#file").addEventListener("change", async (e) => {
 // ---- result rendering ------------------------------------------------------
 let lastItemId = null;
 
-function renderResult(result, blob) {
+function renderResult(result, blob, opts = {}) {
   const best = result.best;
-  $("#best-title").textContent = best ? best.title : "No confident match";
+  const msgEl = $("#result-msg");
+
   $("#best-artist").textContent = best ? best.artist : "";
   $("#best-conf").textContent = best ? `${pct(best.confidence)} · ${best.source}` : "";
   $("#best-conf").hidden = !best;
   const link = $("#best-link");
   if (best && best.url) { link.href = best.url; link.hidden = false; } else link.hidden = true;
+
+  if (best) {
+    $("#result-eyebrow").textContent = "Best guess";
+    $("#best-title").textContent = best.title;
+    msgEl.hidden = true;
+  } else {
+    // No match — say plainly WHAT happened so it doesn't read as "broken".
+    const fp = (result.sources || []).find((s) => s.key === "fingerprint");
+    let title, msg;
+    if (opts.heardNothing) {
+      title = "Heard almost nothing";
+      msg = "Your mic barely picked up any sound. Play the music out loud right next to the mic, and if the input is wrong, switch it with the Mic selector on the home screen.";
+    } else if (fp && fp.status === "error") {
+      title = "Matching unavailable";
+      msg = fp.note || "The matching service returned an error — likely an API-key or quota problem.";
+    } else if (fp && fp.status === "demo") {
+      title = "Live matching is off";
+      msg = "Real matching isn't switched on (no fingerprint key set).";
+    } else {
+      title = "No released-track match";
+      msg = "We listened — this isn't a released track we can fingerprint. It's probably unreleased, which is exactly what the community can name. Add an ID below.";
+    }
+    $("#result-eyebrow").textContent = "Result";
+    $("#best-title").textContent = title;
+    msgEl.textContent = msg;
+    msgEl.hidden = false;
+  }
 
   // replay of what was just recorded (from the in-memory blob)
   const replay = $("#replay-row");
@@ -434,6 +508,9 @@ async function loadStats() {
   if (s.notifySignups) line += ` · ${s.notifySignups} on notify list`;
   $("#stats").textContent = line;
 }
+
+// try to list mics on load (labels only show if permission was already granted)
+populateMics();
 
 // open a deep-linked screen if the page loaded with a hash
 openByHash();

@@ -110,6 +110,14 @@ body {
 .auto-toggle input:checked + .track .thumb { transform: translateX(18px); }
 .auto-toggle input:checked ~ .auto-label { color: var(--text); }
 
+.mic-row { display: inline-flex; align-items: center; gap: 8px; margin-top: 12px; font-size: 13px; color: var(--muted); }
+.mic-select {
+  background: var(--card); color: var(--text); border: 1px solid var(--line);
+  border-radius: 8px; padding: 6px 8px; font-size: 13px; max-width: 220px;
+}
+.mic-select:focus { outline: none; border-color: var(--accent); }
+.result-msg { color: var(--muted); font-size: 14.5px; max-width: 44ch; margin: 4px auto 12px; line-height: 1.5; }
+
 .foot-links { display: flex; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
 .foot-links .linkbtn { font-size: 13.5px; padding: 8px 2px; }
 
