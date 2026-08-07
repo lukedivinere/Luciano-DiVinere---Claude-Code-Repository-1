@@ -25,6 +25,7 @@ const DATA_DIR = join(__dirname, "data");
 const SUBMISSIONS_FILE = join(DATA_DIR, "submissions.json");
 const STATS_FILE = join(DATA_DIR, "stats.json");
 const NOTIFICATIONS_FILE = join(DATA_DIR, "notifications.json");
+const MISSES_FILE = join(DATA_DIR, "misses.json");
 const SEED_FILE = join(__dirname, "seed.json");
 
 const PORT = process.env.PORT || 3000;
@@ -89,12 +90,42 @@ app.post("/api/identify", upload.single("clip"), async (req, res) => {
   try { if (req.body?.hashes) hashes = JSON.parse(req.body.hashes); } catch { /* ignore bad fingerprint */ }
   try {
     const result = await runPipeline(req.file.buffer, req.file.originalname, hashes);
+    // Log every MISS with its audio characteristics, so diagnosing "why no match" later is
+    // evidence, not guesswork: was the mic level too low? too few fingerprints? AudD error?
+    if (!result.best) {
+      const st = (k) => result.sources.find((s) => s.key === k)?.status;
+      const fp = result.sources.find((s) => s.key === "fingerprint");
+      await logMiss({
+        at: new Date().toISOString(),
+        hashCount: Array.isArray(hashes) ? hashes.length : 0,
+        level: num(req.body?.level),        // peak mic level 0..1 (silence detector)
+        durationMs: num(req.body?.durationMs),
+        clipBytes: req.file.size,
+        fingerprint: st("fingerprint"),     // demo | no_match | error | match
+        catalog: st("catalog"),             // pending | no_match | match
+        auddNote: fp?.status === "error" ? fp.note : undefined,
+      });
+      await bumpStat("misses");
+    }
     res.json(result);
   } catch (err) {
     console.error("identify error:", err);
     res.status(502).json({ error: "Recognition failed. Try again." });
   }
   // req.file.buffer goes out of scope here — audio is not persisted anywhere.
+});
+
+function num(v) { const n = parseFloat(v); return Number.isFinite(n) ? n : null; }
+
+async function logMiss(rec) {
+  const list = await readJson(MISSES_FILE, []);
+  list.unshift(rec);
+  await writeJson(MISSES_FILE, list.slice(0, 1000)); // bounded evidence log
+}
+
+// Recent misses, for diagnosing recognition failures with data instead of guesses.
+app.get("/api/misses", async (_req, res) => {
+  res.json(await readJson(MISSES_FILE, []));
 });
 
 // Enroll an unreleased track into Crate's catalog by fingerprint (no audio stored).

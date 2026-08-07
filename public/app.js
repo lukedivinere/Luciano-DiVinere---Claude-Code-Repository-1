@@ -8,6 +8,9 @@ const pct = (c) => `${Math.round((c || 0) * 100)}%`;
 
 const RECORD_MS = 9000; // how long each listen captures
 
+// A per-page-load session id — used to reconcile repeat attempts on the same audio.
+const SESSION_ID = Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+
 // ---- screen navigation -----------------------------------------------------
 const screens = ["listen", "result", "history", "drops", "enroll", "contribute"];
 function show(name) {
@@ -169,7 +172,7 @@ async function idOnce({ silent = false } = {}) {
       alert("Mic access denied. Use “upload a clip instead”.");
       return;
     }
-    return await handleClip(cap.blob, { silent, level: cap.level });
+    return await handleClip(cap.blob, { silent, level: cap.level, durationMs: RECORD_MS });
   } finally {
     recording = false;
     setListeningUI(false);
@@ -181,19 +184,26 @@ async function idOnce({ silent = false } = {}) {
 const SILENCE_LEVEL = 0.015;
 
 // Shared path for mic + uploaded clips.
-async function handleClip(blob, { silent = false, level = null } = {}) {
+async function handleClip(blob, { silent = false, level = null, durationMs = null } = {}) {
   const heardNothing = level != null && level < SILENCE_LEVEL;
   prompt.textContent = "Digging…";
   const fd = new FormData();
   fd.append("clip", blob, "clip.webm");
-  // Fingerprint the clip on-device and send the hashes so the pipeline can match it
-  // against Crate's unreleased catalog. Raw audio still never leaves for the catalog path.
-  try {
-    const hashes = await decodeAndFingerprint(await blob.arrayBuffer());
-    if (hashes && hashes.length) fd.append("hashes", JSON.stringify(hashes));
-  } catch { /* fingerprint failed (undecodable clip) — released-track path still runs */ }
+
+  // Fingerprint the clip on-device: send hashes (so the pipeline can match Crate's
+  // unreleased catalog) plus audio characteristics (so a miss is logged with evidence).
+  let hashes = null;
+  try { hashes = await decodeAndFingerprint(await blob.arrayBuffer()); }
+  catch { /* undecodable clip — released-track path still runs */ }
+  if (hashes && hashes.length) fd.append("hashes", JSON.stringify(hashes));
+  if (level != null) fd.append("level", String(level));
+  if (durationMs != null) fd.append("durationMs", String(durationMs));
+
   const result = await fetch("/api/identify", { method: "POST", body: fd }).then((r) => r.json());
 
+  // Compact fingerprint signature (unique hash values) — used to tell whether two attempts
+  // in this session are the same audio, without storing the full fingerprint.
+  const hsig = hashes ? [...new Set(hashes.map((x) => x.h))].slice(0, 4000) : null;
   const item = {
     id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
     createdAt: new Date().toISOString(),
@@ -201,15 +211,47 @@ async function handleClip(blob, { silent = false, level = null } = {}) {
     best: result.best || null,
     sources: result.sources || [],
     watching: false,
+    sessionId: SESSION_ID,
+    hsig,
+    retired: false,
   };
   await idbPut(item).catch(() => {});
   lastItemId = item.id;
+
+  // Session reconciliation: if this retry resolved to a CATALOG match, retire the earlier
+  // unidentified attempts on the same audio (fingerprint-similar) from this session, so a
+  // solved track doesn't leave a trail of "Unidentified" ghosts behind it.
+  if (result.best && /catalog/i.test(result.best.source || "") && hsig) {
+    await reconcileSession(hsig, result.best).catch(() => {});
+  }
 
   // In auto mode we only surface a match; misses keep the loop quiet.
   if (silent && !result.best) return false;
   renderResult(result, blob, { heardNothing });
   show("result");
   return Boolean(result.best);
+}
+
+// Fraction of the smaller signature's hashes shared between two attempts.
+function hsigOverlap(setA, arrB) {
+  if (!setA.size || !arrB || !arrB.length) return 0;
+  let inter = 0;
+  for (const h of arrB) if (setA.has(h)) inter++;
+  return inter / Math.min(setA.size, arrB.length);
+}
+
+// Retire this session's earlier UNIDENTIFIED attempts whose fingerprint matches the audio
+// we just resolved. Only unresolved items are touched; the matched item is left intact.
+async function reconcileSession(currentHsig, matched) {
+  const cur = new Set(currentHsig);
+  for (const it of await idbAll()) {
+    if (it.sessionId !== SESSION_ID || it.best || it.retired || it.id === lastItemId || !it.hsig) continue;
+    if (hsigOverlap(cur, it.hsig) >= 0.2) {
+      it.retired = true;
+      it.reconciledTo = { title: matched.title, artist: matched.artist };
+      await idbPut(it);
+    }
+  }
 }
 
 // ---- auto-ID loop ----------------------------------------------------------
@@ -356,12 +398,17 @@ $("#result-watch").addEventListener("click", async () => {
 // ---- history rendering -----------------------------------------------------
 async function renderHistory() {
   const wrap = $("#history");
-  const items = await idbAll();
+  const all = await idbAll();
+  const items = all.filter((it) => !it.retired); // retired = an earlier miss later resolved
+  const retiredCount = all.length - items.length;
+  const note = retiredCount
+    ? `<p class="muted">${retiredCount} earlier miss${retiredCount > 1 ? "es" : ""} auto-resolved once the track was identified.</p>`
+    : "";
   if (!items.length) {
-    wrap.innerHTML = '<p class="muted">Nothing yet. Tap the orb on the home screen to ID your first track.</p>';
+    wrap.innerHTML = note || '<p class="muted">Nothing yet. Tap the orb on the home screen to ID your first track.</p>';
     return;
   }
-  wrap.innerHTML = items.map((it) => {
+  wrap.innerHTML = note + items.map((it) => {
     const best = it.best;
     const when = new Date(it.createdAt).toLocaleString([], { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
     return `

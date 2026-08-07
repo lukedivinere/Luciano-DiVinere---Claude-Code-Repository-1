@@ -4,5 +4,6 @@ data/stats.json
 data/ig_drops.json
 data/notifications.json
 data/catalog.json
+data/misses.json
 *.log
 .env
