@@ -255,6 +255,10 @@ async function seedIfEmpty() {
 seedIfEmpty().finally(() => {
   app.listen(PORT, () => {
     console.log(`Crate uploader running on http://localhost:${PORT}`);
-    console.log(`Fingerprint API: ${AUDD_TOKEN ? "configured (live)" : "demo mode (set AUDD_API_TOKEN to enable)"}`);
+    console.log(
+      AUDD_TOKEN
+        ? `Fingerprint API: token present (length ${AUDD_TOKEN.length}, "${AUDD_TOKEN.slice(0, 4)}…${AUDD_TOKEN.slice(-4)}") — NOTE: "present" is not "valid"; AudD verifies it on first request`
+        : "Fingerprint API: demo mode (set AUDD_API_TOKEN to enable)"
+    );
   });
 });

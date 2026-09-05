@@ -26,6 +26,7 @@ import { recentDrops } from "./instagram.js";
 import { match as catalogMatch } from "./catalog.js";
 
 const AUDD_TOKEN = process.env.AUDD_API_TOKEN || "";
+let auddDisabled = false; // set true after an auth failure, so we stop burning the free quota
 
 // --- adapter: fingerprint (AudD) -------------------------------------------
 
@@ -40,7 +41,25 @@ async function sourceFingerprint(buffer, filename) {
     };
   }
 
+  // Guard (point 5): once the token was rejected, stop calling AudD. An invalid token never
+  // becomes valid, and each attempt — especially under Auto-ID's loop — can burn the 300
+  // free requests. Retrying an auth error is pure waste.
+  if (auddDisabled) {
+    return {
+      key: "fingerprint",
+      label: "Fingerprint match",
+      status: "error",
+      note: "AudD paused for this run — AUDD_API_TOKEN was rejected. Fix the token and restart the service.",
+      candidates: [],
+    };
+  }
+
   try {
+    // Redacted proof (point 2): confirm the token is actually populated at request time —
+    // not empty, undefined, or wrapped in quotes. Only first/last 4 chars are logged.
+    console.log(
+      `AudD request → api_token length ${AUDD_TOKEN.length}, value "${AUDD_TOKEN.slice(0, 4)}…${AUDD_TOKEN.slice(-4)}"; sent as a multipart FORM FIELD to POST https://api.audd.io/`
+    );
     const form = new FormData();
     form.append("api_token", AUDD_TOKEN);
     form.append("return", "apple_music,spotify");
@@ -83,8 +102,24 @@ async function sourceFingerprint(buffer, filename) {
     // AudD returns {status:"error", error:{...}} for bad token, quota, etc. Don't
     // swallow that as a genuine "no match" — surface it so it's diagnosable.
     if (data.status === "error") {
-      console.error("AudD API error:", data.error);
+      const code = data.error?.error_code;
       const msg = data.error?.error_message || "matching service error";
+      console.error("AudD API error:", code, msg);
+      // Stop retrying on AUTH errors specifically (point 5). AudD uses error_code 900 for a
+      // bad api_token; match the message too as a fallback. Non-auth errors still surface
+      // but don't disable AudD (they may be transient).
+      const isAuthError = code === 900 || /api[_ ]?token|authoriz|inactive|incorrect|invalid/i.test(msg);
+      if (isAuthError) {
+        auddDisabled = true;
+        console.error("AudD auth error → pausing AudD for this run to protect the free quota.");
+        return {
+          key: "fingerprint",
+          label: "Fingerprint match",
+          status: "error",
+          note: `Auth failed — AUDD_API_TOKEN rejected: ${msg}. Paused AudD for this run to protect your quota.`,
+          candidates: [],
+        };
+      }
       return {
         key: "fingerprint",
         label: "Fingerprint match",
