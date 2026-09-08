@@ -126,8 +126,9 @@ async function captureClip() {
   const stream = await navigator.mediaDevices.getUserMedia({ audio });
   populateMics(); // labels are available now that permission is granted
 
-  // Meter the level while recording.
-  let peak = 0, meter = null, ac = null;
+  // Meter the level while recording — and drive the live waveform (the capture "moment":
+  // the orb visibly responds to real sound, not a canned animation).
+  let peak = 0, meter = null, ac = null, raf = null;
   try {
     ac = new (window.AudioContext || window.webkitAudioContext)();
     const analyser = ac.createAnalyser();
@@ -140,7 +141,8 @@ async function captureClip() {
       for (let i = 0; i < buf.length; i++) { const v = Math.abs(buf[i] - 128) / 128; if (v > max) max = v; }
       if (max > peak) peak = max;
     }, 100);
-  } catch { /* Web Audio unavailable — skip metering, level stays 0 */ }
+    raf = startWaveform(analyser, buf);
+  } catch { /* Web Audio unavailable — skip metering/waveform, level stays 0 */ }
 
   const rec = new MediaRecorder(stream);
   const chunks = [];
@@ -148,6 +150,8 @@ async function captureClip() {
   return new Promise((resolve, reject) => {
     rec.onstop = () => {
       if (meter) clearInterval(meter);
+      if (raf) cancelAnimationFrame(raf);
+      stopWaveform();
       if (ac) ac.close().catch(() => {});
       stream.getTracks().forEach((t) => t.stop());
       resolve({ blob: new Blob(chunks, { type: rec.mimeType || "audio/webm" }), level: peak });
@@ -156,6 +160,39 @@ async function captureClip() {
     rec.start();
     setTimeout(() => rec.state !== "inactive" && rec.stop(), RECORD_MS);
   });
+}
+
+// Live waveform on the orb, driven by real mic input. Returns the rAF id so the caller
+// can cancel it. Respects reduced-motion by drawing a single static baseline.
+function startWaveform(analyser, buf) {
+  const canvas = $("#wave");
+  if (!canvas || !canvas.getContext) return null;
+  const ctx = canvas.getContext("2d");
+  const W = canvas.width, H = canvas.height;
+  const reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const accent = getComputedStyle(document.documentElement).getPropertyValue("--accent").trim() || "#8B7DF0";
+  let id = null;
+  const draw = () => {
+    analyser.getByteTimeDomainData(buf);
+    ctx.clearRect(0, 0, W, H);
+    ctx.lineWidth = 2;
+    ctx.strokeStyle = accent;
+    ctx.beginPath();
+    const step = Math.ceil(buf.length / W);
+    for (let x = 0; x < W; x++) {
+      const v = (buf[x * step] - 128) / 128; // -1..1
+      const y = H / 2 + v * (H / 2) * 0.8;
+      x ? ctx.lineTo(x, y) : ctx.moveTo(x, y);
+    }
+    ctx.stroke();
+    if (!reduce) id = requestAnimationFrame(draw);
+  };
+  draw();
+  return id;
+}
+function stopWaveform() {
+  const canvas = $("#wave");
+  if (canvas && canvas.getContext) canvas.getContext("2d").clearRect(0, 0, canvas.width, canvas.height);
 }
 
 // One full cycle: record → send → save → show. Returns whether a match was found.
@@ -296,6 +333,10 @@ function buildLinks(best) {
   const links = [];
   if (best.spotify) links.push(["Spotify", best.spotify]);
   if (best.appleMusic) links.push(["Apple Music", best.appleMusic]);
+  if (best.deezer) links.push(["Deezer", best.deezer]);
+  // Beatport first among stores — this audience buys there (and it's the affiliate link).
+  links.push(["Buy on Beatport", `https://www.beatport.com/search?q=${q}`]);
+  if (best.itunes) links.push(["Buy on iTunes", best.itunes]);
   links.push(["SoundCloud", `https://soundcloud.com/search?q=${q}`]);
   links.push(["Find in DJ sets", `https://www.google.com/search?q=${q}+site:1001tracklists.com`]);
   links.push([`${best.artist} on Instagram`, `https://www.google.com/search?q=${a}+instagram`]);
@@ -316,13 +357,18 @@ function renderResult(result, blob, opts = {}) {
   if (best) {
     $("#result-eyebrow").textContent = "Best guess";
     $("#best-title").textContent = best.title;
-    $("#best-artist").textContent = best.album ? `${best.artist} · ${best.album}` : best.artist;
+    $("#best-artist").textContent = best.artist;
+    // Label — third line, muted. Omitted entirely when unknown (never "Unknown label").
+    const labelEl = $("#best-label");
+    if (best.label) { labelEl.textContent = best.label; labelEl.hidden = false; }
+    else { labelEl.textContent = ""; labelEl.hidden = true; }
     msgEl.hidden = true;
     if (best.artwork) { cover.src = best.artwork; cover.hidden = false; }
     else { cover.hidden = true; cover.removeAttribute("src"); }
     linksEl.innerHTML = buildLinks(best);
   } else {
     $("#best-artist").textContent = "";
+    $("#best-label").hidden = true;
     cover.hidden = true; cover.removeAttribute("src");
     linksEl.innerHTML = "";
     // No match — say plainly WHAT happened so it doesn't read as "broken".

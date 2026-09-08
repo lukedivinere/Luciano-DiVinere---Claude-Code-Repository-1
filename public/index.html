@@ -20,6 +20,7 @@
           <span class="orb-ring r2"></span>
           <span class="orb-ring r3"></span>
           <span class="orb-core">
+            <canvas id="wave" width="150" height="150" aria-hidden="true"></canvas>
             <svg viewBox="0 0 24 24" width="46" height="46" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
               <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"/>
               <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
@@ -61,6 +62,7 @@
         <p class="eyebrow" id="result-eyebrow">Best guess</p>
         <h2 id="best-title">—</h2>
         <p id="best-artist" class="best-artist"></p>
+        <p id="best-label" class="best-label" hidden></p>
         <span id="best-conf" class="conf"></span>
         <p id="result-msg" class="result-msg" hidden></p>
         <div id="result-links" class="result-links"></div>

@@ -24,6 +24,7 @@
 
 import { recentDrops } from "./instagram.js";
 import { match as catalogMatch } from "./catalog.js";
+import { enrich } from "./metadata.js";
 
 const AUDD_TOKEN = process.env.AUDD_API_TOKEN || "";
 let auddDisabled = false; // set true after an auth failure, so we stop burning the free quota
@@ -62,7 +63,7 @@ async function sourceFingerprint(buffer, filename) {
     );
     const form = new FormData();
     form.append("api_token", AUDD_TOKEN);
-    form.append("return", "apple_music,spotify");
+    form.append("return", "apple_music,spotify,deezer"); // one call → artwork, label, links
     form.append("file", new Blob([buffer]), filename || "clip.audio");
 
     const resp = await fetch("https://api.audd.io/", { method: "POST", body: form });
@@ -72,10 +73,28 @@ async function sourceFingerprint(buffer, filename) {
       const r = data.result;
       const apple = r.apple_music;
       const spotify = r.spotify;
-      // Album art — Apple's URL is a {w}x{h} template; Spotify gives sized images.
+      const deezer = r.deezer;
+      // Album art — Apple's URL is a {w}x{h} template; Spotify and Deezer give sized images.
       let artwork = null;
       if (apple?.artwork?.url) artwork = apple.artwork.url.replace("{w}", "500").replace("{h}", "500");
       else if (spotify?.album?.images?.length) artwork = spotify.album.images[0].url;
+      else if (deezer?.album?.cover_xl || deezer?.album?.cover_big) artwork = deezer.album.cover_xl || deezer.album.cover_big;
+
+      // Enrich: fill any gaps (artwork via iTunes, label via Discogs) and cache by identity.
+      const base = {
+        artist: r.artist,
+        title: r.title,
+        artwork,
+        label: r.label || null,
+        releaseDate: r.release_date || null,
+        serviceLinks: {
+          appleMusic: apple?.url || null,
+          spotify: spotify?.external_urls?.spotify || null,
+          deezer: deezer?.link || null,
+        },
+      };
+      const meta = await enrich(base).catch(() => base); // never let enrichment block a match
+
       return {
         key: "fingerprint",
         label: "Fingerprint match",
@@ -87,12 +106,15 @@ async function sourceFingerprint(buffer, filename) {
             artist: r.artist,
             confidence: 0.99,
             unreleased: false,
-            url: spotify?.external_urls?.spotify || apple?.url || r.song_link || null,
-            spotify: spotify?.external_urls?.spotify || null,
-            appleMusic: apple?.url || null,
-            artwork,
+            url: meta.serviceLinks?.spotify || meta.serviceLinks?.appleMusic || r.song_link || null,
+            spotify: meta.serviceLinks?.spotify || null,
+            appleMusic: meta.serviceLinks?.appleMusic || null,
+            deezer: meta.serviceLinks?.deezer || null,
+            itunes: meta.serviceLinks?.itunes || null,
+            artwork: meta.artwork || null,
+            label: meta.label || null,
             album: r.album || null,
-            releaseDate: r.release_date || null,
+            releaseDate: meta.releaseDate || null,
             sourceLabel: "Released catalog",
           },
         ],

@@ -7,3 +7,4 @@ data/catalog.json
 data/misses.json
 *.log
 .env
+data/metadata_cache.json
