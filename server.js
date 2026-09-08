@@ -180,16 +180,53 @@ app.get("/api/submissions", async (_req, res) => {
 // Trending: community IDs ranked by the honest engagement signal we actually have —
 // votes plus how many people are waiting on a name. This is NOT a play-count ("jammed
 // across N sets"); that needs the sightings/capture-history backend (spec-006), unbuilt.
+const TRENDING_HISTORY_FILE = join(DATA_DIR, "trending_history.json");
+const SNAP_INTERVAL_MS = 15 * 60 * 1000;      // record a score snapshot at most every 15 min
+const TREND_WINDOW_MS = 24 * 60 * 60 * 1000;  // movement measured over the last 24h
+
 app.get("/api/trending", async (_req, res) => {
   const submissions = await readJson(SUBMISSIONS_FILE, []);
   const notifs = await readJson(NOTIFICATIONS_FILE, []);
   const counts = {};
   for (const n of notifs) if (n.submissionId) counts[n.submissionId] = (counts[n.submissionId] || 0) + 1;
-  const ranked = submissions
-    .map((s) => ({ ...s, watchers: counts[s.id] || 0 }))
-    .sort((a, b) => (b.votes + 2 * b.watchers) - (a.votes + 2 * a.watchers) || b.watchers - a.watchers)
-    .slice(0, 25);
-  res.json(ranked);
+  const scored = submissions.map((s) => {
+    const watchers = counts[s.id] || 0;
+    return { ...s, watchers, score: (s.votes || 0) + 2 * watchers };
+  });
+
+  // Real momentum: lazily snapshot scores over time, then measure change vs ~24h ago.
+  // No snapshots yet = "new", not fake movement (spec-006: never overstate a trend).
+  const hist = await readJson(TRENDING_HISTORY_FILE, { lastSnapshotAt: 0, series: {} });
+  const now = Date.now();
+  if (now - (hist.lastSnapshotAt || 0) > SNAP_INTERVAL_MS) {
+    for (const s of scored) {
+      const arr = hist.series[s.id] || (hist.series[s.id] = []);
+      arr.push({ t: now, score: s.score });
+      if (arr.length > 30) arr.splice(0, arr.length - 30);
+    }
+    hist.lastSnapshotAt = now;
+    await writeJson(TRENDING_HISTORY_FILE, hist);
+  }
+
+  const items = scored.map((s) => {
+    const series = hist.series[s.id] || [];
+    const spark = series.map((p) => p.score);
+    if (!spark.length || spark[spark.length - 1] !== s.score) spark.push(s.score); // live point
+    const baseline = series.find((p) => now - p.t <= TREND_WINDOW_MS) || series[0];
+    const prev = baseline ? baseline.score : null;
+    const isNew = prev == null || series.length < 2;
+    const change = prev == null ? 0 : s.score - prev;
+    const changePct = prev && prev > 0 ? Math.round((change / prev) * 100) : change > 0 ? 100 : 0;
+    const direction = isNew ? "new" : change > 0 ? "up" : change < 0 ? "down" : "flat";
+    const hi = Math.max(...spark), lo = Math.min(...spark);
+    return {
+      id: s.id, trackTitle: s.trackTitle, artistGuess: s.artistGuess, seed: !!s.seed,
+      votes: s.votes || 0, watchers: s.watchers, score: s.score,
+      change, changePct, direction, volatile: hi - lo >= 3 && hi > 0, spark: spark.slice(-12),
+    };
+  });
+  items.sort((a, b) => b.score - a.score || b.watchers - a.watchers);
+  res.json(items.slice(0, 25));
 });
 
 // "Notify me" — capture who wants an update when an ID gets a confirmed name or a
@@ -197,13 +234,18 @@ app.get("/api/trending", async (_req, res) => {
 // is a backend job wired once those events exist (community-consensus + release-watch).
 // We store only the email + the two event flags — nothing else, for this purpose only.
 app.post("/api/notify", async (req, res) => {
-  const { submissionId, email, onNamed, onDrop } = req.body || {};
-  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-    return res.status(400).json({ error: "Enter a valid email." });
+  const { submissionId, onNamed, onDrop } = req.body || {};
+  // Accept an email OR a phone number — collected once on the device, reused after.
+  const contact = String(req.body?.contact || req.body?.email || "").trim();
+  const isEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contact);
+  const digits = contact.replace(/\D/g, "");
+  const isPhone = /^\+?[\d\s().-]{7,}$/.test(contact) && digits.length >= 7 && digits.length <= 15;
+  if (!contact || (!isEmail && !isPhone)) {
+    return res.status(400).json({ error: "Enter a valid email or phone number." });
   }
-  if (!onNamed && !onDrop) {
-    return res.status(400).json({ error: "Pick at least one update to get." });
-  }
+  // Default to both events when the one-click path doesn't specify.
+  const wantNamed = onNamed === undefined ? true : Boolean(onNamed);
+  const wantDrop = onDrop === undefined ? true : Boolean(onDrop);
   const subs = await readJson(SUBMISSIONS_FILE, []);
   const sub = subs.find((s) => s.id === submissionId);
   const list = await readJson(NOTIFICATIONS_FILE, []);
@@ -211,9 +253,10 @@ app.post("/api/notify", async (req, res) => {
     id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
     submissionId: submissionId || null,
     trackTitle: sub ? sub.trackTitle : null, // denormalized so the list is readable later
-    email: String(email).slice(0, 200).trim(),
-    onNamed: Boolean(onNamed),
-    onDrop: Boolean(onDrop),
+    contact: contact.slice(0, 200),
+    contactType: isEmail ? "email" : "phone",
+    onNamed: wantNamed,
+    onDrop: wantDrop,
     createdAt: new Date().toISOString(),
   });
   await writeJson(NOTIFICATIONS_FILE, list.slice(0, 2000));

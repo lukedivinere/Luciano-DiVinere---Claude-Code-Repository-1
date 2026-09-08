@@ -8,3 +8,4 @@ data/misses.json
 *.log
 .env
 data/metadata_cache.json
+data/trending_history.json

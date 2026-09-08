@@ -13,6 +13,9 @@
   --accent: #6F5FE8;
   --accent-strong: #5A49D6;
   --accent2: #0E9E75;   /* confirmed / live */
+  --up: #12A150;        /* trending up (market green) */
+  --down: #D64550;      /* trending down (market red) */
+  --flat: #8A82A0;      /* flat / new */
   --glow: transparent;  /* deprecated — no glows in this design */
   --radius: 16px;
   --t-state: 150ms; --t-move: 250ms; --t-beat: 400ms;
@@ -31,6 +34,9 @@
   --accent: #8B7DF0;
   --accent-strong: #6F5FE8;
   --accent2: #5FD0A6;
+  --up: #34D17F;        /* brighter greens/reds read better on the dark ground */
+  --down: #FF6B77;
+  --flat: #6F6880;
   color-scheme: dark;
 }
 
@@ -258,13 +264,15 @@ body {
 .notify-btn { padding: 2px 0; font-size: 13px; }
 .notify-form { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; margin-top: 8px; }
 .notify-form[hidden] { display: none; }  /* beat display:flex so it stays collapsed until opened */
-.notify-form input[type="email"] {
+.notify-form .contact-input {
   flex: 1 1 180px; background: var(--card); border: 1px solid var(--line); color: var(--text);
   padding: 8px 10px; border-radius: 8px; font-size: 14px;
 }
-.notify-form input[type="email"]:focus { outline: none; border-color: var(--accent); }
+.notify-form .contact-input:focus { outline: none; border-color: var(--accent); }
 .notify-form label { display: inline-flex; align-items: center; gap: 5px; font-size: 12.5px; color: var(--muted); }
 .notify-msg { font-size: 12.5px; }
+.contact-bar { color: var(--muted); font-size: 12.5px; margin: 0 0 10px; }
+.contact-bar strong { color: var(--text); font-weight: 600; }
 .notify-msg.ok { color: var(--accent2); }
 .notify-msg.err { color: #ff9a9a; }
 
@@ -282,10 +290,10 @@ body {
 /* ---- history ---- */
 .history { display: flex; flex-direction: column; gap: 12px; margin-top: 12px; }
 .hitem { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 14px; }
-.hitem .htop { display: flex; justify-content: space-between; gap: 10px; }
+.hitem .htop { display: flex; align-items: center; gap: 11px; }
 .hitem .htitle { font-weight: 600; }
 .hitem .hartist { color: var(--muted); font-size: 13px; }
-.hitem .hwhen { color: var(--muted); font-size: 12px; white-space: nowrap; }
+.hitem .hwhen { color: var(--muted); font-size: 12px; white-space: nowrap; margin-left: auto; align-self: flex-start; }
 .hitem audio { width: 100%; height: 34px; margin-top: 10px; }
 .hitem .hrow { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
 .watching { color: var(--accent2); border-color: var(--accent2) !important; }
@@ -318,10 +326,38 @@ body {
 
 .stats { text-align: center; color: var(--muted); font-size: 12.5px; margin: 18px 0 0; }
 
-/* Deliberately dark-only (spec-007): the app is used in dark rooms; a single committed
-   dark world beats a theme that flips to a washed-out light variant on some phones.
-   Force the dark scheme so form controls (inputs, the mic <select>) render dark too. */
-:root { color-scheme: dark; }
-
 /* trending rank number */
 .item .rank { font-size: 18px; font-weight: 500; color: var(--accent); width: 26px; text-align: center; flex: none; font-variant-numeric: tabular-nums; }
+
+/* ---- trending: stock-market style ---- */
+.item.trend { align-items: stretch; }
+.item.trend .body { display: flex; flex-direction: column; justify-content: center; }
+.trend-right {
+  display: flex; flex-direction: column; align-items: flex-end; justify-content: center;
+  gap: 5px; flex: none; min-width: 78px;
+}
+.spark { display: block; }
+.spark.up { color: var(--up); }
+.spark.down { color: var(--down); }
+.spark.flat { color: var(--flat); }
+.delta {
+  font-size: 12.5px; font-weight: 700; font-variant-numeric: tabular-nums;
+  letter-spacing: .01em; white-space: nowrap;
+}
+.delta.up { color: var(--up); }
+.delta.down { color: var(--down); }
+.delta.flat { color: var(--flat); }
+.delta.new {
+  color: var(--accent); border: 1px solid var(--accent); border-radius: 5px;
+  padding: 1px 5px; font-size: 10px; letter-spacing: .04em;
+}
+.vol {
+  display: inline-block; margin-left: 7px; font-size: 10px; letter-spacing: .04em;
+  text-transform: uppercase; color: var(--down); border: 1px solid var(--down);
+  border-radius: 4px; padding: 1px 5px; vertical-align: middle; font-weight: 700;
+}
+
+/* history: album thumbnail next to the title */
+.hitem .hmeta { display: flex; flex-direction: column; gap: 2px; min-width: 0; flex: 1; }
+.hcover { width: 44px; height: 44px; border-radius: 8px; object-fit: cover; flex: none; }
+.hcover.placeholder { background: var(--surface2); border: 1px solid var(--line); }

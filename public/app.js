@@ -6,6 +6,27 @@ const esc = (s) =>
   String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 const pct = (c) => `${Math.round((c || 0) * 100)}%`;
 
+// ---- saved contact (one-click notify) --------------------------------------
+// The user gives an email or phone number ONCE; after that, watching an ID is a
+// single tap. Stored only on this device.
+const CONTACT_KEY = "crate-contact";
+function getContact() { try { return localStorage.getItem(CONTACT_KEY) || ""; } catch { return ""; } }
+function setContact(v) { try { localStorage.setItem(CONTACT_KEY, v); } catch {} }
+function clearContact() { try { localStorage.removeItem(CONTACT_KEY); } catch {} }
+function validContact(v) {
+  const s = String(v || "").trim();
+  const isEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s);
+  const digits = s.replace(/\D/g, "");
+  const isPhone = /^\+?[\d\s().-]{7,}$/.test(s) && digits.length >= 7 && digits.length <= 15;
+  return isEmail || isPhone;
+}
+// Mask a saved contact for display: j***@x.com / +1•••••1234
+function maskContact(v) {
+  const s = String(v || "").trim();
+  if (s.includes("@")) { const [u, d] = s.split("@"); return `${u.slice(0, 1)}***@${d}`; }
+  return s.length > 4 ? `${s.slice(0, 2)}•••${s.slice(-2)}` : s;
+}
+
 const RECORD_MS = 9000; // how long each listen captures
 
 // A per-page-load session id — used to reconcile repeat attempts on the same audio.
@@ -491,7 +512,8 @@ async function renderHistory() {
     return `
       <div class="hitem" data-id="${esc(it.id)}">
         <div class="htop">
-          <div>
+          ${best && best.artwork ? `<img class="hcover" src="${esc(best.artwork)}" alt="" loading="lazy" />` : `<div class="hcover placeholder"></div>`}
+          <div class="hmeta">
             <div class="htitle">${best ? esc(best.title) : "Unidentified"}</div>
             <div class="hartist">${best ? esc(best.artist) + " · " + pct(best.confidence) : "no confident match"}</div>
           </div>
@@ -636,7 +658,26 @@ $("#submit-form").addEventListener("submit", async (e) => {
   }
 });
 
-// ---- trending IDs ----------------------------------------------------------
+// ---- trending IDs (stock-market style) -------------------------------------
+// A tiny sparkline from the score history, coloured by direction.
+function buildSpark(spark, dir) {
+  const w = 62, h = 24, pad = 2;
+  if (!spark || spark.length < 2) spark = [spark && spark[0] ? spark[0] : 0, spark && spark[0] ? spark[0] : 0];
+  const lo = Math.min(...spark), hi = Math.max(...spark), span = hi - lo || 1;
+  const pts = spark.map((v, i) => {
+    const x = pad + (i * (w - 2 * pad)) / (spark.length - 1);
+    const y = h - pad - ((v - lo) / span) * (h - 2 * pad);
+    return `${x.toFixed(1)},${y.toFixed(1)}`;
+  }).join(" ");
+  const cls = dir === "up" ? "up" : dir === "down" ? "down" : "flat";
+  return `<svg class="spark ${cls}" viewBox="0 0 ${w} ${h}" width="${w}" height="${h}" aria-hidden="true"><polyline points="${pts}" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+}
+function deltaChip(s) {
+  if (s.direction === "new") return `<span class="delta new">NEW</span>`;
+  const arrow = s.direction === "up" ? "▲" : s.direction === "down" ? "▼" : "•";
+  const sign = s.changePct > 0 ? "+" : "";
+  return `<span class="delta ${s.direction}">${arrow} ${sign}${s.changePct}%</span>`;
+}
 async function loadTrending() {
   const wrap = $("#trending");
   const items = await fetch("/api/trending").then((r) => r.json());
@@ -645,12 +686,16 @@ async function loadTrending() {
     return;
   }
   wrap.innerHTML = items.map((s, i) => `
-    <div class="item">
+    <div class="item trend">
       <div class="rank">${i + 1}</div>
       <div class="body">
-        <div class="t">${esc(s.trackTitle) || "Untitled ID"}${s.seed ? '<span class="tag-example">example</span>' : ""}</div>
+        <div class="t">${esc(s.trackTitle) || "Untitled ID"}${s.seed ? '<span class="tag-example">example</span>' : ""}${s.volatile ? '<span class="vol">volatile</span>' : ""}</div>
         <div class="a">${esc(s.artistGuess) || "artist unknown"}</div>
         <div class="n">${s.votes} vote${s.votes === 1 ? "" : "s"} · ${s.watchers} waiting</div>
+      </div>
+      <div class="trend-right">
+        ${buildSpark(s.spark, s.direction)}
+        ${deltaChip(s)}
       </div>
     </div>`).join("");
 }
@@ -667,12 +712,10 @@ async function loadFeed() {
         ${s.notes ? `<div class="n">${esc(s.notes)}</div>` : ""}
         ${s.sourceUrl ? `<a class="src" href="${esc(s.sourceUrl)}" target="_blank" rel="noopener">${esc(s.sourceUrl)}</a>` : ""}
         <div class="notify" data-nid="${esc(s.id)}">
-          <button class="linkbtn notify-btn">🔔 Notify me${s.watchers ? ` · ${s.watchers} waiting` : ""}</button>
+          <button class="linkbtn notify-btn">Notify me${s.watchers ? ` · ${s.watchers} waiting` : ""}</button>
           <form class="notify-form" hidden>
-            <input type="email" placeholder="you@email.com" required />
-            <label><input type="checkbox" class="ev-named" checked /> when it's named</label>
-            <label><input type="checkbox" class="ev-drop" checked /> when it drops</label>
-            <button class="btn mini" type="submit">Save</button>
+            <input class="contact-input" type="text" inputmode="email" placeholder="email or phone" required />
+            <button class="btn mini" type="submit">Save &amp; watch</button>
             <span class="notify-msg"></span>
           </form>
         </div>
@@ -690,30 +733,72 @@ async function loadFeed() {
     })
   );
 
+  // One-click watch: POST the saved contact straight to /api/notify. Only the
+  // first time (no saved contact) do we reveal an inline input.
+  async function watch(box, contact, msgEl) {
+    const res = await fetch("/api/notify", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ submissionId: box.dataset.nid, contact }),
+    }).then((r) => r.json());
+    if (res.ok) {
+      if (msgEl) { msgEl.className = "notify-msg ok"; msgEl.textContent = "You're on the list"; }
+      setTimeout(() => { loadFeed(); loadStats(); }, 900);
+    } else if (msgEl) {
+      msgEl.className = "notify-msg err"; msgEl.textContent = res.error || "Try again.";
+    }
+    return res.ok;
+  }
+
   feed.querySelectorAll(".notify").forEach((box) => {
     const btn = box.querySelector(".notify-btn");
     const form = box.querySelector(".notify-form");
-    btn.addEventListener("click", () => { form.hidden = !form.hidden; });
-    form.addEventListener("submit", async (e) => {
-      e.preventDefault();
-      const msg = form.querySelector(".notify-msg");
-      const res = await fetch("/api/notify", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          submissionId: box.dataset.nid,
-          email: form.querySelector("input[type=email]").value,
-          onNamed: form.querySelector(".ev-named").checked,
-          onDrop: form.querySelector(".ev-drop").checked,
-        }),
-      }).then((r) => r.json());
-      if (res.ok) {
-        msg.className = "notify-msg ok"; msg.textContent = "You're on the list ✓";
-        setTimeout(() => { loadFeed(); loadStats(); }, 900);
+    const input = box.querySelector(".contact-input");
+    const msg = form.querySelector(".notify-msg");
+
+    // Reflect the saved contact on the button so it's clearly one-tap.
+    const saved = getContact();
+    if (saved) btn.innerHTML = `Notify me · ${esc(maskContact(saved))}`;
+
+    btn.addEventListener("click", async () => {
+      const contact = getContact();
+      if (validContact(contact)) {
+        btn.disabled = true;
+        await watch(box, contact, null);
       } else {
-        msg.className = "notify-msg err"; msg.textContent = res.error || "Try again.";
+        form.hidden = !form.hidden;      // first time: ask once
+        if (!form.hidden) input.focus();
       }
     });
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const contact = input.value.trim();
+      if (!validContact(contact)) {
+        msg.className = "notify-msg err"; msg.textContent = "Enter a valid email or phone.";
+        return;
+      }
+      setContact(contact);             // remember for next time — one click from here
+      await watch(box, contact, msg);
+    });
+  });
+
+  // A single "change contact" affordance under the feed.
+  wireContactBar();
+}
+
+// Small bar letting the user see / change the device-saved contact.
+function wireContactBar() {
+  const bar = $("#contact-bar");
+  if (!bar) return;
+  const saved = getContact();
+  if (!saved) { bar.hidden = true; return; }
+  bar.hidden = false;
+  bar.innerHTML = `Notifications go to <strong>${esc(maskContact(saved))}</strong> · <button class="linkbtn" id="contact-change">change</button>`;
+  $("#contact-change").addEventListener("click", () => {
+    clearContact();
+    wireContactBar();
+    loadFeed();
   });
 }
 
