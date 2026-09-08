@@ -83,9 +83,20 @@ Entry: `server.js` (Express). Fans one clip across sources in `pipeline.js` → 
   errors now pause AudD for the run (guard against burning the 300 free requests under Auto-ID).
   Next: read the redacted boot log to tell malformed-value from dud-token.
 
-## SPEC FILES (in `/specs`)
-- spec-001 dual-path pipeline · spec-002 name-suggestion flow · spec-003 monetization ·
-  spec-004 artists/storage/theme. Build prompt (not a spec): clips-review + found-feed + IG parser.
+## SPEC FILES (in `/specs`) and BUILD PROMPTS (in `/prompts`)
+- specs: 001 dual-path pipeline · 002 name-suggestion flow · 003 monetization ·
+  004 artists/storage/theme · 006 co-occurrence clustering + demand · 007 venue detection + design.
+- prompts (build instructions, not specs): build-prompt-template · library-view · artwork-and-metadata.
 - **Numbering clash:** `spec-003-agent-sdk-skill.md` and `spec-004-unreleased-id.md` are older
   session artifacts on unrelated topics (a skill; the earlier JS fingerprint design). The
   `agent-sdk` skill is unrelated to Crate and is a candidate for removal/renaming.
+
+## CONVERGENCE (why Stage 0 is now non-optional)
+Every recent artifact — library, artwork, spec-006, spec-007 — depends on the SAME unbuilt
+foundation: **clustering + Unknown IDs + sightings + capture context**, and on **Stage 0
+calibration**. spec-006 states it outright: thresholds (T_SOFT/T_HARD/C_MIN) are undefined
+until Stage 0 runs, and "anyone who hands you specific numbers here is guessing." CLAUDE.md
+(now the active project memory) mandates Panako + clustering + "Stage 0 first, do not skip
+ahead." So the current Node/JS app (no clustering, non-pitch-robust matcher, Stage 0 unrun)
+is the soft floor under all of it. **Next action = Stage 0**, which both decides pivot/adapt
+and calibrates spec-006.
