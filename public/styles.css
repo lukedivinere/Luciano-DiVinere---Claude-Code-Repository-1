@@ -105,7 +105,31 @@ body {
 .nav-item:hover { background: var(--surface2); }
 .nav-item svg { width: 20px; height: 20px; color: var(--accent); flex: none; }
 .nav-item[aria-current="true"] { color: var(--accent); background: var(--surface2); }
+.nav-item small { display: block; color: var(--muted); font-size: 12px; margin-top: 1px; }
+.nav-sep { height: 1px; background: var(--line); margin: 8px 6px; }
 @media (prefers-reduced-motion: reduce) { .nav-backdrop, .nav-panel { transition: none; } }
+
+/* first-run music-service picker (also reused for "change service") */
+.service-picker {
+  position: fixed; inset: 0; z-index: 60; display: flex; align-items: center; justify-content: center;
+  padding: 20px; background: rgba(0, 0, 0, .5);
+}
+.service-picker[hidden] { display: none; }
+.sp-card {
+  width: min(440px, 100%); background: var(--bg2); border: 1px solid var(--line);
+  border-radius: 18px; padding: 24px 22px; box-shadow: 0 20px 60px rgba(0,0,0,.25);
+}
+.sp-card .brand { display: inline-block; margin-bottom: 10px; }
+.sp-card h2 { margin: 0 0 6px; }
+.sp-card .muted { margin: 0 0 18px; }
+.sp-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.sp-opt {
+  padding: 14px 12px; border-radius: 12px; border: 1px solid var(--line);
+  background: var(--card); color: var(--text); font-size: 15px; font-weight: 600; cursor: pointer;
+  transition: border-color var(--t-state), background var(--t-state);
+}
+.sp-opt:hover { border-color: var(--accent); }
+.sp-opt.active { border-color: var(--accent); background: var(--surface2); color: var(--accent); }
 
 .stage {
   flex: 1;

@@ -27,6 +27,35 @@ function maskContact(v) {
   return s.length > 4 ? `${s.slice(0, 2)}•••${s.slice(-2)}` : s;
 }
 
+// ---- preferred music service -----------------------------------------------
+// Chosen once on first launch, stored on this device. When a track turns out to be
+// ALREADY RELEASED we send the user straight into their own service instead of
+// offering "watch for release" (there's nothing to wait for).
+const SERVICE_KEY = "crate-service";
+// exact = the field on a released `best` that holds a direct link; search = fallback.
+const SERVICES = [
+  { id: "spotify",     label: "Spotify",       exact: "spotify",    search: (q) => `https://open.spotify.com/search/${q}` },
+  { id: "apple",       label: "Apple Music",   exact: "appleMusic", search: (q) => `https://music.apple.com/search?term=${q}` },
+  { id: "soundcloud",  label: "SoundCloud",    exact: null,         search: (q) => `https://soundcloud.com/search?q=${q}` },
+  { id: "youtube",     label: "YouTube Music", exact: null,         search: (q) => `https://music.youtube.com/search?q=${q}` },
+  { id: "amazon",      label: "Amazon Music",  exact: null,         search: (q) => `https://music.amazon.com/search/${q}` },
+  { id: "deezer",      label: "Deezer",        exact: "deezer",     search: (q) => `https://www.deezer.com/search/${q}` },
+  { id: "tidal",       label: "Tidal",         exact: null,         search: (q) => `https://tidal.com/search?q=${q}` },
+  { id: "beatport",    label: "Beatport",      exact: null,         search: (q) => `https://www.beatport.com/search?q=${q}` },
+];
+function getService() { try { return localStorage.getItem(SERVICE_KEY) || ""; } catch { return ""; } }
+function setService(id) { try { localStorage.setItem(SERVICE_KEY, id); } catch {} }
+function serviceDef(id) { return SERVICES.find((s) => s.id === (id || getService())) || SERVICES[0]; }
+// Where to send the user for a released track, on THEIR service: exact link if the
+// match carried one, otherwise a search on that service.
+function openLink(best, svc = serviceDef()) {
+  const q = encodeURIComponent(`${best.artist} ${best.title}`);
+  const exact = svc.exact && best[svc.exact];
+  return { label: svc.label, url: exact || svc.search(q), exact: !!exact };
+}
+// A track is ALREADY RELEASED when the released-catalog matcher (AudD) named it.
+function isReleased(best) { return !!best && best.unreleased === false; }
+
 const RECORD_MS = 9000; // how long each listen captures
 
 // A per-page-load session id — used to reconcile repeat attempts on the same audio.
@@ -80,6 +109,33 @@ function applyTheme(mode) {
 $("#theme-toggle").addEventListener("click", () =>
   applyTheme(document.documentElement.dataset.theme === "dark" ? "light" : "dark")
 );
+
+// ---- music-service picker (first run + change from menu) -------------------
+function renderServiceGrid() {
+  const grid = $("#sp-grid");
+  const current = getService();
+  grid.innerHTML = SERVICES.map((s) =>
+    `<button class="sp-opt${s.id === current ? " active" : ""}" data-svc="${s.id}">${esc(s.label)}</button>`
+  ).join("");
+  grid.querySelectorAll("[data-svc]").forEach((b) =>
+    b.addEventListener("click", () => { setService(b.dataset.svc); closeServicePicker(); reflectService(); })
+  );
+}
+function openServicePicker(firstRun) {
+  renderServiceGrid();
+  $("#sp-title").textContent = firstRun ? "Which music app do you use?" : "Change your music service";
+  $("#service-picker").hidden = false;
+}
+function closeServicePicker() { $("#service-picker").hidden = true; }
+// Keep the menu label in sync with the chosen service.
+function reflectService() {
+  const el = $("#nav-service-current");
+  if (el) el.textContent = getService() ? ` · ${serviceDef().label}` : "";
+}
+$("#nav-service").addEventListener("click", () => { closeNav(); openServicePicker(false); });
+// First launch: no service chosen yet → ask before anything else.
+if (!getService()) openServicePicker(true);
+reflectService();
 
 // Deep-link support: #history / #drops / #enroll / #trending / #contribute
 function openByHash() {
@@ -454,9 +510,22 @@ function renderResult(result, blob, opts = {}) {
 
   $("#sources").innerHTML = (result.sources || []).map(renderSource).join("");
 
+  // Already released → send them into their own music app; there's nothing to
+  // "watch for release" on. Unknown / unreleased → keep the watch option.
   const watchBtn = $("#result-watch");
-  watchBtn.textContent = "☆ Watch for release";
-  watchBtn.classList.remove("watching");
+  const openBtn = $("#result-open");
+  if (isReleased(best)) {
+    const link = openLink(best);
+    openBtn.href = link.url;
+    openBtn.textContent = `Open in ${link.label}`;
+    openBtn.hidden = false;
+    watchBtn.hidden = true;
+  } else {
+    openBtn.hidden = true;
+    watchBtn.hidden = false;
+    watchBtn.textContent = "☆ Watch for release";
+    watchBtn.classList.remove("watching");
+  }
 }
 
 function renderSource(s) {
@@ -521,7 +590,9 @@ async function renderHistory() {
         </div>
         <audio controls preload="none" data-audio></audio>
         <div class="hrow">
-          <button class="btn mini ghost ${it.watching ? "watching" : ""}" data-watch>${it.watching ? "★ Watching" : "☆ Watch for release"}</button>
+          ${isReleased(best)
+            ? `<a class="btn mini primary" href="${esc(openLink(best).url)}" target="_blank" rel="noopener">Open in ${esc(openLink(best).label)}</a>`
+            : `<button class="btn mini ghost ${it.watching ? "watching" : ""}" data-watch>${it.watching ? "★ Watching" : "☆ Watch for release"}</button>`}
           <button class="btn mini ghost" data-recheck>Re-check now</button>
         </div>
       </div>`;
@@ -533,7 +604,7 @@ async function renderHistory() {
     const item = await idbGet(id);
     if (item?.blob) el.querySelector("[data-audio]").src = URL.createObjectURL(item.blob);
 
-    el.querySelector("[data-watch]").addEventListener("click", async (e) => {
+    el.querySelector("[data-watch]")?.addEventListener("click", async (e) => {
       const it = await idbGet(id); if (!it) return;
       it.watching = !it.watching; await idbPut(it);
       e.target.classList.toggle("watching", it.watching);
