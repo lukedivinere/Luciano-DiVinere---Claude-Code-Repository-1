@@ -177,6 +177,21 @@ app.get("/api/submissions", async (_req, res) => {
   res.json(submissions.map((s) => ({ ...s, watchers: counts[s.id] || 0 })));
 });
 
+// Trending: community IDs ranked by the honest engagement signal we actually have —
+// votes plus how many people are waiting on a name. This is NOT a play-count ("jammed
+// across N sets"); that needs the sightings/capture-history backend (spec-006), unbuilt.
+app.get("/api/trending", async (_req, res) => {
+  const submissions = await readJson(SUBMISSIONS_FILE, []);
+  const notifs = await readJson(NOTIFICATIONS_FILE, []);
+  const counts = {};
+  for (const n of notifs) if (n.submissionId) counts[n.submissionId] = (counts[n.submissionId] || 0) + 1;
+  const ranked = submissions
+    .map((s) => ({ ...s, watchers: counts[s.id] || 0 }))
+    .sort((a, b) => (b.votes + 2 * b.watchers) - (a.votes + 2 * a.watchers) || b.watchers - a.watchers)
+    .slice(0, 25);
+  res.json(ranked);
+});
+
 // "Notify me" — capture who wants an update when an ID gets a confirmed name or a
 // release date, and how to reach them. This is the intent-capture layer; the actual send
 // is a backend job wired once those events exist (community-consensus + release-watch).

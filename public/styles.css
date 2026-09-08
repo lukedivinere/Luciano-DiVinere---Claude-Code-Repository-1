@@ -1,21 +1,37 @@
+/* LIGHT is the default (user preference); dark is a toggle. Depth from tonal steps, no
+   gradients/glows in either. The toggle sets data-theme on <html> and persists it. */
 :root {
-  /* spec-007 palette: near-black with a purple cast; depth from tonal steps, not glows */
-  --bg: #0E0A14;        /* surface-0 · page */
-  --bg2: #17111F;       /* surface-1 */
-  --card: #17111F;      /* surface-1 · cards */
-  --surface2: #201829;  /* raised */
-  --surface3: #2A2036;  /* sheets, popovers */
+  --bg: #FAF8FD;        /* page */
+  --bg2: #FFFFFF;       /* surface-1 */
+  --card: #FFFFFF;      /* cards */
+  --surface2: #F3EFFA;  /* raised */
+  --surface3: #EBE5F7;  /* sheets, popovers */
+  --line: rgba(20, 10, 35, 0.10);
+  --text: #1A1424;
+  --muted: #5C5470;
+  --faint: #8A82A0;
+  --accent: #6F5FE8;
+  --accent-strong: #5A49D6;
+  --accent2: #0E9E75;   /* confirmed / live */
+  --glow: transparent;  /* deprecated — no glows in this design */
+  --radius: 16px;
+  --t-state: 150ms; --t-move: 250ms; --t-beat: 400ms;
+  color-scheme: light;
+}
+:root[data-theme="dark"] {
+  --bg: #0E0A14;
+  --bg2: #17111F;
+  --card: #17111F;
+  --surface2: #201829;
+  --surface3: #2A2036;
   --line: rgba(255, 255, 255, 0.08);
   --text: #F4F1F8;
   --muted: #A79FB8;
   --faint: #6F6880;
   --accent: #8B7DF0;
   --accent-strong: #6F5FE8;
-  --accent2: #5FD0A6;   /* confirmed / live · desaturated so it sits in the purple system */
-  --glow: transparent;  /* deprecated — spec-007 forbids glows; kept so old refs no-op */
-  --radius: 16px;
-  /* motion: one duration scale */
-  --t-state: 150ms; --t-move: 250ms; --t-beat: 400ms;
+  --accent2: #5FD0A6;
+  color-scheme: dark;
 }
 
 * { box-sizing: border-box; }
@@ -49,9 +65,41 @@ body {
 .topbar { display: flex; justify-content: space-between; align-items: center; }
 .brand { font-weight: 700; letter-spacing: .08em; color: var(--accent); }
 .mode {
-  font-size: 12px; color: var(--accent2); background: #201736;
+  font-size: 12px; color: var(--accent2); background: var(--surface2);
   border: 1px solid var(--line); border-radius: 999px; padding: 4px 11px;
 }
+.topbar { gap: 10px; }
+.topbar .brand { flex: 1; }
+.topbar-right { display: inline-flex; align-items: center; gap: 8px; }
+
+.icon-btn {
+  background: none; border: 0; color: var(--text); cursor: pointer;
+  padding: 6px; border-radius: 10px; display: inline-grid; place-items: center;
+}
+.icon-btn:hover { background: var(--surface2); }
+
+/* slide-out menu (left) */
+.nav { position: fixed; inset: 0; z-index: 50; }
+.nav[hidden] { display: none; }
+.nav-backdrop { position: absolute; inset: 0; background: rgba(0, 0, 0, .45); opacity: 0; transition: opacity var(--t-move) ease; }
+.nav-panel {
+  position: absolute; top: 0; left: 0; bottom: 0; width: min(300px, 82vw);
+  background: var(--bg2); border-right: 1px solid var(--line);
+  padding: 16px 14px; display: flex; flex-direction: column; gap: 4px; overflow-y: auto;
+  transform: translateX(-100%); transition: transform var(--t-move) ease;
+}
+.nav.open .nav-backdrop { opacity: 1; }
+.nav.open .nav-panel { transform: translateX(0); }
+.nav-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+.nav-item {
+  display: flex; align-items: center; gap: 12px; width: 100%; text-align: left;
+  background: none; border: 0; color: var(--text); cursor: pointer;
+  padding: 12px 10px; border-radius: 10px; font-size: 15.5px;
+}
+.nav-item:hover { background: var(--surface2); }
+.nav-item svg { width: 20px; height: 20px; color: var(--accent); flex: none; }
+.nav-item[aria-current="true"] { color: var(--accent); background: var(--surface2); }
+@media (prefers-reduced-motion: reduce) { .nav-backdrop, .nav-panel { transition: none; } }
 
 .stage {
   flex: 1;
@@ -116,7 +164,7 @@ body {
 }
 .auto-toggle input { display: none; }
 .auto-toggle .track {
-  width: 42px; height: 24px; border-radius: 999px; background: #322a49;
+  width: 42px; height: 24px; border-radius: 999px; background: rgba(120, 110, 150, .38);
   position: relative; transition: background .18s;
 }
 .auto-toggle .thumb {
@@ -166,7 +214,7 @@ body {
 .best-artist { color: var(--accent); font-size: 17px; margin: 0 0 8px; }
 .conf {
   display: inline-block; font-size: 12px; color: var(--accent2);
-  background: #17251f; border: 1px solid #234; border-radius: 999px; padding: 3px 10px; margin-bottom: 12px;
+  background: var(--surface2); border: 1px solid var(--line); border-radius: 999px; padding: 3px 10px; margin-bottom: 12px;
 }
 
 .replay-row {
@@ -188,10 +236,10 @@ body {
 .source .shead { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
 .source .slabel { font-weight: 600; font-size: 15px; }
 .pill { font-size: 11px; padding: 3px 9px; border-radius: 999px; border: 1px solid var(--line); }
-.pill.match { color: #0b0812; background: var(--accent2); border-color: var(--accent2); }
-.pill.no_match, .pill.pending { color: var(--muted); background: #211a33; }
-.pill.demo { color: var(--accent); background: #241a3d; }
-.pill.error { color: #ff9a9a; background: #2a1a1f; }
+.pill.match { color: #fff; background: var(--accent2); border-color: var(--accent2); }
+.pill.no_match, .pill.pending { color: var(--muted); background: var(--surface2); }
+.pill.demo { color: var(--accent); background: var(--surface2); }
+.pill.error { color: #c0392b; background: var(--surface2); }
 .source .snote { color: var(--muted); font-size: 13px; margin: 8px 0 0; }
 .cand {
   display: flex; justify-content: space-between; align-items: center; gap: 10px;
@@ -224,9 +272,9 @@ body {
 
 .btn {
   border: 0; border-radius: 11px; padding: 12px 18px; font-size: 15px; font-weight: 600;
-  cursor: pointer; color: #fff; background: #2a2440;
+  cursor: pointer; color: var(--text); background: var(--surface2);
 }
-.btn.primary { background: var(--accent); color: #12091f; display: inline-block; text-decoration: none; }
+.btn.primary { background: var(--accent); color: #fff; display: inline-block; text-decoration: none; }
 .btn.ghost { background: transparent; border: 1px solid var(--line); color: var(--text); }
 .btn.mini { padding: 5px 12px; font-size: 13px; border-radius: 8px; }
 .btn:disabled { opacity: .5; }
@@ -274,3 +322,6 @@ body {
    dark world beats a theme that flips to a washed-out light variant on some phones.
    Force the dark scheme so form controls (inputs, the mic <select>) render dark too. */
 :root { color-scheme: dark; }
+
+/* trending rank number */
+.item .rank { font-size: 18px; font-weight: 500; color: var(--accent); width: 26px; text-align: center; flex: none; font-variant-numeric: tabular-nums; }

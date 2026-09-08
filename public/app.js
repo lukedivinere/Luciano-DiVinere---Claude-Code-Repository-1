@@ -12,27 +12,58 @@ const RECORD_MS = 9000; // how long each listen captures
 const SESSION_ID = Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
 
 // ---- screen navigation -----------------------------------------------------
-const screens = ["listen", "result", "history", "drops", "enroll", "contribute"];
+const screens = ["listen", "result", "history", "drops", "enroll", "trending", "contribute"];
 function show(name) {
   screens.forEach((s) => ($(`#screen-${s}`).hidden = s !== name));
   window.scrollTo(0, 0);
 }
+// Navigate to a destination and load whatever data it needs.
+function go(name) {
+  if (name === "history") renderHistory();
+  else if (name === "drops") loadDrops();
+  else if (name === "enroll") loadCatalog();
+  else if (name === "trending") loadTrending();
+  else if (name === "contribute") { loadFeed(); loadStats(); }
+  show(name);
+}
 document.querySelectorAll("[data-back]").forEach((b) =>
   b.addEventListener("click", () => { stopAuto(); show("listen"); })
 );
-$("#open-contribute").addEventListener("click", () => { loadFeed(); loadStats(); show("contribute"); });
-$("#open-history").addEventListener("click", () => { renderHistory(); show("history"); });
-$("#open-drops").addEventListener("click", () => { loadDrops(); show("drops"); });
-$("#open-enroll").addEventListener("click", () => { loadCatalog(); show("enroll"); });
 $("#result-again").addEventListener("click", () => show("listen"));
-$("#result-contribute").addEventListener("click", () => { loadFeed(); loadStats(); show("contribute"); });
+$("#result-contribute").addEventListener("click", () => go("contribute"));
 
-// Deep-link support: #drops / #history / #contribute open that sheet on load.
+// ---- slide-out menu --------------------------------------------------------
+const navEl = $("#nav");
+function openNav() { navEl.hidden = false; requestAnimationFrame(() => navEl.classList.add("open")); }
+function closeNav() { navEl.classList.remove("open"); setTimeout(() => { navEl.hidden = true; }, 250); }
+$("#nav-toggle").addEventListener("click", openNav);
+navEl.querySelectorAll("[data-nav-close]").forEach((el) => el.addEventListener("click", closeNav));
+navEl.querySelectorAll(".nav-item").forEach((item) =>
+  item.addEventListener("click", () => {
+    const dest = item.dataset.go;
+    closeNav();
+    if (dest === "listen") { stopAuto(); show("listen"); } else go(dest);
+  })
+);
+
+// ---- theme: light by default, dark optional, remembered --------------------
+function applyTheme(mode) {
+  document.documentElement.dataset.theme = mode; // "light" | "dark"
+  try { localStorage.setItem("crate-theme", mode); } catch { /* private mode */ }
+}
+(function initTheme() {
+  let saved = "light";
+  try { saved = localStorage.getItem("crate-theme") || "light"; } catch { /* ignore */ }
+  applyTheme(saved === "dark" ? "dark" : "light");
+})();
+$("#theme-toggle").addEventListener("click", () =>
+  applyTheme(document.documentElement.dataset.theme === "dark" ? "light" : "dark")
+);
+
+// Deep-link support: #history / #drops / #enroll / #trending / #contribute
 function openByHash() {
   const h = location.hash.replace("#", "");
-  if (h === "drops") { loadDrops(); show("drops"); }
-  else if (h === "history") { renderHistory(); show("history"); }
-  else if (h === "contribute") { loadFeed(); loadStats(); show("contribute"); }
+  if (["history", "drops", "enroll", "trending", "contribute"].includes(h)) go(h);
 }
 window.addEventListener("hashchange", openByHash);
 
@@ -604,6 +635,25 @@ $("#submit-form").addEventListener("submit", async (e) => {
     msg.className = "msg err"; msg.textContent = res.error || "Couldn't submit.";
   }
 });
+
+// ---- trending IDs ----------------------------------------------------------
+async function loadTrending() {
+  const wrap = $("#trending");
+  const items = await fetch("/api/trending").then((r) => r.json());
+  if (!items.length) {
+    wrap.innerHTML = '<p class="muted">Nothing trending yet — as people vote on and watch IDs, the most-wanted ones rise here.</p>';
+    return;
+  }
+  wrap.innerHTML = items.map((s, i) => `
+    <div class="item">
+      <div class="rank">${i + 1}</div>
+      <div class="body">
+        <div class="t">${esc(s.trackTitle) || "Untitled ID"}${s.seed ? '<span class="tag-example">example</span>' : ""}</div>
+        <div class="a">${esc(s.artistGuess) || "artist unknown"}</div>
+        <div class="n">${s.votes} vote${s.votes === 1 ? "" : "s"} · ${s.watchers} waiting</div>
+      </div>
+    </div>`).join("");
+}
 
 async function loadFeed() {
   const feed = $("#feed");

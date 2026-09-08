@@ -7,11 +7,56 @@
     <link rel="stylesheet" href="/styles.css" />
   </head>
   <body>
+    <!-- SLIDE-OUT MENU (opens from the left) -------------------------------->
+    <div id="nav" class="nav" hidden>
+      <div class="nav-backdrop" data-nav-close></div>
+      <nav class="nav-panel" aria-label="Menu">
+        <div class="nav-head">
+          <span class="brand">◐ crate</span>
+          <button class="icon-btn" data-nav-close aria-label="Close menu">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="6" y1="6" x2="18" y2="18"/><line x1="18" y1="6" x2="6" y2="18"/></svg>
+          </button>
+        </div>
+        <button id="nav-listen" class="nav-item" data-go="listen">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="22"/></svg>
+          Identify a track
+        </button>
+        <button id="nav-history" class="nav-item" data-go="history">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M4 12h16M4 18h10"/></svg>
+          My IDs
+        </button>
+        <button id="nav-trending" class="nav-item" data-go="trending">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 17 9 11 13 15 21 7"/><polyline points="15 7 21 7 21 13"/></svg>
+          Trending IDs
+        </button>
+        <button id="nav-enroll" class="nav-item" data-go="enroll">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3"/></svg>
+          Enroll unreleased
+        </button>
+        <button id="nav-drops" class="nav-item" data-go="drops">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><line x1="17.5" y1="6.5" x2="17.5" y2="6.5"/></svg>
+          Instagram drops
+        </button>
+        <button id="nav-contribute" class="nav-item" data-go="contribute">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20.6 13.4 12 22l-8-8V4h10l6.6 6.6a2 2 0 0 1 0 2.8z"/><line x1="7.5" y1="7.5" x2="7.5" y2="7.5"/></svg>
+          Name an ID
+        </button>
+      </nav>
+    </div>
+
     <!-- LISTEN SCREEN ------------------------------------------------------->
     <section id="screen-listen" class="screen">
       <div class="topbar">
+        <button id="nav-toggle" class="icon-btn" aria-label="Open menu">
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+        </button>
         <span class="brand">◐ crate</span>
-        <span id="mode-badge" class="mode">…</span>
+        <div class="topbar-right">
+          <button id="theme-toggle" class="icon-btn" aria-label="Toggle light or dark">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
+          </button>
+          <span id="mode-badge" class="mode">…</span>
+        </div>
       </div>
 
       <div class="stage">
@@ -46,12 +91,6 @@
         <input type="file" id="file" accept="audio/*" hidden />
       </div>
 
-      <div class="foot-links">
-        <button id="open-history" class="linkbtn">◔ My IDs</button>
-        <button id="open-enroll" class="linkbtn">🎯 Enroll unreleased</button>
-        <button id="open-drops" class="linkbtn">⚡ IG Drops</button>
-        <button id="open-contribute" class="linkbtn">＋ Name ID</button>
-      </div>
     </section>
 
     <!-- RESULTS SHEET ------------------------------------------------------->
@@ -140,6 +179,18 @@
 
       <p class="sources-label">In the catalog</p>
       <div id="catalog" class="feed"><p class="muted">Loading…</p></div>
+    </section>
+
+    <!-- TRENDING SHEET ------------------------------------------------------>
+    <section id="screen-trending" class="screen sheet" hidden>
+      <button data-back class="linkbtn back">‹ back</button>
+      <h2>Trending IDs</h2>
+      <p class="muted">
+        What the community is chasing most right now — ranked by votes and how many people
+        are waiting on a name. (True "played across N sets" ranking arrives once capture
+        history is in.)
+      </p>
+      <div id="trending" class="feed"><p class="muted">Loading…</p></div>
     </section>
 
     <!-- CONTRIBUTE SHEET ---------------------------------------------------->
