@@ -84,18 +84,22 @@
     .hamburger{display:flex;}
   }
 
-  /* ── hero ── */
-  .hero{position:relative;min-height:100svh;display:flex;align-items:flex-end;isolation:isolate;}
-  .hero-bg{position:absolute;inset:0;z-index:-2;width:100%;height:100%;object-fit:cover;}
-  .hero::after{content:"";position:absolute;inset:0;z-index:-1;background:linear-gradient(180deg, rgba(16,19,15,0.62) 0%, rgba(16,19,15,0.30) 34%, rgba(16,19,15,0.86) 100%);}
-  .hero-inner{padding:0 0 88px;max-width:760px;}
-  .hero h1{font-size:clamp(42px,7vw,84px);}
+  /* ── hero (solid dark — NO background photo; the photo below is a contained block) ── */
+  .hero{position:relative;padding:152px 0 0;text-align:center;overflow:hidden;}
+  .hero::before{content:"";position:absolute;top:-24%;left:50%;transform:translateX(-50%);width:860px;height:860px;max-width:130%;background:radial-gradient(circle, rgba(143,209,79,0.16), transparent 62%);z-index:0;pointer-events:none;}
+  .hero-inner{position:relative;z-index:1;max-width:880px;margin:0 auto;}
+  .hero .eyebrow{margin-bottom:18px;}
+  .hero h1{font-size:clamp(40px,6.6vw,80px);}
   .hero h1 em{font-style:normal;color:var(--accent);}
-  .hero p{margin:26px 0 0;font-size:clamp(17px,2vw,20px);color:rgba(242,243,238,0.86);max-width:52ch;}
-  .hero-actions{display:flex;gap:14px;margin-top:38px;flex-wrap:wrap;}
-  .hero-badges{display:flex;gap:26px;flex-wrap:wrap;margin-top:44px;padding-top:28px;border-top:1px solid rgba(255,255,255,0.16);font-size:14px;color:rgba(242,243,238,0.82);}
+  .hero p{margin:24px auto 0;font-size:clamp(17px,2vw,20px);color:rgba(242,243,238,0.82);max-width:56ch;}
+  .hero-actions{display:flex;gap:14px;margin-top:36px;flex-wrap:wrap;justify-content:center;}
+  .hero-badges{display:flex;gap:16px 30px;flex-wrap:wrap;justify-content:center;margin-top:40px;font-size:14px;color:rgba(242,243,238,0.78);}
   .hero-badges span{display:flex;align-items:center;gap:9px;}
   .hero-badges svg{width:17px;height:17px;color:var(--accent);flex:none;}
+  /* contained hero photo — framed block that reveals as you scroll, not a background */
+  .hero-showcase{max-width:1180px;margin:70px auto 0;padding:0 26px;}
+  .hero-showcase img{width:100%;height:clamp(300px,50vw,580px);object-fit:cover;border-radius:20px;border:1px solid var(--line);box-shadow:0 44px 100px -55px rgba(0,0,0,0.95);}
+  @media (max-width:860px){ .hero{padding-top:122px;} .hero-showcase{margin-top:44px;} .hero-showcase img{border-radius:14px;} }
 
   /* ── ticker ── */
   .ticker{background:var(--accent);color:#12160E;overflow:hidden;white-space:nowrap;border-top:1px solid rgba(0,0,0,0.1);}
@@ -164,13 +168,15 @@
   .pstep p{margin:0;color:var(--muted);font-size:14.5px;}
   @media (max-width:860px){ .process-list{grid-template-columns:1fr 1fr;} .pstep::after{display:none;} }
 
-  /* ── testimonial ── */
-  .quote{position:relative;isolation:isolate;text-align:center;}
-  .quote-bg{position:absolute;inset:0;z-index:-2;width:100%;height:100%;object-fit:cover;}
-  .quote::after{content:"";position:absolute;inset:0;z-index:-1;background:rgba(12,15,10,0.78);}
-  .quote .stars{color:var(--accent-2);font-size:20px;letter-spacing:3px;margin-bottom:22px;}
-  .quote blockquote{font-family:'Space Grotesk';font-weight:500;font-size:clamp(24px,3.4vw,40px);line-height:1.28;margin:0 auto;max-width:16ch;letter-spacing:-0.01em;}
-  .quote cite{display:block;margin-top:26px;font-style:normal;color:var(--muted);font-size:14.5px;}
+  /* ── testimonial (contained framed photo beside the quote — no background image) ── */
+  .quote{background:var(--panel);}
+  .quote .wrap{display:grid;grid-template-columns:0.92fr 1.08fr;gap:52px;align-items:center;}
+  .quote-media{border-radius:var(--radius);overflow:hidden;aspect-ratio:4/3.4;}
+  .quote-media img{width:100%;height:100%;object-fit:cover;}
+  .quote .stars{color:var(--accent-2);font-size:20px;letter-spacing:3px;margin-bottom:20px;}
+  .quote blockquote{font-family:'Space Grotesk';font-weight:500;font-size:clamp(24px,3.2vw,38px);line-height:1.28;margin:0;max-width:20ch;letter-spacing:-0.01em;}
+  .quote cite{display:block;margin-top:22px;font-style:normal;color:var(--muted);font-size:14.5px;}
+  @media (max-width:860px){ .quote .wrap{grid-template-columns:1fr;gap:30px;} }
 
   /* ── packages ── */
   .package-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;}
@@ -261,7 +267,6 @@
 <!-- ═══ HERO ═══ -->
 <span id="top"></span>
 <section class="hero">
-  <img class="hero-bg" src="images/backyard-turf-patio.png" alt="Backyard artificial turf lawn with a covered patio and stone retaining wall">
   <div class="wrap hero-inner">
     <div class="eyebrow">Landscape design &amp; build · <span data-site="serviceArea">San Diego County</span></div>
     <h1>Outdoor spaces built to <em>live in</em>.</h1>
@@ -275,6 +280,9 @@
       <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg>Free Estimates</span>
       <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>12+ Years Local</span>
     </div>
+  </div>
+  <div class="hero-showcase reveal">
+    <img src="images/backyard-turf-patio.png" alt="Backyard artificial turf lawn with a covered patio and stone retaining wall">
   </div>
 </section>
 
@@ -368,11 +376,13 @@
 
 <!-- ═══ TESTIMONIAL ═══ -->
 <section class="quote">
-  <img class="quote-bg" src="images/pergola-string-lights.png" alt="">
-  <div class="wrap">
-    <div class="stars" aria-label="Five out of five stars">★★★★★</div>
-    <blockquote>"Reliable, and quick to make things right."</blockquote>
-    <cite>— What customers keep saying</cite>
+  <div class="wrap reveal">
+    <div class="quote-media"><img src="images/pergola-string-lights.png" alt="Backyard cedar pergola with string lights at night"></div>
+    <div>
+      <div class="stars" aria-label="Five out of five stars">★★★★★</div>
+      <blockquote>"Reliable, and quick to make things right."</blockquote>
+      <cite>— What customers keep saying</cite>
+    </div>
   </div>
 </section>
 
