@@ -1,4 +1,4 @@
-// Crate front end: tap-to-ID, auto-ID loop, on-device history, community layer.
+// iDROP front end: tap-to-ID, auto-ID loop, on-device history, community layer.
 import { decodeAndFingerprint } from "./fingerprint.js";
 
 const $ = (s) => document.querySelector(s);
@@ -90,7 +90,7 @@ const RECORD_MS = 9000; // how long each listen captures
 const SESSION_ID = Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
 
 // ---- screen navigation -----------------------------------------------------
-const screens = ["listen", "result", "history", "drops", "enroll", "trending", "artists", "shows", "contribute"];
+const screens = ["listen", "recent", "result", "history", "drops", "enroll", "trending", "artists", "shows", "contribute"];
 function show(name) {
   screens.forEach((s) => ($(`#screen-${s}`).hidden = s !== name));
   window.scrollTo(0, 0);
@@ -98,6 +98,7 @@ function show(name) {
 // Navigate to a destination and load whatever data it needs.
 function go(name) {
   if (name === "history") renderHistory();
+  else if (name === "recent") loadRecent();
   else if (name === "drops") loadDrops();
   else if (name === "enroll") loadCatalog();
   else if (name === "trending") loadTrending();
@@ -170,7 +171,7 @@ reflectService();
 // Deep-link support: #history / #drops / #enroll / #trending / #contribute
 function openByHash() {
   const h = location.hash.replace("#", "");
-  if (["history", "drops", "enroll", "trending", "artists", "shows", "contribute"].includes(h)) go(h);
+  if (["recent", "history", "drops", "enroll", "trending", "artists", "shows", "contribute"].includes(h)) go(h);
 }
 window.addEventListener("hashchange", openByHash);
 
@@ -734,6 +735,71 @@ async function loadCatalog() {
     </div></div>`).join("");
 }
 
+// ---- recent — full-screen vertical swipe feed ------------------------------
+// The interaction people love from set-ID apps: swipe up/down through recent activity.
+// We merge recent community IDs + IG drops into one time-ordered feed. Native CSS
+// scroll-snap gives real swipe on phones and wheel/keys on desktop — no drag library.
+function recentCard(x) {
+  const followBtn = x.artist
+    ? `<button class="rbtn follow-btn ${isFollowing(normArtist(x.artist)) ? "following" : ""}" data-rfollow="${esc(x.artist)}">${isFollowing(normArtist(x.artist)) ? "Following" : "Follow"}</button>`
+    : "";
+  const voteBtn = x.kind === "id"
+    ? `<button class="rbtn" data-rvote="${esc(x.id)}">▲ <span class="rvc">${x.votes || 0}</span></button>`
+    : "";
+  const link = x.url
+    ? `<a class="rbtn ghost" href="${esc(x.url)}" target="_blank" rel="noopener">${x.kind === "drop" ? "View on Instagram" : "Source"} →</a>`
+    : "";
+  return `
+    <article class="rcard" data-key="${esc(x.id)}">
+      <div class="rcard-inner">
+        <p class="reyebrow">${x.kind === "drop" ? "Instagram drop" : "Unreleased ID"}${x.seed ? ' · <span class="tag-example">example</span>' : ""}</p>
+        <h2 class="rtitle">${esc(x.title) || "Untitled ID"}</h2>
+        <p class="rartist">${esc(x.artist) || "artist unknown"}</p>
+        ${x.notes ? `<p class="rnotes">${esc(x.notes)}</p>` : ""}
+        <div class="ractions">${voteBtn}${followBtn}${link}</div>
+        ${x.when ? `<p class="rwhen">${esc(timeAgo(x.when))}</p>` : ""}
+      </div>
+    </article>`;
+}
+function timeAgo(iso) {
+  const s = Math.max(1, Math.floor((Date.now() - new Date(iso).getTime()) / 1000));
+  const units = [["d", 86400], ["h", 3600], ["m", 60]];
+  for (const [label, secs] of units) { if (s >= secs) return `${Math.floor(s / secs)}${label} ago`; }
+  return "just now";
+}
+async function loadRecent() {
+  const feed = $("#recent-feed");
+  const [subs, drops] = await Promise.all([
+    fetch("/api/submissions").then((r) => r.json()).catch(() => []),
+    fetch("/api/ig-drops").then((r) => r.json()).catch(() => []),
+  ]);
+  const items = [
+    ...subs.map((s) => ({ kind: "id", id: s.id, title: s.trackTitle, artist: s.artistGuess, notes: s.notes, url: s.sourceUrl, votes: s.votes, seed: s.seed, when: s.submittedAt })),
+    ...drops.map((d) => ({ kind: "drop", id: d.id, title: d.trackTitle, artist: d.artist, notes: d.note, url: d.url, seed: false, when: d.submittedAt })),
+  ].sort((a, b) => new Date(b.when || 0) - new Date(a.when || 0));
+
+  if (!items.length) {
+    feed.innerHTML = '<p class="muted rcenter">Nothing yet. As IDs and drops come in, swipe through them here.</p>';
+    return;
+  }
+  feed.innerHTML = items.map(recentCard).join("") +
+    '<div class="rhint" aria-hidden="true">swipe up for more ↑</div>';
+
+  feed.querySelectorAll("[data-rvote]").forEach((b) =>
+    b.addEventListener("click", async () => {
+      const res = await fetch(`/api/submissions/${b.dataset.rvote}/vote`, { method: "POST" }).then((r) => r.json());
+      if (res.ok) b.querySelector(".rvc").textContent = res.votes;
+    })
+  );
+  feed.querySelectorAll("[data-rfollow]").forEach((b) =>
+    b.addEventListener("click", () => {
+      const on = toggleFollow(b.dataset.rfollow);
+      b.classList.toggle("following", on);
+      b.textContent = on ? "Following" : "Follow";
+    })
+  );
+}
+
 // ---- artists (follow / like) ----------------------------------------------
 function artistRow(a) {
   const following = isFollowing(a.key);
@@ -792,7 +858,7 @@ function renderArtists(query = "") {
     html = q
       ? `<p class="muted">No one matching "${esc(query.trim())}" yet.</p>`
       : artistRoster.length
-        ? '<p class="muted">You follow everyone Crate knows so far. Add more by name above, or ID some tracks.</p>'
+        ? '<p class="muted">You follow everyone iDROP knows so far. Add more by name above, or ID some tracks.</p>'
         : '<p class="muted">No artists yet — follow one by name above, or ID some tracks.</p>';
   }
   wrap.innerHTML = html;

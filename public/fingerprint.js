@@ -1,4 +1,4 @@
-// Crate landmark audio fingerprinting — the engine that lets us recognize UNRELEASED
+// iDROP landmark audio fingerprinting — the engine that lets us recognize UNRELEASED
 // tracks nobody else has in a database, by building our own catalog.
 //
 // Method: the Shazam-style "constellation + landmark hash" approach (Wang 2003).

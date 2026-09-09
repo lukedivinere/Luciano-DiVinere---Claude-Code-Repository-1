@@ -1,4 +1,4 @@
-// Crate — Phase-0 web uploader for house-music track ID.
+// iDROP — Phase-0 web uploader for house-music track ID.
 //
 // Design constraints (from VALIDATION.md, non-negotiable):
 //   1. NEVER persist uploaded audio. Uploads live in memory only, are sent to the
@@ -362,7 +362,7 @@ async function seedIfEmpty() {
 
 Promise.all([seedIfEmpty(), seedEventsIfEmpty()]).finally(() => {
   app.listen(PORT, () => {
-    console.log(`Crate uploader running on http://localhost:${PORT}`);
+    console.log(`iDROP running on http://localhost:${PORT}`);
     console.log(
       AUDD_TOKEN
         ? `Fingerprint API: token present (length ${AUDD_TOKEN.length}, "${AUDD_TOKEN.slice(0, 4)}…${AUDD_TOKEN.slice(-4)}") — NOTE: "present" is not "valid"; AudD verifies it on first request`
