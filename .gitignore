@@ -9,3 +9,4 @@ data/misses.json
 .env
 data/metadata_cache.json
 data/trending_history.json
+data/events.json

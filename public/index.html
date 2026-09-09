@@ -42,6 +42,14 @@
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 17 9 11 13 15 21 7"/><polyline points="15 7 21 7 21 13"/></svg>
           Trending IDs
         </button>
+        <button id="nav-artists" class="nav-item" data-go="artists">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          Artists you follow
+        </button>
+        <button id="nav-shows" class="nav-item" data-go="shows">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="17" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+          Upcoming shows
+        </button>
         <button id="nav-enroll" class="nav-item" data-go="enroll">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3"/></svg>
           Enroll unreleased
@@ -210,6 +218,61 @@
         history is in.)
       </p>
       <div id="trending" class="feed"><p class="muted">Loading…</p></div>
+    </section>
+
+    <!-- ARTISTS SHEET ------------------------------------------------------->
+    <section id="screen-artists" class="screen sheet" hidden>
+      <button data-back class="linkbtn back">‹ back</button>
+      <h2>Artists</h2>
+      <p class="muted">
+        Follow the producers you're into. When one of them has an upcoming show, it
+        surfaces on <strong>Upcoming shows</strong>. Following is saved
+        <strong>on this device</strong>.
+      </p>
+
+      <form id="artist-add" class="artist-add">
+        <input id="artist-search" placeholder="Search or add an artist…" autocomplete="off" />
+      </form>
+
+      <div id="following-wrap" hidden>
+        <p class="sources-label">Following</p>
+        <div id="following" class="artists"></div>
+      </div>
+
+      <p class="sources-label">On Crate</p>
+      <div id="artists" class="artists"><p class="muted">Loading…</p></div>
+    </section>
+
+    <!-- UPCOMING SHOWS SHEET ------------------------------------------------>
+    <section id="screen-shows" class="screen sheet" hidden>
+      <button data-back class="linkbtn back">‹ back</button>
+      <h2>Upcoming shows</h2>
+      <p class="muted">
+        Where to catch these artists live. We show dates artists and fans add, with a link
+        out to buy tickets — never a fabricated listing. (Live event feeds are on the
+        roadmap.) <strong>Follow artists</strong> and their shows rise to the top here.
+      </p>
+
+      <div class="show-tabs">
+        <button class="show-tab active" data-shows="following">Who you follow</button>
+        <button class="show-tab" data-shows="all">All shows</button>
+      </div>
+
+      <div id="shows" class="shows"><p class="muted">Loading…</p></div>
+
+      <details class="add-show">
+        <summary>Add a show</summary>
+        <form id="show-form" class="form">
+          <label>Artist <input name="artist" placeholder="e.g. Max Styler" required /></label>
+          <label>Date <input name="date" type="date" required /></label>
+          <label>Venue <input name="venue" placeholder="e.g. Sound" /></label>
+          <label>City <input name="city" placeholder="e.g. Los Angeles, CA" /></label>
+          <label>Ticket link <input name="ticketUrl" placeholder="https://…" /></label>
+          <label>Notes <input name="note" placeholder="Support / set time / lineup" /></label>
+          <button class="btn primary" type="submit">Add show</button>
+          <div id="show-msg" class="msg" hidden></div>
+        </form>
+      </details>
     </section>
 
     <!-- CONTRIBUTE SHEET ---------------------------------------------------->

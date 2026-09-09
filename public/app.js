@@ -56,13 +56,41 @@ function openLink(best, svc = serviceDef()) {
 // A track is ALREADY RELEASED when the released-catalog matcher (AudD) named it.
 function isReleased(best) { return !!best && best.unreleased === false; }
 
+// ---- followed artists (on-device) ------------------------------------------
+// Stored as { normalizedKey: displayName }. Following is per-device, like My IDs.
+const FOLLOW_KEY = "crate-following";
+function normArtist(name) {
+  return String(name || "")
+    .replace(/[—–-]\s*unconfirmed.*$/i, "")
+    .replace(/\((?:unconfirmed|id|forthcoming|unreleased)\)/gi, "")
+    .replace(/\s+/g, " ").trim().toLowerCase();
+}
+function dispArtist(name) {
+  return String(name || "")
+    .replace(/[—–-]\s*unconfirmed.*$/i, "")
+    .replace(/\((?:unconfirmed|id|forthcoming|unreleased)\)/gi, "")
+    .replace(/\s+/g, " ").trim();
+}
+function getFollowing() { try { return JSON.parse(localStorage.getItem(FOLLOW_KEY) || "{}"); } catch { return {}; } }
+function saveFollowing(map) { try { localStorage.setItem(FOLLOW_KEY, JSON.stringify(map)); } catch {} }
+function isFollowing(key) { return Object.prototype.hasOwnProperty.call(getFollowing(), key); }
+function toggleFollow(rawName) {
+  const key = normArtist(rawName);
+  if (!key) return false;
+  const map = getFollowing();
+  if (map[key]) delete map[key];
+  else map[key] = dispArtist(rawName);
+  saveFollowing(map);
+  return !!map[key];
+}
+
 const RECORD_MS = 9000; // how long each listen captures
 
 // A per-page-load session id — used to reconcile repeat attempts on the same audio.
 const SESSION_ID = Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
 
 // ---- screen navigation -----------------------------------------------------
-const screens = ["listen", "result", "history", "drops", "enroll", "trending", "contribute"];
+const screens = ["listen", "result", "history", "drops", "enroll", "trending", "artists", "shows", "contribute"];
 function show(name) {
   screens.forEach((s) => ($(`#screen-${s}`).hidden = s !== name));
   window.scrollTo(0, 0);
@@ -73,6 +101,8 @@ function go(name) {
   else if (name === "drops") loadDrops();
   else if (name === "enroll") loadCatalog();
   else if (name === "trending") loadTrending();
+  else if (name === "artists") loadArtists();
+  else if (name === "shows") loadShows();
   else if (name === "contribute") { loadFeed(); loadStats(); }
   show(name);
 }
@@ -140,7 +170,7 @@ reflectService();
 // Deep-link support: #history / #drops / #enroll / #trending / #contribute
 function openByHash() {
   const h = location.hash.replace("#", "");
-  if (["history", "drops", "enroll", "trending", "contribute"].includes(h)) go(h);
+  if (["history", "drops", "enroll", "trending", "artists", "shows", "contribute"].includes(h)) go(h);
 }
 window.addEventListener("hashchange", openByHash);
 
@@ -703,6 +733,150 @@ async function loadCatalog() {
       ${t.sourceUrl ? `<a class="src" href="${esc(t.sourceUrl)}" target="_blank" rel="noopener">${esc(t.sourceUrl)}</a>` : ""}
     </div></div>`).join("");
 }
+
+// ---- artists (follow / like) ----------------------------------------------
+function artistRow(a) {
+  const following = isFollowing(a.key);
+  const bits = [];
+  if (a.ids) bits.push(`${a.ids} ID${a.ids === 1 ? "" : "s"}`);
+  if (a.shows) bits.push(`${a.shows} upcoming show${a.shows === 1 ? "" : "s"}`);
+  return `
+    <div class="item artist" data-key="${esc(a.key)}">
+      <div class="avatar">${esc((a.name[0] || "?").toUpperCase())}</div>
+      <div class="body">
+        <div class="t">${esc(a.name)}</div>
+        <div class="a">${bits.join(" · ") || "no activity yet"}</div>
+      </div>
+      <button class="btn mini follow-btn ${following ? "following" : ""}" data-follow="${esc(a.name)}">
+        ${following ? "Following" : "Follow"}
+      </button>
+    </div>`;
+}
+let artistRoster = [];
+async function loadArtists() {
+  const wrap = $("#artists");
+  artistRoster = await fetch("/api/artists").then((r) => r.json());
+  renderArtists();
+}
+function renderArtists(query = "") {
+  const wrap = $("#artists");
+  const followWrap = $("#following-wrap");
+  const followEl = $("#following");
+  const map = getFollowing();
+
+  // "Following" block — from the on-device set, augmented with roster counts when present.
+  const followKeys = Object.keys(map);
+  if (followKeys.length) {
+    followWrap.hidden = false;
+    followEl.innerHTML = followKeys.map((k) => {
+      const found = artistRoster.find((a) => a.key === k);
+      return artistRow(found || { key: k, name: map[k], ids: 0, shows: 0 });
+    }).join("");
+  } else {
+    followWrap.hidden = true;
+    followEl.innerHTML = "";
+  }
+
+  const q = normArtist(query);
+  // "On Crate" is a discover list — exclude artists already in your Following set.
+  const list = artistRoster
+    .filter((a) => !map[a.key])
+    .filter((a) => (q ? a.key.includes(q) : true));
+  // Offer to add a brand-new artist the roster doesn't know yet.
+  const exactExists = artistRoster.some((a) => a.key === q) || (q && map[q]);
+  let html = list.map(artistRow).join("");
+  if (q && !exactExists) {
+    html = `<button class="btn ghost add-artist" data-add="${esc(query.trim())}">Follow "${esc(query.trim())}"</button>` + html;
+  }
+  if (!html) {
+    html = q
+      ? `<p class="muted">No one matching "${esc(query.trim())}" yet.</p>`
+      : artistRoster.length
+        ? '<p class="muted">You follow everyone Crate knows so far. Add more by name above, or ID some tracks.</p>'
+        : '<p class="muted">No artists yet — follow one by name above, or ID some tracks.</p>';
+  }
+  wrap.innerHTML = html;
+  wireArtistButtons();
+}
+function wireArtistButtons() {
+  document.querySelectorAll("[data-follow]").forEach((b) =>
+    b.addEventListener("click", () => { toggleFollow(b.dataset.follow); renderArtists($("#artist-search").value); })
+  );
+  document.querySelectorAll("[data-add]").forEach((b) =>
+    b.addEventListener("click", () => {
+      toggleFollow(b.dataset.add);
+      $("#artist-search").value = "";
+      renderArtists();
+    })
+  );
+}
+$("#artist-add").addEventListener("submit", (e) => e.preventDefault());
+$("#artist-search").addEventListener("input", (e) => renderArtists(e.target.value));
+
+// ---- upcoming shows --------------------------------------------------------
+let showsMode = "following";
+function fmtDate(iso) {
+  return new Date(iso).toLocaleDateString([], { weekday: "short", month: "short", day: "numeric", year: "numeric" });
+}
+function showCard(e, youFollow) {
+  const where = [e.venue, e.city].filter(Boolean).join(" · ");
+  return `
+    <div class="item show">
+      <div class="show-date"><span class="mon">${esc(new Date(e.date).toLocaleDateString([], { month: "short" }))}</span><span class="day">${new Date(e.date).getDate()}</span></div>
+      <div class="body">
+        <div class="t">${esc(e.artist)}${youFollow ? '<span class="tag-following">following</span>' : ""}${e.seed ? '<span class="tag-example">example</span>' : ""}</div>
+        <div class="a">${esc(where) || "venue TBA"}</div>
+        <div class="n">${esc(fmtDate(e.date))}${e.note ? " · " + esc(e.note) : ""}</div>
+      </div>
+      ${e.ticketUrl ? `<a class="btn mini primary" href="${esc(e.ticketUrl)}" target="_blank" rel="noopener">Tickets</a>` : ""}
+    </div>`;
+}
+async function loadShows() {
+  document.querySelectorAll("[data-shows]").forEach((t) => t.classList.toggle("active", t.dataset.shows === showsMode));
+  const wrap = $("#shows");
+  const following = getFollowing();
+  const followKeys = Object.keys(following);
+  const all = await fetch("/api/events").then((r) => r.json());
+
+  if (showsMode === "following") {
+    if (!followKeys.length) {
+      wrap.innerHTML = `<p class="muted">You're not following anyone yet. <button class="linkbtn" id="go-artists">Find artists to follow →</button></p>`;
+      $("#go-artists")?.addEventListener("click", () => go("artists"));
+      return;
+    }
+    const mine = all.filter((e) => followKeys.includes(e.artistKey));
+    wrap.innerHTML = mine.length
+      ? mine.map((e) => showCard(e, true)).join("")
+      : `<p class="muted">No upcoming shows yet for the ${followKeys.length} artist${followKeys.length === 1 ? "" : "s"} you follow. Check <button class="linkbtn" data-shows-switch>all shows</button> or add one below.</p>`;
+  } else {
+    wrap.innerHTML = all.length
+      ? all.map((e) => showCard(e, followKeys.includes(e.artistKey))).join("")
+      : '<p class="muted">No upcoming shows yet. Add the first one below.</p>';
+  }
+  wrap.querySelector("[data-shows-switch]")?.addEventListener("click", () => { showsMode = "all"; loadShows(); });
+}
+document.querySelectorAll("[data-shows]").forEach((tab) =>
+  tab.addEventListener("click", () => { showsMode = tab.dataset.shows; loadShows(); })
+);
+$("#show-form").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const form = e.target;
+  const msg = $("#show-msg");
+  const body = {
+    artist: form.artist.value, date: form.date.value, venue: form.venue.value,
+    city: form.city.value, ticketUrl: form.ticketUrl.value, note: form.note.value,
+  };
+  const res = await fetch("/api/events", {
+    method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body),
+  }).then((r) => r.json());
+  msg.hidden = false;
+  if (res.ok) {
+    msg.className = "msg ok"; msg.textContent = "Show added.";
+    form.reset(); showsMode = "all"; loadShows();
+  } else {
+    msg.className = "msg err"; msg.textContent = res.error || "Couldn't add that show.";
+  }
+});
 
 // ---- community submit + feed ----------------------------------------------
 $("#submit-form").addEventListener("submit", async (e) => {

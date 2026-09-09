@@ -19,6 +19,7 @@ import { readFile, writeFile, mkdir } from "node:fs/promises";
 import { runPipeline } from "./pipeline.js";
 import { addDrop, listDrops } from "./instagram.js";
 import { enroll, listTracks } from "./catalog.js";
+import { addEvent, listEvents, upcomingEvents, seedEventsIfEmpty, normalizeArtist, displayArtist } from "./events.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const DATA_DIR = join(__dirname, "data");
@@ -277,6 +278,55 @@ app.get("/api/ig-drops", async (_req, res) => {
   res.json(await listDrops());
 });
 
+// ---- artists + upcoming shows ---------------------------------------------
+// Aggregate every distinct artist we know about — from community IDs, the unreleased
+// catalog, IG drops, and submitted shows — so users can follow them. Following itself
+// lives on the device (localStorage); the server just supplies the roster + counts.
+app.get("/api/artists", async (_req, res) => {
+  const [subs, cat, drops, events] = await Promise.all([
+    readJson(SUBMISSIONS_FILE, []),
+    listTracks(),
+    listDrops(),
+    upcomingEvents(),
+  ]);
+  const map = new Map(); // key -> { name, ids, shows }
+  const bump = (raw, field) => {
+    const key = normalizeArtist(raw);
+    if (!key) return;
+    const name = displayArtist(raw);
+    const cur = map.get(key) || { key, name, ids: 0, shows: 0 };
+    cur[field] += 1;
+    if (name.length > cur.name.length) cur.name = name; // prefer the fullest spelling
+    map.set(key, cur);
+  };
+  for (const s of subs) bump(s.artistGuess, "ids");
+  for (const t of cat) bump(t.artist, "ids");
+  for (const d of drops) bump(d.artist, "ids");
+  for (const e of events) bump(e.artist, "shows");
+  const artists = [...map.values()].sort(
+    (a, b) => b.shows - a.shows || b.ids - a.ids || a.name.localeCompare(b.name)
+  );
+  res.json(artists);
+});
+
+// Upcoming shows. Optionally scope to a set of followed artist keys (?artists=a,b,c) so
+// the client can render a "shows for who you follow" view without shipping the roster.
+app.get("/api/events", async (req, res) => {
+  const events = await upcomingEvents();
+  const want = String(req.query.artists || "").split(",").map((s) => s.trim()).filter(Boolean);
+  const filtered = want.length ? events.filter((e) => want.includes(e.artistKey)) : events;
+  res.json(filtered);
+});
+
+// Submit a show (artist or fan). Metadata + ticket link only — no fabricated listings.
+app.post("/api/events", async (req, res) => {
+  const { artist, venue, city, date, ticketUrl, note } = req.body || {};
+  const result = await addEvent({ artist, venue, city, date, ticketUrl, note });
+  if (result.error) return res.status(400).json({ error: result.error });
+  await bumpStat("events");
+  res.json(result);
+});
+
 // Upvote — the reputation/engagement signal that tells us the community loop works.
 app.post("/api/submissions/:id/vote", async (req, res) => {
   const submissions = await readJson(SUBMISSIONS_FILE, []);
@@ -310,7 +360,7 @@ async function seedIfEmpty() {
   console.log(`Seeded ${rows.length} example community IDs.`);
 }
 
-seedIfEmpty().finally(() => {
+Promise.all([seedIfEmpty(), seedEventsIfEmpty()]).finally(() => {
   app.listen(PORT, () => {
     console.log(`Crate uploader running on http://localhost:${PORT}`);
     console.log(

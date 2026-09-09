@@ -385,3 +385,45 @@ body {
 .hitem .hmeta { display: flex; flex-direction: column; gap: 2px; min-width: 0; flex: 1; }
 .hcover { width: 44px; height: 44px; border-radius: 8px; object-fit: cover; flex: none; }
 .hcover.placeholder { background: var(--surface2); border: 1px solid var(--line); }
+
+/* ---- artists (follow / like) ---- */
+.artist-add { margin: 14px 0 6px; }
+.artist-add #artist-search {
+  width: 100%; background: var(--card); border: 1px solid var(--line); color: var(--text);
+  padding: 11px 13px; border-radius: 11px; font-size: 15px;
+}
+.artist-add #artist-search:focus { outline: none; border-color: var(--accent); }
+.artists { display: flex; flex-direction: column; gap: 10px; margin-top: 8px; }
+.item.artist .avatar {
+  width: 40px; height: 40px; border-radius: 50%; flex: none;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--surface2); color: var(--accent); font-weight: 700; font-size: 17px;
+}
+.follow-btn { flex: none; border: 1px solid var(--accent); background: transparent; color: var(--accent); }
+.follow-btn.following { background: var(--accent); color: #fff; border-color: var(--accent); }
+.add-artist { align-self: flex-start; margin-bottom: 2px; }
+
+/* ---- upcoming shows ---- */
+.show-tabs { display: flex; gap: 8px; margin: 14px 0 4px; }
+.show-tab {
+  border: 1px solid var(--line); background: var(--card); color: var(--muted);
+  padding: 7px 14px; border-radius: 999px; font-size: 13.5px; font-weight: 600; cursor: pointer;
+}
+.show-tab.active { border-color: var(--accent); background: var(--surface2); color: var(--accent); }
+.shows { display: flex; flex-direction: column; gap: 10px; margin-top: 10px; }
+.item.show { align-items: center; }
+.show-date {
+  flex: none; width: 52px; height: 52px; border-radius: 10px; background: var(--surface2);
+  border: 1px solid var(--line); display: flex; flex-direction: column; align-items: center; justify-content: center;
+}
+.show-date .mon { font-size: 10.5px; text-transform: uppercase; letter-spacing: .04em; color: var(--accent); font-weight: 700; }
+.show-date .day { font-size: 20px; font-weight: 700; line-height: 1; color: var(--text); }
+.tag-following {
+  font-size: 10px; color: var(--accent2); border: 1px solid var(--accent2); border-radius: 4px;
+  padding: 1px 5px; margin-left: 6px; vertical-align: middle; letter-spacing: .02em;
+}
+.add-show { margin-top: 18px; border-top: 1px solid var(--line); padding-top: 12px; }
+.add-show > summary { cursor: pointer; color: var(--accent); font-weight: 600; font-size: 14.5px; list-style: none; }
+.add-show > summary::-webkit-details-marker { display: none; }
+.add-show > summary::before { content: "+ "; }
+.add-show[open] > summary::before { content: "− "; }
