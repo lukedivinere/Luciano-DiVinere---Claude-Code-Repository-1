@@ -6,11 +6,15 @@ folder), rebrandable in a few edits, and needs no build step — just open it in
 
 ## Templates
 
-| Niche | Folder | Status |
-|-------|--------|--------|
-| 🌿 Landscaping | [`templates/landscaping/`](templates/landscaping/) | ✅ Ready |
-| _(next niche)_ | `templates/…/` | Planned |
-| _(next niche)_ | `templates/…/` | Planned |
+Two looks for the **landscaping** niche — show a prospect both and let them pick:
+
+| Template | Folder | Style |
+|----------|--------|-------|
+| 🌿 Landscaping — Classic | [`templates/landscaping/`](templates/landscaping/) | Light, warm, editorial (serif headings) |
+| 🌿 Landscaping — Modern | [`templates/landscaping-modern/`](templates/landscaping-modern/) | Dark, bold, photo-forward (full-bleed hero) |
+
+Both share the same content sections and the same one-block rebranding, so customizing the
+second feels identical to the first.
 
 ## How to use one
 
