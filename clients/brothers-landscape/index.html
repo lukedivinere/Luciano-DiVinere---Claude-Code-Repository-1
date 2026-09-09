@@ -1,0 +1,632 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<!-- ═══════════════════════════════════════════════════════════════════
+     EDIT THIS TITLE + DESCRIPTION per client (used by Google & browser tabs)
+     ═══════════════════════════════════════════════════════════════════ -->
+<title>Brothers Landscape | Lawn Care &amp; Landscaping in El Cajon, CA</title>
+<meta name="description" content="Full-service lawn care, landscaping, irrigation, sod, and retaining walls in El Cajon and San Diego County. Family owned, licensed &amp; insured. Free estimates — call (619) 654-6887.">
+
+<!-- Open Graph / social share preview -->
+<meta property="og:title" content="Brothers Landscape | Lawn Care &amp; Landscaping in El Cajon">
+<meta property="og:description" content="Lawn care, landscaping, irrigation, sod &amp; retaining walls in El Cajon &amp; San Diego County. Free estimates.">
+<meta property="og:type" content="website">
+<meta property="og:image" content="images/backyard-turf-patio.png">
+
+<!-- Inline SVG favicon (leaf mark, no external file needed) -->
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 26 26'%3E%3Cpath d='M13 3C9 8 6 11 6 15a7 7 0 0014 0c0-4-3-7-7-12z' fill='%233F5C39'/%3E%3Crect x='11.5' y='15' width='3' height='8' fill='%23B5713F'/%3E%3C/svg%3E">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Public+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  /* ═══════════════════════════════════════════════════════════════════
+     BRAND COLORS — change these five to re-skin the whole site for a client
+     ═══════════════════════════════════════════════════════════════════ */
+  :root{
+    --evergreen:#1E3324;   /* primary dark green — headers, buttons */
+    --moss:#3F5C39;        /* secondary green — accents */
+    --clay:#B5713F;        /* warm accent — CTA, eyebrows */
+    --stone:#EDE7D9;       /* light section background */
+    --stone-dark:#DCD3BC;  /* slightly darker section background */
+    --gold:#CC9A3E;        /* highlight on dark backgrounds */
+    --ink:#1B1B16;
+    --paper:#FBF9F3;
+    --line: rgba(27,27,22,0.14);
+    --radius: 3px;
+    --shadow: 0 18px 40px -24px rgba(27,27,22,0.45);
+  }
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    margin:0;
+    font-family:'Public Sans', system-ui, sans-serif;
+    color:var(--ink);
+    background:var(--paper);
+    line-height:1.55;
+    -webkit-font-smoothing:antialiased;
+  }
+  h1,h2,h3{
+    font-family:'Fraunces', Georgia, serif;
+    font-weight:600;
+    margin:0;
+    letter-spacing:-0.01em;
+  }
+  a{color:inherit;}
+  img{max-width:100%;display:block;}
+  .wrap{max-width:1120px;margin:0 auto;padding:0 28px;}
+
+  /* scroll-reveal (disabled for reduced-motion below) */
+  .reveal{opacity:0;transform:translateY(18px);transition:opacity .7s ease, transform .7s ease;}
+  .reveal.in{opacity:1;transform:none;}
+
+  /* ── header ── */
+  header{
+    position:sticky;top:0;z-index:50;
+    background:rgba(251,249,243,0.92);
+    backdrop-filter:saturate(140%) blur(8px);
+    border-bottom:1px solid var(--line);
+  }
+  .nav{
+    display:flex;align-items:center;justify-content:space-between;
+    padding:16px 0;
+  }
+  .brand{display:flex;align-items:center;gap:10px;font-family:'Fraunces',serif;font-size:20px;font-weight:600;text-decoration:none;}
+  .brand svg{width:26px;height:26px;flex:none;}
+  .navlinks{display:flex;gap:32px;font-size:15px;font-weight:500;align-items:center;}
+  .navlinks a{text-decoration:none;opacity:0.75;transition:opacity .15s;}
+  .navlinks a:hover{opacity:1;}
+  .nav-right{display:flex;align-items:center;gap:18px;}
+  .nav-phone{font-weight:600;font-size:15px;text-decoration:none;white-space:nowrap;}
+  .navcta{
+    background:var(--clay);color:#fff;padding:10px 20px;border-radius:var(--radius);
+    font-size:14px;font-weight:600;text-decoration:none;white-space:nowrap;
+    transition:background .15s;
+  }
+  .navcta:hover{background:#9d5f32;}
+  .hamburger{
+    display:none;background:none;border:0;cursor:pointer;padding:8px;
+    flex-direction:column;gap:5px;
+  }
+  .hamburger span{display:block;width:24px;height:2px;background:var(--ink);transition:transform .2s, opacity .2s;}
+  .hamburger[aria-expanded="true"] span:nth-child(1){transform:translateY(7px) rotate(45deg);}
+  .hamburger[aria-expanded="true"] span:nth-child(2){opacity:0;}
+  .hamburger[aria-expanded="true"] span:nth-child(3){transform:translateY(-7px) rotate(-45deg);}
+
+  @media (max-width:820px){
+    .navlinks{
+      position:absolute;top:100%;left:0;right:0;
+      flex-direction:column;gap:0;align-items:stretch;
+      background:var(--paper);border-bottom:1px solid var(--line);
+      max-height:0;overflow:hidden;transition:max-height .28s ease;
+    }
+    .navlinks.open{max-height:340px;}
+    .navlinks a{padding:16px 28px;border-top:1px solid var(--line);opacity:1;}
+    .nav-phone{display:none;}
+    .hamburger{display:flex;}
+  }
+
+  /* ── hero (full-width copy — no photo; the photos all live in the gallery below) ── */
+  .hero{background:linear-gradient(180deg, var(--stone) 0%, var(--paper) 100%);border-bottom:1px solid var(--line);}
+  .hero .wrap{padding-top:104px;padding-bottom:92px;}
+  .hero-copy{max-width:660px;}
+  .hero-copy .kicker{color:var(--moss);font-weight:600;font-size:14px;margin-bottom:14px;letter-spacing:0.02em;}
+  .hero-copy h1{font-size:clamp(38px,6vw,64px);line-height:1.02;}
+  .hero-copy p{margin:24px 0 0;font-size:18px;color:#3a3a33;max-width:52ch;}
+  .hero-actions{display:flex;gap:14px;margin-top:34px;flex-wrap:wrap;}
+  .btn-primary{
+    background:var(--evergreen);color:#fff;padding:14px 26px;border-radius:var(--radius);
+    text-decoration:none;font-weight:600;font-size:15px;transition:transform .12s, box-shadow .2s;
+  }
+  .btn-primary:hover{transform:translateY(-1px);box-shadow:var(--shadow);}
+  .btn-secondary{
+    border:1px solid var(--ink);padding:14px 26px;border-radius:var(--radius);
+    text-decoration:none;font-weight:600;font-size:15px;transition:background .15s,color .15s;
+  }
+  .btn-secondary:hover{background:var(--ink);color:var(--paper);}
+  @media (max-width:900px){
+    .hero .wrap{padding-top:72px;padding-bottom:64px;}
+  }
+
+  /* ── trust strip ── */
+  .trust{background:var(--evergreen);color:#fff;padding:16px 0;}
+  .trust .wrap{display:flex;gap:20px 36px;justify-content:center;flex-wrap:wrap;font-size:14px;font-weight:500;opacity:0.94;}
+  .trust span{display:flex;align-items:center;gap:8px;}
+  .trust svg{width:16px;height:16px;flex:none;opacity:0.85;}
+
+  section{padding:96px 0;}
+  .eyebrow{color:var(--clay);font-weight:600;font-size:14px;margin-bottom:10px;letter-spacing:0.02em;}
+  .section-head{max-width:620px;margin-bottom:56px;}
+  .section-head h2{font-size:clamp(26px,3.4vw,38px);}
+  .section-head p{margin:16px 0 0;color:#3a3a33;font-size:16.5px;}
+
+  /* ── services ── */
+  .services{background:var(--stone);}
+  .service-grid{
+    display:grid;grid-template-columns:repeat(3,1fr);gap:1px;
+    background:var(--line);border:1px solid var(--line);
+  }
+  .service{background:var(--paper);padding:36px 32px;transition:background .2s;}
+  .service:hover{background:#fff;}
+  .service .num{font-family:'Fraunces',serif;font-size:15px;color:var(--clay);margin-bottom:18px;}
+  .service h3{font-size:20px;margin-bottom:10px;}
+  .service p{margin:0;font-size:15px;color:#4a4a41;}
+  @media (max-width:820px){ .service-grid{grid-template-columns:1fr;} }
+
+  /* ── stats band ── */
+  .stats{background:var(--paper);}
+  .stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:24px;text-align:center;}
+  .stat .n{font-family:'Fraunces',serif;font-size:clamp(34px,4.5vw,48px);color:var(--evergreen);line-height:1;}
+  .stat .l{margin-top:10px;font-size:14.5px;color:#4a4a41;}
+  .stat + .stat{border-left:1px solid var(--line);}
+  @media (max-width:820px){
+    .stats-grid{grid-template-columns:1fr 1fr;gap:36px 24px;}
+    .stat + .stat{border-left:none;}
+  }
+
+  /* ── gallery ── */
+  .gallery-grid{display:grid;grid-template-columns:repeat(2,1fr);grid-auto-rows:clamp(220px,27vw,310px);gap:12px;}
+  .gallery-grid img{width:100%;height:100%;object-fit:cover;border-radius:var(--radius);}
+  @media (max-width:620px){
+    .gallery-grid{grid-template-columns:1fr;grid-auto-rows:220px;}
+  }
+
+  /* ── process ── */
+  .process{background:var(--evergreen);color:#fff;}
+  .process .section-head p{color:rgba(255,255,255,0.72);}
+  .process .eyebrow{color:var(--gold);}
+  .process-list{display:grid;grid-template-columns:repeat(4,1fr);gap:32px;}
+  .process-step{border-top:1px solid rgba(255,255,255,0.25);padding-top:20px;}
+  .process-step .n{font-family:'Fraunces',serif;font-size:28px;color:var(--gold);}
+  .process-step h3{font-size:17px;margin:10px 0 8px;font-family:'Public Sans';font-weight:600;}
+  .process-step p{font-size:14.5px;color:rgba(255,255,255,0.72);margin:0;}
+  @media (max-width:820px){ .process-list{grid-template-columns:repeat(2,1fr);} }
+
+  /* ── testimonial ── */
+  .testimonial{display:grid;grid-template-columns:0.85fr 1.15fr;align-items:stretch;}
+  .testimonial-photo{min-height:340px;width:100%;height:100%;object-fit:cover;}
+  .testimonial-copy{padding:64px 48px;display:flex;flex-direction:column;justify-content:center;background:var(--stone);}
+  .testimonial-copy .stars{color:var(--gold);font-size:18px;letter-spacing:2px;margin-bottom:18px;}
+  .testimonial-copy blockquote{font-family:'Fraunces',serif;font-size:26px;line-height:1.35;margin:0;font-weight:500;}
+  .testimonial-copy cite{display:block;margin-top:22px;font-style:normal;font-size:14.5px;color:#4a4a41;}
+  .testimonial-copy ul{list-style:none;padding:0;margin:22px 0 0;font-size:15px;color:#3a3a33;display:flex;flex-direction:column;gap:14px;}
+  @media (max-width:820px){ .testimonial{grid-template-columns:1fr;} .testimonial-photo{min-height:240px;} .testimonial-copy{padding:44px 24px;} }
+
+  /* ── packages ── */
+  .packages{background:var(--paper);}
+  .package-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:24px;}
+  .package{border:1px solid var(--line);padding:32px 28px;border-radius:var(--radius);display:flex;flex-direction:column;}
+  .package.featured{border-color:var(--evergreen);background:var(--evergreen);color:#fff;box-shadow:var(--shadow);}
+  .package .tag{font-size:12px;font-weight:600;letter-spacing:0.04em;text-transform:uppercase;color:var(--gold);margin-bottom:10px;min-height:16px;}
+  .package h3{font-size:19px;margin-bottom:6px;}
+  .package .price{font-family:'Fraunces',serif;font-size:32px;margin:14px 0;}
+  .package .price span{font-family:'Public Sans';font-size:14px;font-weight:500;opacity:0.7;}
+  .package ul{list-style:none;margin:18px 0 26px;padding:0;font-size:14.5px;flex:1;}
+  .package li{padding:7px 0;border-top:1px solid var(--line);}
+  .package.featured li{border-top-color:rgba(255,255,255,0.2);}
+  .package a{display:block;text-align:center;padding:12px;border:1px solid var(--ink);border-radius:var(--radius);text-decoration:none;font-weight:600;font-size:14.5px;transition:background .15s,color .15s;}
+  .package a:hover{background:var(--ink);color:var(--paper);}
+  .package.featured a{border-color:#fff;}
+  .package.featured a:hover{background:#fff;color:var(--evergreen);}
+  .package .note{font-size:12.5px;color:#6a6a5f;margin-top:14px;text-align:center;}
+  .package.featured .note{color:rgba(255,255,255,0.6);}
+  @media (max-width:820px){ .package-grid{grid-template-columns:1fr;} }
+
+  /* ── FAQ ── */
+  .faq{background:var(--stone);}
+  .faq-list{max-width:820px;margin:0 auto;}
+  .faq-item{border-top:1px solid var(--line);}
+  .faq-item:last-child{border-bottom:1px solid var(--line);}
+  .faq-q{
+    width:100%;text-align:left;background:none;border:0;cursor:pointer;
+    padding:22px 0;font-family:'Fraunces',serif;font-size:19px;font-weight:500;color:var(--ink);
+    display:flex;justify-content:space-between;align-items:center;gap:20px;
+  }
+  .faq-q .ic{font-family:'Public Sans';font-size:24px;color:var(--clay);transition:transform .2s;flex:none;}
+  .faq-q[aria-expanded="true"] .ic{transform:rotate(45deg);}
+  .faq-a{max-height:0;overflow:hidden;transition:max-height .3s ease;}
+  .faq-a p{margin:0 0 22px;font-size:15.5px;color:#4a4a41;max-width:70ch;}
+
+  /* ── contact ── */
+  .contact{background:var(--stone-dark);}
+  .contact-inner{display:grid;grid-template-columns:1fr 1fr;gap:56px;}
+  .contact h2{font-size:clamp(26px,3.4vw,36px);margin-bottom:16px;}
+  .contact-details{font-size:15.5px;}
+  .contact-details div{padding:14px 0;border-top:1px solid var(--line);}
+  .contact-details div:first-child{border-top:none;}
+  .contact-details .label{display:block;color:var(--clay);font-weight:600;font-size:13px;margin-bottom:4px;}
+  .contact-details a{text-decoration:none;}
+  form{display:flex;flex-direction:column;gap:14px;}
+  input,textarea{
+    font-family:'Public Sans',sans-serif;font-size:15px;padding:13px 14px;
+    border:1px solid var(--line);border-radius:var(--radius);background:var(--paper);
+  }
+  textarea{resize:vertical;min-height:100px;}
+  input:focus,textarea:focus{outline:2px solid var(--evergreen);outline-offset:1px;}
+  button[type=submit]{
+    background:var(--clay);color:#fff;border:none;padding:14px;border-radius:var(--radius);
+    font-weight:600;font-size:15px;cursor:pointer;font-family:'Public Sans';transition:background .15s;
+  }
+  button[type=submit]:hover{background:#9d5f32;}
+  .form-note{font-size:12.5px;color:#6a6a5f;margin:2px 0 0;}
+  @media (max-width:820px){ .contact-inner{grid-template-columns:1fr;} }
+
+  /* ── footer ── */
+  footer{padding:32px 0 108px;border-top:1px solid var(--line);font-size:13.5px;color:#5a5a4f;}
+  .footer-inner{display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px;align-items:center;}
+  @media (min-width:821px){ footer{padding-bottom:32px;} }
+
+  /* ── sticky mobile call bar ── */
+  .callbar{
+    position:fixed;left:0;right:0;bottom:0;z-index:60;display:none;
+    background:var(--evergreen);color:#fff;padding:12px 20px;
+    align-items:center;justify-content:space-between;gap:12px;
+    box-shadow:0 -8px 24px -16px rgba(0,0,0,0.5);
+  }
+  .callbar strong{font-family:'Fraunces',serif;font-weight:600;font-size:15px;}
+  .callbar a{
+    background:var(--clay);color:#fff;text-decoration:none;font-weight:600;font-size:14px;
+    padding:10px 18px;border-radius:var(--radius);white-space:nowrap;
+  }
+  @media (max-width:820px){ .callbar{display:flex;} }
+
+  @media (prefers-reduced-motion: reduce){
+    html{scroll-behavior:auto;}
+    .reveal{opacity:1;transform:none;transition:none;}
+    *{transition-duration:0.001ms !important;}
+  }
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════════════════════════════
+     HEADER
+     • data-site="businessName" spans are filled from the SITE config below
+     • Phone links (data-site="phoneLink") get href="tel:..." automatically
+     ═══════════════════════════════════════════════════════════════════ -->
+<header>
+  <div class="wrap nav">
+    <a class="brand" href="#top">
+      <svg viewBox="0 0 26 26" fill="none"><path d="M13 3C9 8 6 11 6 15a7 7 0 0014 0c0-4-3-7-7-12z" fill="#3F5C39"/><rect x="11.5" y="15" width="3" height="8" fill="#B5713F"/></svg>
+      <span data-site="businessName">Gonzalez Landscape</span>
+    </a>
+    <nav class="navlinks" id="navlinks">
+      <a href="#services">Services</a>
+      <a href="#work">Our Work</a>
+      <a href="#packages">Pricing</a>
+      <a href="#faq">FAQ</a>
+      <a href="#contact">Contact</a>
+    </nav>
+    <div class="nav-right">
+      <a class="nav-phone" data-site="phoneLink" href="#"><span data-site="phone">(619) 677-4697</span></a>
+      <a class="navcta" href="#contact">Get a Quote</a>
+      <button class="hamburger" id="hamburger" aria-label="Menu" aria-expanded="false" aria-controls="navlinks">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </div>
+</header>
+
+<!-- ═══ HERO ═══ -->
+<span id="top"></span>
+<section class="hero" style="padding:0;">
+  <div class="wrap">
+    <div class="hero-copy">
+      <div class="kicker">Serving <span data-site="serviceArea">El Cajon &amp; San Diego County</span></div>
+      <h1>Full-service landscaping, done right.</h1>
+      <p>From weekly mowing to new lawns, irrigation, and retaining walls — Brothers Landscape handles it all, and every job starts with a free estimate.</p>
+      <div class="hero-actions">
+        <a class="btn-primary" href="#contact">Request a Free Estimate</a>
+        <a class="btn-secondary" href="#work">See Our Work</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ TRUST STRIP ═══ -->
+<div class="trust">
+  <div class="wrap">
+    <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l7 3v6c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V5z"/></svg>Licensed &amp; Insured</span>
+    <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg>Free Estimates</span>
+    <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg>Family Owned</span>
+    <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 21h18M5 21V7l7-4 7 4v14"/></svg>El Cajon, CA</span>
+  </div>
+</div>
+
+<!-- ═══ SERVICES ═══ -->
+<section id="services" class="services">
+  <div class="wrap">
+    <div class="section-head reveal">
+      <div class="eyebrow">Services</div>
+      <h2>Everything your yard needs, one crew</h2>
+      <p>Over 20 services — from routine lawn care to full installs. Here's the short version.</p>
+    </div>
+    <div class="service-grid reveal">
+      <div class="service"><div class="num">01</div><h3>Lawn Care &amp; Mowing</h3><p>Mowing, blowing, trimming, edging, raking, and fertilization to keep it sharp.</p></div>
+      <div class="service"><div class="num">02</div><h3>Lawn Installation</h3><p>New lawn installation, seeding, sodding, soil rejuvenation, and area preparation.</p></div>
+      <div class="service"><div class="num">03</div><h3>Sprinklers &amp; Irrigation</h3><p>Sprinkler and irrigation system installation so every zone gets the water it needs.</p></div>
+      <div class="service"><div class="num">04</div><h3>Landscape Design</h3><p>Yard &amp; garden landscaping, new design &amp; installation, plus delivery and planting.</p></div>
+      <div class="service"><div class="num">05</div><h3>Retaining Walls</h3><p>Retaining wall construction and hardscape work built to hold up and look good.</p></div>
+      <div class="service"><div class="num">06</div><h3>Cleanup &amp; Seasonal Care</h3><p>Yard cleanup, mulching, and seasonal maintenance to keep the property in shape.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ STATS BAND ═══ -->
+<section class="stats">
+  <div class="wrap">
+    <div class="stats-grid reveal">
+      <div class="stat"><div class="n">20+</div><div class="l">Services offered</div></div>
+      <div class="stat"><div class="n">Free</div><div class="l">On-site estimates</div></div>
+      <div class="stat"><div class="n">El&nbsp;Cajon</div><div class="l">Based &amp; local</div></div>
+      <div class="stat"><div class="n">100%</div><div class="l">Licensed &amp; insured</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ OUR WORK / GALLERY ═══ -->
+<section id="work">
+  <div class="wrap">
+    <div class="section-head reveal">
+      <div class="eyebrow">Our Work</div>
+      <h2>Recent projects</h2>
+      <p>A look at the kind of work we do around El Cajon and San Diego County.</p>
+    </div>
+    <div class="gallery-grid reveal">
+      <img src="images/front-xeriscape.png" alt="Front-yard xeriscape with palms and river rock">
+      <img src="images/retaining-wall-steps.png" alt="Terraced retaining wall with built-in stone steps">
+      <img src="images/backyard-turf-patio.png" alt="Backyard artificial turf lawn with a covered patio and stone retaining wall">
+      <img src="images/pergola-string-lights.png" alt="Backyard cedar pergola with string lights at night">
+    </div>
+  </div>
+</section>
+
+<!-- ═══ PROCESS ═══ -->
+<section class="process">
+  <div class="wrap">
+    <div class="section-head reveal">
+      <div class="eyebrow">How It Works</div>
+      <h2>From first call to finished yard</h2>
+    </div>
+    <div class="process-list reveal">
+      <div class="process-step"><div class="n">1</div><h3>Free Estimate</h3><p>We walk the property and talk through what you want.</p></div>
+      <div class="process-step"><div class="n">2</div><h3>Proposal</h3><p>You get a clear scope and price, no surprises later.</p></div>
+      <div class="process-step"><div class="n">3</div><h3>Scheduled Work</h3><p>We show up on time and keep you posted on progress.</p></div>
+      <div class="process-step"><div class="n">4</div><h3>Walkthrough</h3><p>We review the finished job with you before we call it done.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ TESTIMONIAL ═══ -->
+<section class="testimonial" style="padding:0;">
+  <img class="testimonial-photo" src="images/pergola-string-lights.png" alt="Finished backyard patio with a cedar pergola and string lights">
+  <div class="testimonial-copy">
+    <div class="stars" aria-label="Five out of five stars">★★★★★</div>
+    <blockquote>"Dependable crew, fair pricing, and the yard looks great."</blockquote>
+    <cite>Placeholder review — swap in a real one from Yelp or Google</cite>
+    <ul>
+      <li>On time, tidy, and clear about the scope from the first estimate.</li>
+      <li>Handled both the install and the ongoing maintenance.</li>
+      <li>Easy to reach and quick to respond.</li>
+    </ul>
+  </div>
+</section>
+
+<!-- ═══ PACKAGES ═══ -->
+<section id="packages" class="packages">
+  <div class="wrap">
+    <div class="section-head reveal">
+      <div class="eyebrow">How We Work</div>
+      <h2>Pick what your property needs</h2>
+      <p>Every yard is different, so pricing is quoted per job. Every one starts with a free on-site estimate.</p>
+    </div>
+    <div class="package-grid reveal">
+      <div class="package">
+        <div class="tag">&nbsp;</div>
+        <h3>Lawn Maintenance</h3>
+        <div class="price">Free<span> estimate</span></div>
+        <ul>
+          <li>Mowing, edging &amp; blowing</li>
+          <li>Trimming, raking &amp; fertilization</li>
+          <li>Weekly, biweekly, or monthly</li>
+        </ul>
+        <a href="#contact">Get a Quote</a>
+      </div>
+      <div class="package featured">
+        <div class="tag">Most requested</div>
+        <h3>Lawn &amp; Irrigation Install</h3>
+        <div class="price">Free<span> estimate</span></div>
+        <ul>
+          <li>New lawns, seeding &amp; sod</li>
+          <li>Sprinkler &amp; irrigation systems</li>
+          <li>Soil prep &amp; rejuvenation</li>
+        </ul>
+        <a href="#contact">Get a Quote</a>
+      </div>
+      <div class="package">
+        <div class="tag">&nbsp;</div>
+        <h3>Design &amp; Hardscape</h3>
+        <div class="price">Custom</div>
+        <ul>
+          <li>Yard &amp; garden landscaping</li>
+          <li>Retaining walls &amp; new design</li>
+          <li>Delivery, planting &amp; cleanup</li>
+        </ul>
+        <a href="#contact">Get a Quote</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ FAQ ═══ -->
+<section id="faq" class="faq">
+  <div class="wrap">
+    <div class="section-head reveal" style="margin-left:auto;margin-right:auto;text-align:center;">
+      <div class="eyebrow">FAQ</div>
+      <h2>Questions we hear a lot</h2>
+    </div>
+    <div class="faq-list reveal">
+      <div class="faq-item">
+        <button class="faq-q" aria-expanded="false"><span>Do you offer free estimates?</span><span class="ic" aria-hidden="true">+</span></button>
+        <div class="faq-a"><p>Yes. We walk the property with you, talk through what you're after, and send a written quote with a clear scope and price — no charge and no obligation.</p></div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-q" aria-expanded="false"><span>What areas do you serve?</span><span class="ic" aria-hidden="true">+</span></button>
+        <div class="faq-a"><p>We cover <span data-site="serviceArea">San Diego County</span> and the surrounding towns. Not sure if you're in range? Give us a call and we'll let you know.</p></div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-q" aria-expanded="false"><span>Are you licensed and insured?</span><span class="ic" aria-hidden="true">+</span></button>
+        <div class="faq-a"><p>Fully licensed and insured. We're happy to share proof of coverage before any work begins.</p></div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-q" aria-expanded="false"><span>Do you handle one-time projects or only ongoing maintenance?</span><span class="ic" aria-hidden="true">+</span></button>
+        <div class="faq-a"><p>Both. We take on one-time cleanups, redesigns, and hardscape builds, as well as weekly and monthly maintenance plans. Whatever your yard needs.</p></div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-q" aria-expanded="false"><span>How soon can you start?</span><span class="ic" aria-hidden="true">+</span></button>
+        <div class="faq-a"><p>Most maintenance jobs start within a week. Larger design-and-build projects are scheduled once the proposal is approved — we'll give you a realistic timeline up front.</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ CONTACT ═══ -->
+<section id="contact" class="contact">
+  <div class="wrap contact-inner">
+    <div>
+      <h2>Let's talk about your yard</h2>
+      <div class="contact-details">
+        <div><span class="label">Phone</span><a data-site="phoneLink" href="#"><span data-site="phone">(619) 677-4697</span></a></div>
+        <div><span class="label">Email</span><a data-site="emailLink" href="#"><span data-site="email">hello@gonzalezlandscape.com</span></a></div>
+        <div><span class="label">Service Area</span><span data-site="serviceArea">San Diego County</span> and surrounding towns</div>
+        <div><span class="label">Hours</span><span data-site="hours">Mon–Sat, 7am–6pm</span></div>
+      </div>
+    </div>
+    <form id="quote-form">
+      <input type="text" name="name" placeholder="Name" required>
+      <input type="tel" name="phone" placeholder="Phone" required>
+      <input type="text" name="address" placeholder="Property Address">
+      <textarea name="message" placeholder="What does your yard need?"></textarea>
+      <button type="submit">Request Estimate</button>
+      <p class="form-note">Opens your email app with the details filled in. Swap for a real form handler (Formspree, Netlify Forms, etc.) when the site goes live.</p>
+    </form>
+  </div>
+</section>
+
+<!-- ═══ FOOTER ═══ -->
+<footer>
+  <div class="wrap footer-inner">
+    <span>© <span id="year">2026</span> <span data-site="businessName">Gonzalez Landscape</span>. All rights reserved.</span>
+    <span>Licensed &amp; insured · Free estimates · <span data-site="serviceArea">San Diego County</span></span>
+  </div>
+</footer>
+
+<!-- ═══ STICKY MOBILE CALL BAR ═══ -->
+<div class="callbar">
+  <strong>Free estimate?</strong>
+  <a data-site="phoneLink" href="#">Call <span data-site="phone">(619) 677-4697</span></a>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════
+     LOCAL SEO — LocalBusiness structured data (helps Google show the
+     business in local/map results). Update the values to match the client.
+     ═══════════════════════════════════════════════════════════════════ -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "LandscapingBusiness",
+  "name": "Brothers Landscape",
+  "description": "Full-service lawn care, landscaping, irrigation, sod, and retaining walls in El Cajon and San Diego County.",
+  "telephone": "+1-619-654-6887",
+  "email": "info@brothers-landscape.com",
+  "address": { "@type": "PostalAddress", "addressLocality": "El Cajon", "addressRegion": "CA", "addressCountry": "US" },
+  "areaServed": "El Cajon and San Diego County, CA",
+  "priceRange": "$$",
+  "openingHours": "Mo-Sa 07:00-18:00",
+  "image": "images/backyard-turf-patio.png",
+  "url": "https://www.brothers-landscape.com/"
+}
+</script>
+
+<script>
+/* ═══════════════════════════════════════════════════════════════════
+   ▶▶▶  SITE CONFIG — EDIT THIS ONE BLOCK TO REBRAND FOR A NEW CLIENT  ◀◀◀
+   Everything below (header, hero, contact, call bar, phone/email links)
+   updates automatically. Don't forget the <title>, meta description, and
+   the JSON-LD block above — those are read by Google before JS runs.
+   ═══════════════════════════════════════════════════════════════════ */
+const SITE = {
+  businessName: "Brothers Landscape",
+  phone:        "(619) 654-6887",
+  email:        "info@brothers-landscape.com",   // PLACEHOLDER — confirm the real email
+  serviceArea:  "El Cajon & San Diego County",
+  hours:        "Mon–Sat, 7am–6pm"                // PLACEHOLDER — confirm real hours
+};
+
+/* ── apply config (progressive enhancement — page still works without JS) ── */
+(function(){
+  document.querySelectorAll('[data-site]').forEach(function(el){
+    var key = el.getAttribute('data-site');
+    if (key === 'phoneLink') { el.setAttribute('href', 'tel:' + SITE.phone.replace(/[^\d+]/g,'')); return; }
+    if (key === 'emailLink') { el.setAttribute('href', 'mailto:' + SITE.email); return; }
+    if (SITE[key]) el.textContent = SITE[key];
+  });
+  var y = document.getElementById('year'); if (y) y.textContent = new Date().getFullYear();
+})();
+
+/* ── mobile nav toggle ── */
+(function(){
+  var btn = document.getElementById('hamburger'),
+      menu = document.getElementById('navlinks');
+  btn.addEventListener('click', function(){
+    var open = menu.classList.toggle('open');
+    btn.setAttribute('aria-expanded', open);
+  });
+  menu.querySelectorAll('a').forEach(function(a){
+    a.addEventListener('click', function(){
+      menu.classList.remove('open');
+      btn.setAttribute('aria-expanded', 'false');
+    });
+  });
+})();
+
+/* ── FAQ accordion ── */
+document.querySelectorAll('.faq-q').forEach(function(q){
+  q.addEventListener('click', function(){
+    var open = q.getAttribute('aria-expanded') === 'true';
+    q.setAttribute('aria-expanded', !open);
+    var a = q.nextElementSibling;
+    a.style.maxHeight = open ? null : a.scrollHeight + 'px';
+  });
+});
+
+/* ── scroll reveal ── */
+(function(){
+  var els = document.querySelectorAll('.reveal');
+  if (!('IntersectionObserver' in window)) { els.forEach(function(e){e.classList.add('in');}); return; }
+  var io = new IntersectionObserver(function(entries){
+    entries.forEach(function(en){ if (en.isIntersecting){ en.target.classList.add('in'); io.unobserve(en.target); } });
+  }, { threshold: 0.12 });
+  els.forEach(function(e){ io.observe(e); });
+})();
+
+/* ── quote form → prefilled email (swap for a real handler in production) ── */
+document.getElementById('quote-form').addEventListener('submit', function(e){
+  e.preventDefault();
+  var f = e.target;
+  var body = [
+    'Name: ' + f.name.value,
+    'Phone: ' + f.phone.value,
+    'Address: ' + f.address.value,
+    'Message: ' + f.message.value
+  ].join('\n');
+  location.href = 'mailto:' + SITE.email
+    + '?subject=' + encodeURIComponent('Estimate Request - ' + f.name.value)
+    + '&body=' + encodeURIComponent(body);
+});
+</script>
+</body>
+</html>
