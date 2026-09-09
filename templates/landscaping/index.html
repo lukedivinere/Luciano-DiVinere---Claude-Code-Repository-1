@@ -168,11 +168,10 @@
   }
 
   /* ── gallery ── */
-  .gallery-grid{display:grid;grid-template-columns:repeat(4,1fr);grid-auto-rows:210px;gap:10px;}
+  .gallery-grid{display:grid;grid-template-columns:repeat(2,1fr);grid-auto-rows:clamp(220px,27vw,310px);gap:12px;}
   .gallery-grid img{width:100%;height:100%;object-fit:cover;border-radius:var(--radius);}
-  .gallery-grid img:nth-child(1),.gallery-grid img:nth-child(4){grid-column:span 2;}
-  @media (max-width:760px){
-    .gallery-grid{grid-template-columns:repeat(2,1fr);grid-auto-rows:170px;}
+  @media (max-width:620px){
+    .gallery-grid{grid-template-columns:1fr;grid-auto-rows:220px;}
   }
 
   /* ── process ── */
@@ -377,11 +376,9 @@
       <p>A few yards we've worked on this season. Swap these for the client's own before-and-after photos.</p>
     </div>
     <div class="gallery-grid reveal">
-      <img src="images/turf-yard-wide.png" alt="Full artificial turf backyard with a covered patio">
       <img src="images/front-xeriscape.png" alt="Front-yard xeriscape with palms and river rock">
       <img src="images/retaining-wall-steps.png" alt="Terraced retaining wall with built-in stone steps">
       <img src="images/backyard-turf-patio.png" alt="Backyard artificial turf lawn with a covered patio and stone retaining wall">
-      <img src="images/pool-rock-waterfall.png" alt="Pool with a rock waterfall feature and mature palms">
       <img src="images/pergola-string-lights.png" alt="Backyard cedar pergola with string lights at night">
     </div>
   </div>
