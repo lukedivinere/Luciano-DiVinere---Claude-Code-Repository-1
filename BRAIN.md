@@ -11,6 +11,26 @@ fact or decision changes. Confidence tracks evidence.
 Live web prototype: **https://crate-2u8a.onrender.com** (Render, free tier — cold-starts ~50s).
 Repo branch of record: `claude/house-music-shazam-app-nmmfhu`.
 
+## COMPETITIVE STANDARD — beat `trakd` (owner directive, standing)
+`trakd` (App Store) is the closest shipping competitor and the explicit bar: Crate must be
+**more professional, more complete, and a better-working app than trakd** — every task handed
+over is expected to clear that bar, not merely function. This is a durable quality gate, not a
+one-off ask.
+
+- **Structural differentiator (the moat, don't dilute it):** trakd and every automated peer
+  match against **commercial catalogs**, so an unreleased track comes back empty. Crate's reason
+  to exist is the half they *can't* do — clustering unknown IDs, sightings, retroactive
+  resolution, and an artist portal (claim/reveal/suppress). When a feature choice is ambiguous,
+  favor the one that widens this gap, never the one that makes Crate a nicer catalog-matcher.
+- **Execution bar ("above-board complexity"):** ship real, verified behavior — honest empty
+  states, no fabricated data (a guess reads as a guess), accessible/responsive UI in both
+  themes, and features tested (headless browser + endpoint checks) before they're called done.
+  Complexity is welcome when it earns its keep; it is never an excuse for something that only
+  looks finished.
+- **Honesty guard:** do NOT assert parity-or-better against trakd's *current* shipping feature
+  set from memory — re-check what it actually ships before making a comparative claim to the
+  owner. The moat argument above is structural and safe; specific feature comparisons are not.
+
 ## THE ANCHOR — two sources of truth diverge (highest-signal fact)
 There are two descriptions of this project and they do **not** match:
 - **CLAUDE.md (intended target):** Python/FastAPI + Postgres + **Panako** (CQT, pitch-robust) in
