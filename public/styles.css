@@ -1,42 +1,68 @@
-/* LIGHT is the default (user preference); dark is a toggle. Depth from tonal steps, no
-   gradients/glows in either. The toggle sets data-theme on <html> and persists it. */
+/* SKY IRIS — the design direction (Claude Design "iDROP Directions", 2a).
+   Sky-blue ground, black poster type, white for everything you touch, pink as the one
+   signal colour, yellow for the active tab, the iridescent iris as the ID button.
+   Light-first; dark is a coherent toggle. */
 :root {
-  --bg: #FAF8FD;        /* page */
+  /* brand constants — the "can" palette (stable across themes) */
+  --sky: #29A8DC;
+  --ink: #0E0E10;
+  --pink: #EC2A63;
+  --yellow: #F5C63C;
+  --iris: #6F5FE8;
+
+  --bg: #F6F4EF;        /* paper — sheet ground */
   --bg2: #FFFFFF;       /* surface-1 */
-  --card: #FFFFFF;      /* cards */
-  --surface2: #F3EFFA;  /* raised */
-  --surface3: #EBE5F7;  /* sheets, popovers */
-  --line: rgba(20, 10, 35, 0.10);
-  --text: #1A1424;
-  --muted: #5C5470;
-  --faint: #8A82A0;
-  --accent: #6F5FE8;
-  --accent-strong: #5A49D6;
-  --accent2: #0E9E75;   /* confirmed / live */
-  --up: #12A150;        /* trending up (market green) */
-  --down: #D64550;      /* trending down (market red) */
-  --flat: #8A82A0;      /* flat / new */
-  --glow: transparent;  /* deprecated — no glows in this design */
+  --card: #FFFFFF;      /* cards — the parts you touch are white */
+  --surface2: #ECE8E1;  /* raised */
+  --surface3: #E4DFD6;  /* sheets, popovers */
+  --line: rgba(14, 14, 16, 0.13);
+  --text: #0E0E10;
+  --muted: rgba(14, 14, 16, 0.60);
+  --faint: rgba(14, 14, 16, 0.42);
+  --accent: #EC2A63;         /* pink = the single signal colour */
+  --accent-strong: #D11E52;
+  --accent2: #0E9E75;        /* confirmed / live */
+  --up: #0E9E75;             /* trending up */
+  --down: #D64550;           /* trending down */
+  --flat: rgba(14, 14, 16, 0.5);
+  --glow: transparent;
+
+  --hero: #29A8DC;           /* home + hero headers */
+  --hero-ink: #0E0E10;
+  --nav-bg: #0E0E10;         /* bottom tab bar + drawer head */
+  --nav-fg: rgba(255, 255, 255, 0.66);
+  --nav-active: #F5C63C;
+
+  --font-poster: "Archivo Black", Archivo, system-ui, sans-serif;
+  --font-ui: Archivo, system-ui, "Segoe UI", Roboto, sans-serif;
+  --font-mono: "DM Mono", ui-monospace, Menlo, monospace;
+
   --radius: 16px;
   --t-state: 150ms; --t-move: 250ms; --t-beat: 400ms;
   color-scheme: light;
 }
 :root[data-theme="dark"] {
-  --bg: #0E0A14;
-  --bg2: #17111F;
-  --card: #17111F;
-  --surface2: #201829;
-  --surface3: #2A2036;
-  --line: rgba(255, 255, 255, 0.08);
+  --bg: #141019;
+  --bg2: #1C1622;
+  --card: #1C1622;
+  --surface2: #251E2E;
+  --surface3: #2F2739;
+  --line: rgba(255, 255, 255, 0.10);
   --text: #F4F1F8;
-  --muted: #A79FB8;
-  --faint: #6F6880;
-  --accent: #8B7DF0;
-  --accent-strong: #6F5FE8;
+  --muted: rgba(244, 241, 248, 0.62);
+  --faint: rgba(244, 241, 248, 0.40);
+  --accent: #FF5A86;
+  --accent-strong: #EC2A63;
   --accent2: #5FD0A6;
-  --up: #34D17F;        /* brighter greens/reds read better on the dark ground */
+  --up: #34D17F;
   --down: #FF6B77;
-  --flat: #6F6880;
+  --flat: rgba(244, 241, 248, 0.5);
+
+  --hero: #123A4D;           /* deep sky so poster type stays readable */
+  --hero-ink: #F4F1F8;
+  --nav-bg: #08060C;
+  --nav-fg: rgba(255, 255, 255, 0.60);
+  --nav-active: #F5C63C;
   color-scheme: dark;
 }
 
@@ -46,7 +72,7 @@ html, body { height: 100%; }
 
 body {
   margin: 0;
-  font: 16px/1.55 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  font: 16px/1.55 var(--font-ui);
   background: var(--bg);
   color: var(--text);
   overflow-x: hidden;
@@ -56,27 +82,37 @@ body {
   min-height: 100dvh;
   width: min(520px, 100%);
   margin: 0 auto;
-  padding: 20px 22px 32px;
+  padding: 20px 22px 96px;   /* room for the fixed bottom tab bar */
   display: flex;
   flex-direction: column;
 }
+/* Home rides the sky-blue hero ground; sheets stay on paper. */
+#screen-listen { background: var(--hero); }
 /* [hidden] and .screen's display:flex have equal specificity — make hidden win. */
 .screen[hidden] { display: none; }
 
 /* ---- listen screen ---- */
-#screen-listen {
-  background: var(--bg);
-}
+#screen-listen { background: var(--hero); color: var(--hero-ink); }
 
-.topbar { display: flex; justify-content: space-between; align-items: center; }
-.brand { font-weight: 700; letter-spacing: .08em; color: var(--accent); }
-.mode {
-  font-size: 12px; color: var(--accent2); background: var(--surface2);
-  border: 1px solid var(--line); border-radius: 999px; padding: 4px 11px;
+.topbar { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+.brand {
+  font-family: var(--font-poster); font-weight: 400; letter-spacing: -.02em;
+  color: var(--text); font-size: 17px; text-transform: none;
 }
-.topbar { gap: 10px; }
-.topbar .brand { flex: 1; }
+/* the "live" pill — white chip with a green blip */
+.mode {
+  font-family: var(--font-mono); font-size: 9.5px; letter-spacing: .12em; text-transform: uppercase;
+  color: var(--ink); background: #fff; border: 0; border-radius: 20px;
+  padding: 5px 10px 5px 8px; display: inline-flex; align-items: center; gap: 6px;
+}
+.mode::before {
+  content: ""; width: 6px; height: 6px; border-radius: 50%;
+  background: var(--accent2); animation: blip 1.4s ease-in-out infinite;
+}
+.topbar .brand { flex: 1; text-align: center; }
+#screen-listen .topbar .icon-btn { color: var(--ink); }
 .topbar-right { display: inline-flex; align-items: center; gap: 8px; }
+@keyframes blip { 0%, 100% { opacity: .3 } 50% { opacity: 1 } }
 
 .icon-btn {
   background: none; border: 0; color: var(--text); cursor: pointer;
@@ -137,55 +173,63 @@ body {
   text-align: center; gap: 8px;
 }
 
-/* the orb */
+/* the iris — the ID button. An iridescent ring, white inset, black pupil with a glint. */
 .orb {
-  position: relative; width: 210px; height: 210px; margin-bottom: 18px;
-  border: 0; background: none; cursor: pointer; color: #fff;
-  display: grid; place-items: center;
+  position: relative; width: 220px; height: 220px; margin-bottom: 26px;
+  border: 0; cursor: pointer; display: grid; place-items: center;
+  border-radius: 50%;
+  background: conic-gradient(from 20deg, var(--pink), var(--yellow), #ffffff, var(--sky), var(--iris), var(--pink));
+  box-shadow: 0 20px 44px rgba(14, 14, 16, .28);
+  animation: bob 6s ease-in-out infinite;
 }
+.orb.listening { animation: spin 3.4s linear infinite; }
+.orb:active { transform: scale(.97); }
 .orb-core {
   position: relative; z-index: 2;
-  width: 150px; height: 150px; border-radius: 50%;
+  width: 164px; height: 164px; border-radius: 50%;
   display: grid; place-items: center; overflow: hidden;
-  background: var(--surface2);              /* flat tonal — depth from steps, not glow */
-  border: 1px solid var(--line);
-  color: var(--accent);
-  transition: transform var(--t-state) ease, background var(--t-state) ease;
+  background: var(--card);
 }
-.orb.listening .orb-core { background: var(--surface3); color: var(--text); }
-.orb:active .orb-core { transform: scale(.96); }
-.orb-core svg { position: relative; z-index: 2; }
-
-/* live mic waveform (the capture "moment") — drawn to this canvas while listening */
-#wave {
-  position: absolute; inset: 0; width: 100%; height: 100%; z-index: 1;
-  opacity: 0; transition: opacity var(--t-state) ease;
+/* pupil + glint (pure CSS; the mic glyph and canvas are hidden) */
+.orb-core::before {
+  content: ""; width: 86px; height: 86px; border-radius: 50%; background: var(--ink);
 }
-.orb.listening #wave { opacity: 1; }
-.orb.listening .orb-core svg { opacity: .25; }
+.orb-core::after {
+  content: ""; position: absolute; top: 46px; left: 52px;
+  width: 15px; height: 15px; border-radius: 50%; background: #fff; opacity: .92;
+}
+.orb-core svg, .orb-core #wave { display: none; }
 
+/* expanding rings while listening — "I'm hearing you" */
 .orb-ring {
   position: absolute; inset: 0; margin: auto;
-  width: 150px; height: 150px; border-radius: 50%;
-  border: 1.5px solid var(--accent);
+  width: 200px; height: 200px; border-radius: 50%;
+  border: 3px solid rgba(255, 255, 255, .9);
   opacity: 0; pointer-events: none;
 }
-/* one expanding ring per pass while listening — confirms "I'm hearing you" */
-.orb.listening .orb-ring { animation: pulse 2.1s ease-out infinite; }
-.orb.listening .r2 { animation-delay: .7s; }
-.orb.listening .r3 { animation-delay: 1.4s; }
+.orb.listening .orb-ring { animation: ring 2.2s linear infinite; }
+.orb.listening .r2 { animation-delay: .73s; }
+.orb.listening .r3 { animation-delay: 1.46s; }
 
-@keyframes pulse {
-  0%   { opacity: .5; transform: scale(1); }
-  100% { opacity: 0; transform: scale(2); }
-}
+@keyframes ring { 0% { transform: scale(.55); opacity: .85 } 100% { transform: scale(1.9); opacity: 0 } }
+@keyframes bob { 0%, 100% { transform: translateY(0) } 50% { transform: translateY(-9px) } }
+@keyframes spin { to { transform: rotate(360deg) } }
 
 @media (prefers-reduced-motion: reduce) {
+  .orb, .orb.listening { animation: none; }
   .orb.listening .orb-ring { animation: none; opacity: .3; }
 }
 
-.prompt { font-size: 32px; font-weight: 500; letter-spacing: -0.02em; margin: 8px 0 2px; }
-.subprompt { color: var(--muted); max-width: 30ch; margin: 0 0 6px; }
+/* poster headline */
+.prompt {
+  font-family: var(--font-poster); font-weight: 400;
+  font-size: clamp(46px, 15vw, 62px); line-height: .86; letter-spacing: -.045em;
+  text-transform: uppercase; color: var(--hero-ink); margin: 8px 0 4px;
+}
+.subprompt {
+  font-family: var(--font-mono); font-size: 12px; line-height: 1.55;
+  color: var(--hero-ink); opacity: .82; max-width: 30ch; margin: 8px 0 6px;
+}
 
 /* auto toggle */
 .auto-toggle {
@@ -468,3 +512,58 @@ body {
 .add-show > summary::-webkit-details-marker { display: none; }
 .add-show > summary::before { content: "+ "; }
 .add-show[open] > summary::before { content: "− "; }
+
+/* ============================================================================
+   SKY IRIS — bottom tab bar, poster headings, mono labels, pill buttons
+   ========================================================================== */
+
+/* fixed bottom tab bar (primary destinations) */
+.tabbar {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 40; height: 64px;
+  background: var(--nav-bg);
+  display: flex; align-items: center; justify-content: space-around;
+  padding-bottom: env(safe-area-inset-bottom, 0);
+}
+.tabbar .tab {
+  background: none; border: 0; cursor: pointer; padding: 8px 10px;
+  font-family: var(--font-mono); font-size: 10px; letter-spacing: .14em; text-transform: uppercase;
+  color: var(--nav-fg);
+}
+.tabbar .tab.active { color: var(--nav-active); }
+/* the full-screen swipe feed manages its own chrome; keep the bar clear of it */
+.screen.recent { padding-bottom: 0; }
+
+/* poster sheet headings — every sheet gets the record-sleeve identity */
+.sheet h2 {
+  font-family: var(--font-poster); font-weight: 400; text-transform: uppercase;
+  letter-spacing: -.03em; line-height: .95; font-size: 30px; margin: 6px 0 8px;
+  color: var(--text);
+}
+.sp-card h2 { font-family: var(--font-poster); font-weight: 400; text-transform: uppercase; letter-spacing: -.03em; }
+
+/* mono section labels (terminal feel) */
+.sources-label, .eyebrow, .replay-note, .sources-label {
+  font-family: var(--font-mono); text-transform: uppercase; letter-spacing: .14em;
+  font-size: 10.5px; color: var(--muted);
+}
+
+/* primary action = pink pill, poster-adjacent */
+.btn.primary {
+  background: var(--accent); color: #fff; border-radius: 30px;
+  font-family: var(--font-ui); font-weight: 700; text-transform: uppercase; letter-spacing: .06em;
+  font-size: 13px;
+}
+.btn.primary:hover { background: var(--accent-strong); }
+
+/* auto-ID toggle turns pink when on */
+.auto-toggle input:checked ~ .track { background: var(--accent); }
+#screen-listen .auto-toggle { color: var(--hero-ink); }
+#screen-listen .linkbtn, #screen-listen #upload-fallback { color: var(--hero-ink); text-decoration: underline; }
+
+/* trending rank number — pink poster figure */
+.item .rank {
+  font-family: var(--font-poster); font-weight: 400; color: var(--accent);
+}
+
+/* drawer head + brand echo the poster identity */
+.nav-head .brand { font-family: var(--font-poster); }

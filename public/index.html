@@ -4,13 +4,16 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <title>iDROP — tap to ID house</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Archivo:wght@500;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="/styles.css" />
   </head>
   <body>
     <!-- FIRST-RUN: pick your music service --------------------------------->
     <div id="service-picker" class="service-picker" hidden>
       <div class="sp-card">
-        <span class="brand">◐ iDROP</span>
+        <span class="brand">iDROP</span>
         <h2 id="sp-title">Which music app do you use?</h2>
         <p class="muted" id="sp-sub">
           When a track you ID turns out to be already released, we'll drop you straight
@@ -25,7 +28,7 @@
       <div class="nav-backdrop" data-nav-close></div>
       <nav class="nav-panel" aria-label="Menu">
         <div class="nav-head">
-          <span class="brand">◐ iDROP</span>
+          <span class="brand">iDROP</span>
           <button class="icon-btn" data-nav-close aria-label="Close menu">
             <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="6" y1="6" x2="18" y2="18"/><line x1="18" y1="6" x2="6" y2="18"/></svg>
           </button>
@@ -80,7 +83,7 @@
         <button id="nav-toggle" class="icon-btn" aria-label="Open menu">
           <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
         </button>
-        <span class="brand">◐ iDROP</span>
+        <span class="brand">iDROP</span>
         <div class="topbar-right">
           <button id="theme-toggle" class="icon-btn" aria-label="Toggle light or dark">
             <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
@@ -314,6 +317,14 @@
       <div id="feed" class="feed"><p class="muted">Loading…</p></div>
       <p class="stats" id="stats"></p>
     </section>
+
+    <!-- BOTTOM TAB BAR — primary destinations ------------------------------->
+    <nav class="tabbar" aria-label="Primary">
+      <button class="tab" data-tab="listen" data-go="listen">ID</button>
+      <button class="tab" data-tab="history" data-go="history">My IDs</button>
+      <button class="tab" data-tab="trending" data-go="trending">Trending</button>
+      <button class="tab" data-tab="shows" data-go="shows">Shows</button>
+    </nav>
 
     <script type="module" src="/app.js"></script>
   </body>

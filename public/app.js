@@ -94,6 +94,10 @@ const screens = ["listen", "recent", "result", "history", "drops", "enroll", "tr
 function show(name) {
   screens.forEach((s) => ($(`#screen-${s}`).hidden = s !== name));
   window.scrollTo(0, 0);
+  // sync the bottom tab bar (only 4 primary destinations light up)
+  document.querySelectorAll(".tabbar .tab").forEach((t) =>
+    t.classList.toggle("active", t.dataset.tab === name)
+  );
 }
 // Navigate to a destination and load whatever data it needs.
 function go(name) {
@@ -112,6 +116,14 @@ document.querySelectorAll("[data-back]").forEach((b) =>
 );
 $("#result-again").addEventListener("click", () => show("listen"));
 $("#result-contribute").addEventListener("click", () => go("contribute"));
+
+// bottom tab bar — primary destinations
+document.querySelectorAll(".tabbar .tab").forEach((t) =>
+  t.addEventListener("click", () => {
+    const dest = t.dataset.go;
+    if (dest === "listen") { stopAuto(); show("listen"); } else go(dest);
+  })
+);
 
 // ---- slide-out menu --------------------------------------------------------
 const navEl = $("#nav");

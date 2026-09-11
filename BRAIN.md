@@ -31,6 +31,22 @@ one-off ask.
   set from memory — re-check what it actually ships before making a comparative claim to the
   owner. The moat argument above is structural and safe; specific feature comparisons are not.
 
+## DESIGN SYSTEM — "SKY IRIS" (implemented, current)
+The app's visual language is **SKY IRIS**, from a Claude Design "iDROP Directions" doc
+(direction 2a). Implemented in `public/{index.html,styles.css,app.js}`:
+- **Palette** (CSS tokens in `styles.css :root`): sky `#29A8DC` (home/hero ground),
+  ink `#0E0E10` (poster type + nav), white cards, **pink `#EC2A63` = the single signal
+  colour** (`--accent`), yellow `#F5C63C` (active tab), iris purple `#6F5FE8` (in the eye
+  gradient only), green `#0E9E75` (live/confirmed). Dark theme is a coherent toggle.
+- **Type**: Archivo Black (poster headlines, uppercase), Archivo (UI), DM Mono (labels) —
+  loaded from Google Fonts in `index.html`.
+- **Signatures**: the ID button is an **iridescent "iris" eye** (conic-gradient ring, white
+  inset, black pupil + glint; bobs idle, spins while listening); poster headlines on every
+  sheet; a **fixed black bottom tab bar** (ID / My IDs / Trending / Shows, active=yellow)
+  alongside the existing left drawer for the full menu.
+- Supersedes the earlier spec-007 purple dark-first redesign. Internal storage keys stay
+  `crate-*` (renaming would wipe saved prefs); brand/user-facing copy is iDROP.
+
 ## THE ANCHOR — two sources of truth diverge (highest-signal fact)
 There are two descriptions of this project and they do **not** match:
 - **CLAUDE.md (intended target):** Python/FastAPI + Postgres + **Panako** (CQT, pitch-robust) in
