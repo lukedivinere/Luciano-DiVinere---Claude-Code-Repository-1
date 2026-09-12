@@ -13,3 +13,6 @@ data/events.json
 
 # Generated design/handoff artifacts (large binaries, not source)
 *.pdf
+
+# Stage 0 scratch output (degraded audio intermediates, regenerated each run)
+stage0-tmp/
