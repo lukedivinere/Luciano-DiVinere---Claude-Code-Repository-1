@@ -1,0 +1,5 @@
+recording,true_track,condition,notes
+deep_cut_quiet0.m4a,deep_cut,quiet_0,phone ~1m from speaker
+deep_cut_quiet4.m4a,deep_cut,quiet_4,pitch +4% key-lock OFF
+deep_cut_noise4.m4a,deep_cut,noise_4,crowd-noise video playing
+random_track_a.m4a,NONE,negative,track not in sources/

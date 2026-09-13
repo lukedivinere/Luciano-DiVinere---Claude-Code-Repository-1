@@ -14,5 +14,13 @@ data/events.json
 # Generated design/handoff artifacts (large binaries, not source)
 *.pdf
 
-# Stage 0 scratch output (degraded audio intermediates, regenerated each run)
+# Stage 0 (scripts/stage0.mjs) scratch output — degraded audio intermediates, regenerated each run
 stage0-tmp/
+
+# Stage 0 (stage0/ Panako harness) — never commit copyrighted audio, personal labels, or run output
+stage0/sources/*
+stage0/recordings/*
+!stage0/sources/.gitkeep
+!stage0/recordings/.gitkeep
+stage0/manifest.csv
+stage0/scores.csv
