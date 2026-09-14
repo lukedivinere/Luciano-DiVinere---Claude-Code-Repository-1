@@ -24,3 +24,7 @@ stage0/recordings/*
 !stage0/recordings/.gitkeep
 stage0/manifest.csv
 stage0/scores.csv
+
+# Python bytecode cache
+__pycache__/
+*.pyc
