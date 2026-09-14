@@ -20,6 +20,22 @@ evening — instead of after months of app work.
 > The plan: run the Node one first for a fast read on the current engine, then run this one for
 > the real verdict that decides whether we build the full engine.
 
+## Two ways to run this
+
+- **In the cloud (easiest):** the pitch-robust Panako engine's native code is built for
+  Intel/Linux, which is exactly what Claude Code's cloud machine is — and it's been verified to
+  run there end-to-end (Java + ffmpeg + Panako). So you can just **make your phone recordings,
+  upload them (plus your source tracks) to the chat, and Claude runs the whole test for you** and
+  hands back the table + `scores.csv`. On an **Apple-Silicon Mac this is the recommended path**,
+  because that prebuilt jar's native library is Intel-only and won't load on an M-series chip.
+- **On your own laptop:** follow the install steps below. On Apple Silicon you'd additionally need
+  Rosetta + an Intel Java to load the native library — ask Claude to walk you through it if you
+  want to go this route.
+
+> **Modern Java note:** Panako's database needs two `--add-opens` flags on JDK 16+
+> (`java.base/java.nio` and `java.base/sun.nio.ch`). This harness adds them automatically when it
+> calls `java -jar`. If you ever run Panako by hand, include them or it errors at startup.
+
 ---
 
 ## The idea in one paragraph

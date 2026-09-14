@@ -140,9 +140,21 @@ def panako_query(path: Path, panako_cmd: str, strategy: str) -> list[dict]:
     return parse_panako_query(out.stdout)
 
 
+# Panako's LMDB store uses reflection into java.nio, which JDK 16+ blocks by default. Without
+# these opens the PANAKO strategy fails at startup ("Unable to make field ... accessible").
+JAVA_OPENS = [
+    "--add-opens", "java.base/java.nio=ALL-UNNAMED",
+    "--add-opens", "java.base/sun.nio.ch=ALL-UNNAMED",
+]
+
+
 def _panako_argv(panako_cmd: str, *args: str) -> list[str]:
-    """`panako_cmd` may be 'panako' (on PATH) or a full 'java -jar /path/panako.jar' string."""
-    return panako_cmd.split() + list(args)
+    """`panako_cmd` may be 'panako' (on PATH) or a full 'java -jar /path/panako.jar' string.
+    If it's a java+jar invocation, inject the --add-opens flags Panako needs on modern JDKs."""
+    tokens = panako_cmd.split()
+    if tokens and tokens[0] == "java" and "-jar" in tokens and "--add-opens" not in tokens:
+        tokens = [tokens[0], *JAVA_OPENS, *tokens[1:]]
+    return tokens + list(args)
 
 
 def resolve_panako(flag: str | None) -> str:
