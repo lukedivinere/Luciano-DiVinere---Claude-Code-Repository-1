@@ -121,14 +121,18 @@ def classify(true_track: str, matched_stem: str | None) -> str:
 # ---------------------------------------------------------------------------
 # Running the external tools (Panako + AudD).
 # ---------------------------------------------------------------------------
-def panako_store(files: list[Path], panako_cmd: str) -> None:
-    cmd = _panako_argv(panako_cmd, "store", *[str(f) for f in files])
-    print(f"  indexing {len(files)} tracks: {' '.join(cmd[:2])} …")
+# CRITICAL: Panako ships two algorithms and defaults to OLAF, which is NOT pitch-robust.
+# The whole point of Stage 0 is pitch robustness, so we must force STRATEGY=panako (the
+# constant-Q engine, tolerant to ~±20% pitch/tempo). Passed as an arg after the subcommand,
+# per Panako's docs: `panako store STRATEGY=panako files…`.
+def panako_store(files: list[Path], panako_cmd: str, strategy: str) -> None:
+    cmd = _panako_argv(panako_cmd, "store", f"STRATEGY={strategy}", *[str(f) for f in files])
+    print(f"  indexing {len(files)} tracks with STRATEGY={strategy} …")
     subprocess.run(cmd, check=True)
 
 
-def panako_query(path: Path, panako_cmd: str) -> list[dict]:
-    cmd = _panako_argv(panako_cmd, "query", str(path))
+def panako_query(path: Path, panako_cmd: str, strategy: str) -> list[dict]:
+    cmd = _panako_argv(panako_cmd, "query", f"STRATEGY={strategy}", str(path))
     out = subprocess.run(cmd, capture_output=True, text=True)
     if out.returncode != 0:
         print(f"  ! panako query failed on {path.name}: {out.stderr.strip()[:200]}", file=sys.stderr)
@@ -139,6 +143,19 @@ def panako_query(path: Path, panako_cmd: str) -> list[dict]:
 def _panako_argv(panako_cmd: str, *args: str) -> list[str]:
     """`panako_cmd` may be 'panako' (on PATH) or a full 'java -jar /path/panako.jar' string."""
     return panako_cmd.split() + list(args)
+
+
+def resolve_panako(flag: str | None) -> str:
+    """Figure out how to call Panako. --panako wins; then $PANAKO_CMD; then ~/panako.jar
+    (the prebuilt fat jar from the releases page); else the bare `panako` on PATH."""
+    if flag:
+        return flag
+    if os.environ.get("PANAKO_CMD"):
+        return os.environ["PANAKO_CMD"]
+    jar = Path.home() / "panako.jar"
+    if jar.exists():
+        return f"java -jar {jar}"
+    return "panako"
 
 
 def audd_query(path: Path, token: str) -> dict | None:
@@ -184,13 +201,14 @@ def cmd_index(args) -> None:
     srcs = _audio_files(SOURCES)
     if not srcs:
         sys.exit(f"No audio in {SOURCES}/ — drop your 10 source tracks there first.")
-    panako_store(srcs, args.panako)
+    panako_store(srcs, resolve_panako(args.panako), args.strategy)
     print(f"Indexed {len(srcs)} source tracks.")
 
 
 def cmd_run(args) -> None:
     """Query every recording (Panako + optional AudD), classify, aggregate, write scores.csv."""
     rows = _read_manifest()
+    panako_cmd = resolve_panako(args.panako)
     token = args.audd_token or os.environ.get("AUDD_API_TOKEN", "")
     if not token:
         print("(no AudD token — skipping the catalog path; pass --audd-token or set AUDD_API_TOKEN)\n")
@@ -202,7 +220,7 @@ def cmd_run(args) -> None:
             print(f"  ! missing recording file: {m['recording']}", file=sys.stderr)
             continue
 
-        rows_p = panako_query(rec_path, args.panako)
+        rows_p = panako_query(rec_path, panako_cmd, args.strategy)
         top = best_match(rows_p)
         matched_stem = stem(top["match_path"]) if top else None
         verdict = classify(m["true_track"], matched_stem)
@@ -342,8 +360,12 @@ def _selftest() -> None:
 
 def main() -> None:
     p = argparse.ArgumentParser(description="Stage 0 fingerprint-recognition validation harness.")
-    p.add_argument("--panako", default="panako",
-                   help="How to call Panako. Default 'panako'. Or e.g. 'java -jar /path/panako.jar'.")
+    p.add_argument("--panako", default=None,
+                   help="How to call Panako. Default: ~/panako.jar if present, else 'panako' on PATH. "
+                        "Or pass e.g. 'java -jar /path/panako.jar'.")
+    p.add_argument("--strategy", default="panako", choices=["panako", "olaf"],
+                   help="Which Panako engine. Default 'panako' (constant-Q, pitch-robust — what we're "
+                        "testing). 'olaf' is the non-pitch-robust one, for comparison only.")
     sub = p.add_subparsers(dest="cmd", required=True)
 
     sub.add_parser("init", help="scan recordings/ and write a manifest template to fill in").set_defaults(func=cmd_init)

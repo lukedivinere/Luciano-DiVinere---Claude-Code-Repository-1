@@ -48,16 +48,18 @@ Stage 0 has to run where your audio is. It needs three things:
 1. **Java 17+** (Panako is a Java program). Check: `java -version`.
 2. **ffmpeg** on your PATH (Panako decodes audio by calling ffmpeg). Check: `ffmpeg -version`.
    - macOS: `brew install ffmpeg` · Ubuntu: `sudo apt install ffmpeg`
-3. **Panako**, built once:
+3. **Panako** — download the prebuilt "all" jar (no building needed):
    ```bash
-   git clone https://github.com/JorenSix/Panako
-   cd Panako
-   ./gradlew shadowJar      # builds a single runnable jar
-   ./gradlew install        # installs to ~/.panako and a `panako` launch script
+   curl -L -o ~/panako.jar \
+     https://github.com/JorenSix/Panako/releases/download/joss/Panako-2.1-all.jar
+   java -jar ~/panako.jar      # prints its config/help = it works
    ```
-   Confirm it runs: `panako` (prints help). If the `panako` command isn't on your PATH, you
-   can always call it as `java -jar ~/.panako/panako.jar` and pass that to the harness with
-   `--panako "java -jar /Users/you/.panako/panako.jar"`.
+   This harness auto-detects `~/panako.jar`. (If you put it elsewhere, pass
+   `--panako "java -jar /full/path/panako.jar"`.)
+
+   > **Which engine:** Panako bundles two algorithms and *defaults to OLAF, which is NOT
+   > pitch-robust.* This harness always forces `STRATEGY=panako` (the constant-Q, pitch-robust
+   > engine) so we test the right thing. To compare against the weaker one, add `--strategy olaf`.
 4. **Python 3.9+** (for this harness). For the AudD comparison only: `pip install requests`.
 
 ---
