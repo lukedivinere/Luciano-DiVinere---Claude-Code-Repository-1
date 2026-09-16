@@ -1,0 +1,10 @@
+# Cloned reference repo — used as a source to borrow from, not part of this project
+ai-stock-trading-claude/
+
+# Python
+__pycache__/
+*.pyc
+
+# Secrets / local config
+.env
+config.py
