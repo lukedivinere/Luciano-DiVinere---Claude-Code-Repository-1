@@ -1,0 +1,7 @@
+# Core collector (step 2) — only these are needed right now.
+yfinance>=0.2
+pandas>=2.0
+
+# Used by later layers (news, LLM narrative). Safe to install now.
+requests>=2.31
+anthropic>=0.39

@@ -1,0 +1,16 @@
+# Cloned reference repo — used as a source to borrow from, not part of this project
+ai-stock-trading-claude/
+
+# Python
+__pycache__/
+*.pyc
+
+# Local databases (generated at runtime)
+*.db
+
+# Generated briefings
+market-intel/reports/
+
+# Secrets / local config
+.env
+.env.local

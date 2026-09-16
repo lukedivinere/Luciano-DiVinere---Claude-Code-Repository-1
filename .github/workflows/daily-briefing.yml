@@ -1,0 +1,79 @@
+name: Daily Market Briefing
+
+# Runs on weekdays before the US market open. Cron is in UTC — 12:00 UTC is
+# ~07:00/08:00 ET depending on daylight saving. Adjust to your timezone.
+on:
+  schedule:
+    - cron: "0 12 * * 1-5"
+  workflow_dispatch: {}   # allow manual runs from the Actions tab
+
+# Needed for the GitHub Pages deploy job.
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Don't let overlapping runs clobber a Pages deploy.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  briefing:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: market-intel
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run offline test suite
+        run: |
+          for t in prices store news ranking report pipeline delivery indices webreport sparkline; do
+            python tests/test_$t.py
+          done
+
+      - name: Generate briefing (Markdown + HTML)
+        env:
+          # Optional email delivery — configure these as repo secrets to enable.
+          SMTP_HOST: ${{ secrets.SMTP_HOST }}
+          SMTP_PORT: ${{ secrets.SMTP_PORT }}
+          SMTP_USER: ${{ secrets.SMTP_USER }}
+          SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
+          REPORT_FROM: ${{ secrets.REPORT_FROM }}
+          REPORT_TO: ${{ secrets.REPORT_TO }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: python run_daily.py --method email
+
+      - name: Upload briefing artifact (download from the run)
+        uses: actions/upload-artifact@v4
+        with:
+          name: daily-briefing
+          path: market-intel/reports/*
+          if-no-files-found: warn
+
+      # Publishes reports/ (which includes index.html) as the Pages site.
+      # Requires: repo Settings -> Pages -> Source = "GitHub Actions".
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: market-intel/reports
+
+  deploy-pages:
+    needs: briefing
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
