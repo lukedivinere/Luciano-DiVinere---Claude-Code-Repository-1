@@ -14,7 +14,11 @@ Being built incrementally per the build plan (Section 6). Current progress:
       `.env.example` (API keys), `requirements.txt`.
 - [x] **Step 2 — First collector**: `collectors/prices.py` — yfinance
       price/volume + technicals, tested in isolation (`tests/test_prices.py`).
-- [ ] Step 3 — Normalizer / store (SQLite)
+- [x] **Step 3 — Normalizer / store**: `store.py` — SQLite persistence for
+      price snapshots (sector-tagged, one row per trade day, upsert-deduped)
+      and news items, for day-over-day trend tracking (`tests/test_store.py`).
+- [x] **News collector**: `collectors/news.py` — yfinance headlines with a
+      transparent keyword relevance score (`tests/test_news.py`).
 - [ ] Step 4 — Ranking / scoring
 - [ ] Step 5 — Report generator (Markdown)
 - [ ] Step 6 — Delivery (email / Slack)
@@ -27,11 +31,15 @@ market-intel/
 ├── config.py            # tickers, sectors, indicator windows (non-secret)
 ├── .env.example         # API keys template (copy to .env; gitignored)
 ├── requirements.txt
+├── store.py             # SQLite normalizer/store (snapshots + news)
 ├── collectors/
 │   ├── __init__.py
-│   └── prices.py        # price/volume + technicals collector
+│   ├── prices.py        # price/volume + technicals collector
+│   └── news.py          # news collector + relevance scoring
 └── tests/
-    └── test_prices.py   # offline isolation tests for the collector
+    ├── test_prices.py   # offline isolation tests for the price collector
+    ├── test_store.py    # in-memory SQLite tests
+    └── test_news.py     # offline scoring/ranking tests
 ```
 
 ## Setup

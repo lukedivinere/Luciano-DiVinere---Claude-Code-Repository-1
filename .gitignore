@@ -5,6 +5,9 @@ ai-stock-trading-claude/
 __pycache__/
 *.pyc
 
+# Local databases (generated at runtime)
+*.db
+
 # Secrets / local config
 .env
 .env.local
