@@ -7,6 +7,17 @@ on:
     - cron: "0 12 * * 1-5"
   workflow_dispatch: {}   # allow manual runs from the Actions tab
 
+# Needed for the GitHub Pages deploy job.
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Don't let overlapping runs clobber a Pages deploy.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
 jobs:
   briefing:
     runs-on: ubuntu-latest
@@ -26,11 +37,11 @@ jobs:
 
       - name: Run offline test suite
         run: |
-          for t in prices store news ranking report pipeline delivery indices; do
+          for t in prices store news ranking report pipeline delivery indices webreport; do
             python tests/test_$t.py
           done
 
-      - name: Generate briefing
+      - name: Generate briefing (Markdown + HTML)
         env:
           # Optional email delivery — configure these as repo secrets to enable.
           SMTP_HOST: ${{ secrets.SMTP_HOST }}
@@ -42,9 +53,27 @@ jobs:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
         run: python run_daily.py --method email
 
-      - name: Upload briefing artifact
+      - name: Upload briefing artifact (download from the run)
         uses: actions/upload-artifact@v4
         with:
           name: daily-briefing
-          path: market-intel/reports/*.md
+          path: market-intel/reports/*
           if-no-files-found: warn
+
+      # Publishes reports/ (which includes index.html) as the Pages site.
+      # Requires: repo Settings -> Pages -> Source = "GitHub Actions".
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: market-intel/reports
+
+  deploy-pages:
+    needs: briefing
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

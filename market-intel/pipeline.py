@@ -19,6 +19,7 @@ import config
 import ranking
 import report
 import store
+import webreport
 from collectors import indices as index_collector
 from collectors import news as news_collector
 from collectors import prices as price_collector
@@ -76,10 +77,15 @@ def run(
     # 4. Rank off the latest stored snapshots (includes prior days if any).
     ranked = ranking.rank(store.latest_snapshots(conn), news_by_symbol)
 
-    # 5. Build (and optionally write) the report.
+    # 5. Build (and optionally write) the report in both Markdown and HTML.
     markdown = report.build_report(ranked, news_by_symbol, as_of=as_of,
                                    indices=index_snapshots)
-    report_path = report.save_report(markdown, report_dir, as_of=as_of) if write_report else None
+    html_page = webreport.build_html(ranked, news_by_symbol, as_of=as_of,
+                                     indices=index_snapshots)
+    report_path = html_path = None
+    if write_report:
+        report_path = report.save_report(markdown, report_dir, as_of=as_of)
+        html_path = webreport.save_html(html_page, report_dir, as_of=as_of)
 
     conn.close()
 
@@ -89,7 +95,9 @@ def run(
         "errors": errors,
         "ranked": ranked,
         "report_path": report_path,
+        "html_path": html_path,
         "markdown": markdown,
+        "html": html_page,
     }
 
 

@@ -30,8 +30,10 @@ def main(argv: list[str] | None = None) -> int:
 
     print(
         f"[run_daily] {result['as_of']}: {result['collected']} collected, "
-        f"{len(result['errors'])} error(s); report -> {result['report_path']}"
+        f"{len(result['errors'])} error(s)"
     )
+    print(f"[run_daily] markdown -> {result['report_path']}")
+    print(f"[run_daily] html     -> {result['html_path']}")
 
     outcome = delivery.deliver(result["markdown"], method=args.method,
                                subject=f"Market Briefing — {result['as_of']}")

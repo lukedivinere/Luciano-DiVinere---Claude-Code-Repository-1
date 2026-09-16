@@ -36,6 +36,9 @@ Being built incrementally per the build plan (Section 6). Current progress:
       (`tests/test_pipeline.py`).
 - [x] **Index collector**: `collectors/indices.py` — market-index snapshot
       wired into report section 1 (`tests/test_indices.py`).
+- [x] **Web output**: `webreport.py` — self-contained HTML briefing
+      (light/dark, escaped external content) published via GitHub Pages in
+      the workflow (`tests/test_webreport.py`).
 - [ ] Later — earnings collector (Finnhub) to fill report section 3
 
 ## Layout
@@ -48,6 +51,7 @@ market-intel/
 ├── store.py             # SQLite normalizer/store (snapshots + news)
 ├── ranking.py           # transparent weighted screen (score + reasons)
 ├── report.py            # Markdown daily-briefing generator
+├── webreport.py         # self-contained HTML briefing (for GitHub Pages)
 ├── delivery.py          # console / email delivery
 ├── pipeline.py          # collect -> store -> rank -> report orchestrator
 ├── run_daily.py         # scheduled entrypoint (cron / CI)
@@ -74,10 +78,22 @@ for t in prices store news ranking report pipeline delivery indices; do python t
 
 ```bash
 cd market-intel
-python run_daily.py                    # console + writes reports/briefing_<date>.md
+python run_daily.py                    # writes reports/briefing_<date>.md + .html
 python run_daily.py --method email     # also email (set SMTP_* in .env)
 python run_daily.py --symbols AAPL MSFT NVDA
 ```
+
+Each run writes both a Markdown file and a self-contained `.html` page (plus
+`index.html`) to `reports/`. Open the HTML in a browser to see the styled
+briefing.
+
+## Publish as a website (GitHub Pages)
+
+The workflow deploys `reports/` (including `index.html`) to GitHub Pages.
+To turn it on once: repo **Settings → Pages → Source = "GitHub Actions"**.
+After the next scheduled/manual run, the latest briefing is live at your
+Pages URL. Until Pages is enabled, the deploy step is a harmless no-op and
+the briefing is still available as a downloadable run artifact.
 
 ## Setup
 
