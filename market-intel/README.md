@@ -19,10 +19,16 @@ Being built incrementally per the build plan (Section 6). Current progress:
       and news items, for day-over-day trend tracking (`tests/test_store.py`).
 - [x] **News collector**: `collectors/news.py` — yfinance headlines with a
       transparent keyword relevance score (`tests/test_news.py`).
-- [ ] Step 4 — Ranking / scoring
-- [ ] Step 5 — Report generator (Markdown)
+- [x] **Step 4 — Ranking / scoring**: `ranking.py` — transparent weighted
+      screen (momentum, trend stack, unusual volume, RSI band, news catalyst)
+      with a per-symbol reason/concern breakdown (`tests/test_ranking.py`).
+- [x] **Step 5 — Report generator**: `report.py` — Markdown daily briefing
+      (snapshot, ranked movers + why, developments, concerns, sources,
+      disclaimer); un-wired sections shown as explicit placeholders
+      (`tests/test_report.py`).
 - [ ] Step 6 — Delivery (email / Slack)
 - [ ] Step 7 — Scheduling (cron / GitHub Actions)
+- [ ] Later — earnings + index collectors (fill report sections 1 & 3)
 
 ## Layout
 
@@ -32,6 +38,8 @@ market-intel/
 ├── .env.example         # API keys template (copy to .env; gitignored)
 ├── requirements.txt
 ├── store.py             # SQLite normalizer/store (snapshots + news)
+├── ranking.py           # transparent weighted screen (score + reasons)
+├── report.py            # Markdown daily-briefing generator
 ├── collectors/
 │   ├── __init__.py
 │   ├── prices.py        # price/volume + technicals collector
@@ -39,7 +47,16 @@ market-intel/
 └── tests/
     ├── test_prices.py   # offline isolation tests for the price collector
     ├── test_store.py    # in-memory SQLite tests
-    └── test_news.py     # offline scoring/ranking tests
+    ├── test_news.py     # offline scoring/ranking tests
+    ├── test_ranking.py  # ranking screen tests
+    └── test_report.py   # report rendering tests
+```
+
+## Run the full offline test suite
+
+```bash
+cd market-intel
+for t in prices store news ranking report; do python tests/test_$t.py; done
 ```
 
 ## Setup
