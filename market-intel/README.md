@@ -26,8 +26,14 @@ Being built incrementally per the build plan (Section 6). Current progress:
       (snapshot, ranked movers + why, developments, concerns, sources,
       disclaimer); un-wired sections shown as explicit placeholders
       (`tests/test_report.py`).
-- [ ] Step 6 — Delivery (email / Slack)
-- [ ] Step 7 — Scheduling (cron / GitHub Actions)
+- [x] **Step 6 — Delivery**: `delivery.py` — console / email (SMTP from env;
+      safe dry-run when unconfigured) (`tests/test_delivery.py`).
+- [x] **Step 7 — Scheduling**: `run_daily.py` entrypoint +
+      `.github/workflows/daily-briefing.yml` (weekday cron, runs tests,
+      generates + emails the briefing, uploads it as an artifact).
+- [x] **Orchestration**: `pipeline.py` ties collect → store → rank → report
+      with injectable collectors; resilient to partial outages
+      (`tests/test_pipeline.py`).
 - [ ] Later — earnings + index collectors (fill report sections 1 & 3)
 
 ## Layout
@@ -40,6 +46,9 @@ market-intel/
 ├── store.py             # SQLite normalizer/store (snapshots + news)
 ├── ranking.py           # transparent weighted screen (score + reasons)
 ├── report.py            # Markdown daily-briefing generator
+├── delivery.py          # console / email delivery
+├── pipeline.py          # collect -> store -> rank -> report orchestrator
+├── run_daily.py         # scheduled entrypoint (cron / CI)
 ├── collectors/
 │   ├── __init__.py
 │   ├── prices.py        # price/volume + technicals collector
@@ -56,7 +65,16 @@ market-intel/
 
 ```bash
 cd market-intel
-for t in prices store news ranking report; do python tests/test_$t.py; done
+for t in prices store news ranking report pipeline delivery; do python tests/test_$t.py; done
+```
+
+## Run the whole thing (needs Yahoo access)
+
+```bash
+cd market-intel
+python run_daily.py                    # console + writes reports/briefing_<date>.md
+python run_daily.py --method email     # also email (set SMTP_* in .env)
+python run_daily.py --symbols AAPL MSFT NVDA
 ```
 
 ## Setup

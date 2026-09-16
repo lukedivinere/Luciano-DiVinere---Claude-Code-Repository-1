@@ -1,0 +1,50 @@
+name: Daily Market Briefing
+
+# Runs on weekdays before the US market open. Cron is in UTC — 12:00 UTC is
+# ~07:00/08:00 ET depending on daylight saving. Adjust to your timezone.
+on:
+  schedule:
+    - cron: "0 12 * * 1-5"
+  workflow_dispatch: {}   # allow manual runs from the Actions tab
+
+jobs:
+  briefing:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: market-intel
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run offline test suite
+        run: |
+          for t in prices store news ranking report pipeline delivery; do
+            python tests/test_$t.py
+          done
+
+      - name: Generate briefing
+        env:
+          # Optional email delivery — configure these as repo secrets to enable.
+          SMTP_HOST: ${{ secrets.SMTP_HOST }}
+          SMTP_PORT: ${{ secrets.SMTP_PORT }}
+          SMTP_USER: ${{ secrets.SMTP_USER }}
+          SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
+          REPORT_FROM: ${{ secrets.REPORT_FROM }}
+          REPORT_TO: ${{ secrets.REPORT_TO }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: python run_daily.py --method email
+
+      - name: Upload briefing artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: daily-briefing
+          path: market-intel/reports/*.md
+          if-no-files-found: warn
