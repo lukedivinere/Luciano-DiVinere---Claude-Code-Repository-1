@@ -17,8 +17,8 @@ There is also a dark **Modern** version in `../brothers-landscape-modern/`.
 - **Phone conflict:** their website header shows **(619) 579-7304**, but the Google
   listing shows **(619) 366-4748** (used here). Confirm which is current.
 - **Email** — using `info@brothers-landscape.com` as a placeholder guess.
-- **Photos** — the "Our Work" gallery uses placeholder stock photos. Replace `images/*.png`
-  with Brothers' own high-resolution job photos (the gallery opens each full-size on click).
+- **Photos** — the "Our Work" gallery now uses Brothers' own real project photos
+  (`images/work-*.jpg`), web-optimized; the gallery opens each full-size on click.
 - **Reviews** — testimonial quote is a labeled placeholder; the 4.7★/25 count is real.
 - **Quote form** — opens the visitor's email app; wire to Formspree/Netlify Forms at launch.
 
