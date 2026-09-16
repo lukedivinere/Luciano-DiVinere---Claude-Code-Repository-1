@@ -7,4 +7,4 @@ __pycache__/
 
 # Secrets / local config
 .env
-config.py
+.env.local
