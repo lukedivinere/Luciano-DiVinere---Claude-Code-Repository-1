@@ -40,6 +40,15 @@ SECTORS = {
     "PLTR": "Software",
 }
 
+# Market indices for the report's snapshot section (Yahoo ^ symbols).
+INDICES = {
+    "^GSPC": "S&P 500",
+    "^IXIC": "Nasdaq Composite",
+    "^DJI": "Dow Jones",
+    "^RUT": "Russell 2000",
+    "^VIX": "Volatility (VIX)",
+}
+
 # --- Collector tuning -------------------------------------------------------
 # How much history to pull for technicals, and the indicator windows.
 PRICE_HISTORY_PERIOD = "3mo"   # yfinance period string

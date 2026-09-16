@@ -26,7 +26,7 @@ jobs:
 
       - name: Run offline test suite
         run: |
-          for t in prices store news ranking report pipeline delivery; do
+          for t in prices store news ranking report pipeline delivery indices; do
             python tests/test_$t.py
           done
 

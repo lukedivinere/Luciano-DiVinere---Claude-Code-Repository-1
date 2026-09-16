@@ -47,6 +47,15 @@ def test_empty_inputs_render_safely():
     md = report.build_report([], {}, as_of="2024-01-02")
     assert "No data collected." in md
     assert "NOT investment advice" in md
+    # No indices passed -> placeholder, not a crash.
+    assert "_not collected this run_" in md
+
+
+def test_indices_table_renders():
+    ranked, news = _sample_ranked()
+    indices = {"^GSPC": {"name": "S&P 500", "level": 5050.0, "change_pct": 1.0}}
+    md = report.build_report(ranked, news, as_of="2024-01-02", indices=indices)
+    assert "| S&P 500 | 5050.0 | 1.0 |" in md
 
 
 def test_save_report_writes_file():

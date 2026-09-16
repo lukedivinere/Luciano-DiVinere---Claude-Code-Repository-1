@@ -29,6 +29,11 @@ def _fake_news(symbol):
     return []
 
 
+def _fake_indices():
+    return {"snapshots": {"^GSPC": {"name": "S&P 500", "level": 5050.0, "change_pct": 1.0}},
+            "errors": {}}
+
+
 def test_pipeline_end_to_end():
     with tempfile.TemporaryDirectory() as d:
         db = os.path.join(d, "t.db")
@@ -39,6 +44,7 @@ def test_pipeline_end_to_end():
             report_dir=reports,
             collect_prices=_fake_prices,
             collect_news=_fake_news,
+            collect_indices=_fake_indices,
             as_of="2024-06-03",
         )
 
@@ -50,6 +56,7 @@ def test_pipeline_end_to_end():
         with open(result["report_path"], encoding="utf-8") as f:
             md = f.read()
         assert "NVDA" in md and "NOT investment advice" in md
+        assert "S&P 500" in md   # index snapshot wired into section 1
 
 
 def test_pipeline_persists_across_runs():
@@ -58,6 +65,7 @@ def test_pipeline_persists_across_runs():
         # Day 1
         pipeline.run(["NVDA"], db_path=db, report_dir=d,
                      collect_prices=_fake_prices, collect_news=_fake_news,
+                     collect_indices=_fake_indices,
                      as_of="2024-06-03", write_report=False)
         # Day 2: no fresh collection (simulate outage) — ranking still works
         # off the stored snapshot.
@@ -65,6 +73,7 @@ def test_pipeline_persists_across_runs():
             ["NVDA"], db_path=db, report_dir=d,
             collect_prices=lambda syms: {"snapshots": {}, "errors": {"NVDA": "outage"}},
             collect_news=lambda s: [],
+            collect_indices=_fake_indices,
             as_of="2024-06-04", write_report=False,
         )
         assert result["collected"] == 0

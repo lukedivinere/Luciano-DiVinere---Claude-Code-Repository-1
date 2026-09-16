@@ -19,6 +19,7 @@ import config
 import ranking
 import report
 import store
+from collectors import indices as index_collector
 from collectors import news as news_collector
 from collectors import prices as price_collector
 
@@ -30,6 +31,7 @@ def run(
     report_dir: str = "reports",
     collect_prices: Optional[Callable[[list[str]], dict]] = None,
     collect_news: Optional[Callable[[str], list]] = None,
+    collect_indices: Optional[Callable[[], dict]] = None,
     as_of: Optional[str] = None,
     write_report: bool = True,
 ) -> dict:
@@ -49,6 +51,7 @@ def run(
     as_of = as_of or date.today().isoformat()
     collect_prices = collect_prices or price_collector.collect_many
     collect_news = collect_news or news_collector.get_news
+    collect_indices = collect_indices or index_collector.collect_indices
 
     conn = store.connect(db_path)
 
@@ -67,11 +70,15 @@ def run(
             news_by_symbol[sym] = items
             store.upsert_news(conn, sym, items, collected_date=as_of)
 
-    # 3. Rank off the latest stored snapshots (includes prior days if any).
+    # 3. Market-index snapshot (best-effort; never blocks the briefing).
+    index_snapshots = collect_indices().get("snapshots", {})
+
+    # 4. Rank off the latest stored snapshots (includes prior days if any).
     ranked = ranking.rank(store.latest_snapshots(conn), news_by_symbol)
 
-    # 4. Build (and optionally write) the report.
-    markdown = report.build_report(ranked, news_by_symbol, as_of=as_of)
+    # 5. Build (and optionally write) the report.
+    markdown = report.build_report(ranked, news_by_symbol, as_of=as_of,
+                                   indices=index_snapshots)
     report_path = report.save_report(markdown, report_dir, as_of=as_of) if write_report else None
 
     conn.close()

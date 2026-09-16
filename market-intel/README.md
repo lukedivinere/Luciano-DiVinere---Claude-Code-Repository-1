@@ -34,7 +34,9 @@ Being built incrementally per the build plan (Section 6). Current progress:
 - [x] **Orchestration**: `pipeline.py` ties collect → store → rank → report
       with injectable collectors; resilient to partial outages
       (`tests/test_pipeline.py`).
-- [ ] Later — earnings + index collectors (fill report sections 1 & 3)
+- [x] **Index collector**: `collectors/indices.py` — market-index snapshot
+      wired into report section 1 (`tests/test_indices.py`).
+- [ ] Later — earnings collector (Finnhub) to fill report section 3
 
 ## Layout
 
@@ -65,7 +67,7 @@ market-intel/
 
 ```bash
 cd market-intel
-for t in prices store news ranking report pipeline delivery; do python tests/test_$t.py; done
+for t in prices store news ranking report pipeline delivery indices; do python tests/test_$t.py; done
 ```
 
 ## Run the whole thing (needs Yahoo access)

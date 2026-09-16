@@ -32,6 +32,20 @@ def _snapshot_line(ranked: list[dict]) -> str:
     )
 
 
+def _indices_table(indices: Optional[dict]) -> str:
+    """Render the market-index snapshot table, or a placeholder if absent."""
+    if not indices:
+        return "> Index/sector-level snapshot: _not collected this run_."
+    lines = [
+        "| Index | Level | Chg% |",
+        "|-------|------:|-----:|",
+    ]
+    for sym in sorted(indices):
+        ix = indices[sym]
+        lines.append(f"| {ix.get('name', sym)} | {ix['level']} | {ix['change_pct']} |")
+    return "\n".join(lines)
+
+
 def _movers_table(ranked: list[dict], top_n: int = 10) -> str:
     if not ranked:
         return "_No candidates._"
@@ -90,7 +104,7 @@ def _sources_section(news_by_symbol: Optional[dict]) -> str:
 
 
 def build_report(ranked: list[dict], news_by_symbol: Optional[dict] = None,
-                 as_of: Optional[str] = None) -> str:
+                 as_of: Optional[str] = None, indices: Optional[dict] = None) -> str:
     """Assemble the full Markdown briefing."""
     as_of = as_of or date.today().isoformat()
 
@@ -99,7 +113,7 @@ def build_report(ranked: list[dict], news_by_symbol: Optional[dict] = None,
 ## 1. Market snapshot
 {_snapshot_line(ranked)}
 
-> Index/sector-level snapshot: _not yet wired_ (no index collector yet).
+{_indices_table(indices)}
 
 ## 2. Top movers / bullish candidates
 {_movers_table(ranked)}
