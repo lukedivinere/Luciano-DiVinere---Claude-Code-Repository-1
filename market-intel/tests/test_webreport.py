@@ -42,6 +42,27 @@ def test_malicious_news_title_is_escaped():
     assert "javascript:alert(1)" not in html     # dropped entirely, not linked
 
 
+def test_developments_show_summary_text():
+    long_desc = ("Moderna said its experimental cancer vaccine cut recurrence in a "
+                 "mid-stage trial. The company plans a larger study next year. Shares "
+                 "rose on the news as analysts raised price targets across the board.")
+    news = {"MRNA": [{"title": "Moderna cancer vaccine data", "source": "Reuters",
+                      "published_at": "2024-06-03", "url": "https://ex.com/mrna",
+                      "description": long_desc, "relevance_score": 12}]}
+    html = webreport.build_html(_ranked(), news, as_of="2024-06-03")
+    assert "experimental cancer vaccine cut recurrence" in html   # summary rendered
+    assert 'class="dev-summary"' in html
+
+
+def test_summary_escapes_html():
+    news = {"NVDA": [{"title": "ok", "source": "Reuters", "published_at": "2024-06-03",
+                      "url": "https://ex.com/x", "description": "<img src=x onerror=alert(1)>",
+                      "relevance_score": 12}]}
+    html = webreport.build_html(_ranked(), news, as_of="2024-06-03")
+    assert "<img src=x" not in html
+    assert "&lt;img" in html
+
+
 def test_safe_http_url_becomes_link():
     news = {"NVDA": [{"title": "beats earnings", "source": "Reuters",
                       "published_at": "2024-06-03", "url": "https://ex.com/a",
@@ -72,6 +93,17 @@ def test_no_sparkline_without_history():
     # Trend column still present, but the cell shows a dash, no svg.
     assert "<th>Trend</th>" in html
     assert "<svg" not in html
+
+
+def test_stance_section_renders():
+    import stance
+    ranked = _ranked()
+    stances = stance.build_stances(ranked, {})
+    html = webreport.build_html(ranked, {}, as_of="2024-06-03", stances=stances,
+                                stance_disclaimer=stance.STANCE_DISCLAIMER)
+    assert "Daily read — your holdings" in html
+    assert "not a recommendation to buy or sell" in html
+    assert "stance-card" in html
 
 
 def test_empty_renders_safely():

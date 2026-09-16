@@ -35,6 +35,27 @@ COMPANY_TERMS = {
     "INTC": ["intel", "intc", "foundry", "core ultra"],
     "PLTR": ["palantir", "pltr", "alex karp", "gotham", "foundry"],
     "MU": ["micron", "mu", "dram", "nand", "memory chip", "hbm"],
+    "MRNA": ["moderna", "mrna", "mrna vaccine", "cancer vaccine", "oncology", "spikevax", "clinical trial"],
+    "PFE": ["pfizer", "pfe", "vaccine", "comirnaty", "fda", "clinical trial", "drug"],
+    "LLY": ["eli lilly", "lly", "zepbound", "mounjaro", "weight loss", "glp-1", "obesity drug"],
+    "JNJ": ["johnson & johnson", "jnj", "j&j", "medtech", "pharmaceutical"],
+    "JPM": ["jpmorgan", "jpm", "jamie dimon", "bank", "investment banking"],
+    "BAC": ["bank of america", "bac", "brian moynihan", "bank"],
+    "XOM": ["exxon", "xom", "exxonmobil", "oil", "crude", "refining"],
+    "CVX": ["chevron", "cvx", "oil", "crude", "natural gas"],
+    "F": ["ford", "f", "f-150", "lightning", "ev truck", "jim farley"],
+    "T": ["at&t", "att", "telecom", "wireless", "fiber", "5g"],
+    "KO": ["coca-cola", "coke", "ko", "beverage"],
+    "DIS": ["disney", "dis", "bob iger", "streaming", "disney+", "parks", "espn"],
+    "SOFI": ["sofi", "sofi technologies", "fintech", "anthony noto", "student loan"],
+    # Current holdings
+    "HOOD": ["robinhood", "hood", "brokerage", "crypto trading", "vlad tenev", "trading app"],
+    "UBER": ["uber", "uber technologies", "rideshare", "dara khosrowshahi", "delivery", "eats", "robotaxi"],
+    "ACHR": ["archer", "archer aviation", "achr", "evtol", "air taxi", "midnight", "united airlines"],
+    "RKLB": ["rocket lab", "rklb", "electron", "neutron", "launch", "peter beck", "space"],
+    "ENPH": ["enphase", "enph", "solar", "microinverter", "battery", "residential solar"],
+    "NNOX": ["nano-x", "nnox", "nanox", "medical imaging", "fda clearance", "x-ray"],
+    "IBIT": ["bitcoin", "ibit", "btc", "crypto", "etf inflows", "spot bitcoin"],
 }
 
 MARKET_CATALYST_TERMS = [

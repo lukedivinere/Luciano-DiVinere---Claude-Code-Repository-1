@@ -18,6 +18,7 @@ from typing import Callable, Optional
 import config
 import ranking
 import report
+import stance as stance_mod
 import store
 import webreport
 from collectors import indices as index_collector
@@ -84,12 +85,18 @@ def run(
         for r in ranked
     }
 
+    # 4c. Per-holding daily stance (rules-based signal, optional).
+    stances = (stance_mod.build_stances(ranked, news_by_symbol)
+               if getattr(config, "DAILY_STANCE_ENABLED", False) else None)
+
     # 5. Build (and optionally write) the report in both Markdown and HTML.
     markdown = report.build_report(ranked, news_by_symbol, as_of=as_of,
                                    indices=index_snapshots)
     html_page = webreport.build_html(ranked, news_by_symbol, as_of=as_of,
                                      indices=index_snapshots,
-                                     history_by_symbol=history_by_symbol)
+                                     history_by_symbol=history_by_symbol,
+                                     stances=stances,
+                                     stance_disclaimer=stance_mod.STANCE_DISCLAIMER)
     report_path = html_path = None
     if write_report:
         report_path = report.save_report(markdown, report_dir, as_of=as_of)

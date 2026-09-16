@@ -16,29 +16,36 @@ ANTHROPIC_API_KEY = os.environ.get("ANTHROPIC_API_KEY", "")
 FINNHUB_API_KEY = os.environ.get("FINNHUB_API_KEY", "")
 
 # --- Universe of interest ---------------------------------------------------
-# Tickers the agent scans each run.
+# The stocks / ETFs YOU hold (from your portfolio). Edit freely.
 TICKERS = [
-    "AAPL", "MSFT", "NVDA", "AMZN", "GOOGL", "META", "TSLA",
-    "AMD", "AVGO", "NFLX", "CRM", "INTC", "PLTR", "MU",
+    # Individual stocks
+    "NVDA", "PLTR", "HOOD", "UBER", "ACHR", "RKLB", "ENPH", "NNOX",
+    # ETFs / funds
+    "AIQ", "DRAM", "IBIT", "QQQM", "ROBO", "SCHG", "SPYM", "XLF",
 ]
 
-# Optional sector grouping — used later by the ranking/report layers.
+# Sector / type grouping — used by the ranking/report layers to tag and group.
 SECTORS = {
-    "AAPL": "Technology",
-    "MSFT": "Technology",
     "NVDA": "Semiconductors",
-    "AMD": "Semiconductors",
-    "AVGO": "Semiconductors",
-    "INTC": "Semiconductors",
-    "MU": "Semiconductors",
-    "AMZN": "Consumer Discretionary",
-    "TSLA": "Consumer Discretionary",
-    "GOOGL": "Communication Services",
-    "META": "Communication Services",
-    "NFLX": "Communication Services",
-    "CRM": "Software",
     "PLTR": "Software",
+    "HOOD": "Financials",
+    "UBER": "Consumer Discretionary",
+    "ACHR": "Aerospace / eVTOL",
+    "RKLB": "Aerospace / Space",
+    "ENPH": "Clean Energy",
+    "NNOX": "Healthcare / Imaging",
+    "AIQ": "ETF · AI",
+    "DRAM": "ETF · Memory chips",
+    "IBIT": "ETF · Bitcoin",
+    "QQQM": "ETF · Nasdaq 100",
+    "ROBO": "ETF · Robotics",
+    "SCHG": "ETF · Large-cap growth",
+    "SPYM": "ETF · S&P 500",
+    "XLF": "ETF · Financials",
 }
+
+# Show a per-holding daily "stance" section (rules-based signal, not advice).
+DAILY_STANCE_ENABLED = True
 
 # Market indices for the report's snapshot section (Yahoo ^ symbols).
 INDICES = {
