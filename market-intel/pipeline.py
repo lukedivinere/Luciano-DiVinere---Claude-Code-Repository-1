@@ -77,11 +77,19 @@ def run(
     # 4. Rank off the latest stored snapshots (includes prior days if any).
     ranked = ranking.rank(store.latest_snapshots(conn), news_by_symbol)
 
+    # 4b. Pull each ranked symbol's price history for sparklines.
+    history_by_symbol = {
+        r["symbol"]: [row["current_price"]
+                      for row in store.price_history(conn, r["symbol"], days=30)]
+        for r in ranked
+    }
+
     # 5. Build (and optionally write) the report in both Markdown and HTML.
     markdown = report.build_report(ranked, news_by_symbol, as_of=as_of,
                                    indices=index_snapshots)
     html_page = webreport.build_html(ranked, news_by_symbol, as_of=as_of,
-                                     indices=index_snapshots)
+                                     indices=index_snapshots,
+                                     history_by_symbol=history_by_symbol)
     report_path = html_path = None
     if write_report:
         report_path = report.save_report(markdown, report_dir, as_of=as_of)

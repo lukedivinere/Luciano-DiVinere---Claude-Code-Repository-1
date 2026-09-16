@@ -58,6 +58,22 @@ def test_save_html_writes_index_too():
         assert os.path.isfile(os.path.join(d, "index.html"))
 
 
+def test_sparkline_rendered_when_history_present():
+    html = webreport.build_html(
+        _ranked(), {}, as_of="2024-06-03",
+        history_by_symbol={"NVDA": [100, 105, 103, 110, 120]},
+    )
+    assert "<svg" in html and "spark up" in html
+    assert "<th>Trend</th>" in html
+
+
+def test_no_sparkline_without_history():
+    html = webreport.build_html(_ranked(), {}, as_of="2024-06-03")
+    # Trend column still present, but the cell shows a dash, no svg.
+    assert "<th>Trend</th>" in html
+    assert "<svg" not in html
+
+
 def test_empty_renders_safely():
     html = webreport.build_html([], {}, as_of="2024-06-03")
     assert "No data collected." in html

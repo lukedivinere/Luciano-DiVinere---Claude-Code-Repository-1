@@ -17,6 +17,8 @@ from datetime import date
 from typing import Optional
 from urllib.parse import urlparse
 
+import sparkline
+
 DISCLAIMER = (
     "This is automated research/informational content generated from a "
     "transparent, rules-based screen. It is NOT investment advice and makes "
@@ -64,14 +66,18 @@ def _index_tiles(indices: Optional[dict]) -> str:
     return f'<div class="tiles">{"".join(tiles)}</div>'
 
 
-def _movers_rows(ranked: list[dict]) -> str:
+def _movers_rows(ranked: list[dict], history_by_symbol: Optional[dict] = None) -> str:
+    history_by_symbol = history_by_symbol or {}
     rows = []
     for i, r in enumerate(ranked, 1):
+        series = history_by_symbol.get(r["symbol"]) or []
+        spark = sparkline.build_svg(series) if len(series) >= 2 else '<span class="muted">—</span>'
         rows.append(
             "<tr>"
             f"<td>{i}</td>"
             f'<td class="sym">{_esc(r["symbol"])}</td>'
             f"<td>{_esc(r.get('sector') or '—')}</td>"
+            f'<td class="spark-cell">{spark}</td>'
             f'<td class="num">{_esc(r["score"])}/{_esc(r["max_score"])}</td>'
             f'<td class="num">${_esc(r["price"])}</td>'
             f'<td class="num {_chg_class(r["change_pct"])}">{_esc(r["change_pct"])}</td>'
@@ -168,14 +174,23 @@ details { background: var(--card); border: 1px solid var(--border);
   border-radius: 8px; padding: 8px 12px; margin: 6px 0; }
 summary { cursor: pointer; }
 a { color: var(--accent); }
+.spark-cell { width: 100px; }
+.spark { display: block; }
+.spark.up { color: var(--up); } .spark.down { color: var(--down); }
+.spark.flat { color: var(--muted); }
 footer { margin-top: 40px; padding-top: 12px; border-top: 1px solid var(--border);
   color: var(--muted); font-size: .85rem; }
 """
 
 
 def build_html(ranked: list[dict], news_by_symbol: Optional[dict] = None,
-               as_of: Optional[str] = None, indices: Optional[dict] = None) -> str:
-    """Render the full standalone HTML briefing page."""
+               as_of: Optional[str] = None, indices: Optional[dict] = None,
+               history_by_symbol: Optional[dict] = None) -> str:
+    """Render the full standalone HTML briefing page.
+
+    history_by_symbol maps a ticker to a chronological list of closing prices
+    (from the store); when present, a sparkline is drawn in the movers table.
+    """
     as_of = as_of or date.today().isoformat()
 
     if ranked:
@@ -186,10 +201,11 @@ def build_html(ranked: list[dict], news_by_symbol: Optional[dict] = None,
                     f"{decliners} down, average move {avg}%.")
         movers = (
             "<table><thead><tr>"
-            "<th>#</th><th>Ticker</th><th>Sector</th><th class='num'>Score</th>"
+            "<th>#</th><th>Ticker</th><th>Sector</th><th>Trend</th>"
+            "<th class='num'>Score</th>"
             "<th class='num'>Price</th><th class='num'>Chg%</th>"
             "<th class='num'>Vol×</th><th class='num'>RSI</th>"
-            f"</tr></thead><tbody>{_movers_rows(ranked)}</tbody></table>"
+            f"</tr></thead><tbody>{_movers_rows(ranked, history_by_symbol)}</tbody></table>"
         )
     else:
         snapshot = "No data collected."

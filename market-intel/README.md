@@ -39,6 +39,9 @@ Being built incrementally per the build plan (Section 6). Current progress:
 - [x] **Web output**: `webreport.py` — self-contained HTML briefing
       (light/dark, escaped external content) published via GitHub Pages in
       the workflow (`tests/test_webreport.py`).
+- [x] **Sparklines**: `sparkline.py` — inline-SVG trend lines drawn from the
+      stored price history, shown per ticker in the movers table
+      (`tests/test_sparkline.py`).
 - [ ] Later — earnings collector (Finnhub) to fill report section 3
 
 ## Layout
@@ -71,7 +74,7 @@ market-intel/
 
 ```bash
 cd market-intel
-for t in prices store news ranking report pipeline delivery indices; do python tests/test_$t.py; done
+for t in prices store news ranking report pipeline delivery indices webreport sparkline; do python tests/test_$t.py; done
 ```
 
 ## Run the whole thing (needs Yahoo access)
