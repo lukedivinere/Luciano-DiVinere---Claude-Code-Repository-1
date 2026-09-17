@@ -103,8 +103,27 @@ def _sources_section(news_by_symbol: Optional[dict]) -> str:
     return "\n".join(urls) if urls else "_Price/volume data via yfinance; no news links today._"
 
 
+def _earnings_md(earnings: Optional[dict]) -> str:
+    earnings = earnings or {}
+    if not earnings:
+        return "_No earnings in the recent/upcoming window (or Finnhub key not set)._"
+    lines = []
+    for sym in sorted(earnings):
+        e = earnings[sym]
+        status = e["status"].title()
+        if e["eps_actual"] is not None:
+            sp = e["eps_surprise_pct"]
+            sp_txt = f" ({sp:+}%)" if sp is not None else ""
+            eps = f"EPS {e['eps_actual']} vs {e['eps_estimate']} est{sp_txt}"
+        else:
+            eps = f"EPS est {e['eps_estimate']}"
+        lines.append(f"- **{sym}** — {status} ({e['date']} {e['hour']}): {eps}")
+    return "\n".join(lines)
+
+
 def build_report(ranked: list[dict], news_by_symbol: Optional[dict] = None,
-                 as_of: Optional[str] = None, indices: Optional[dict] = None) -> str:
+                 as_of: Optional[str] = None, indices: Optional[dict] = None,
+                 earnings: Optional[dict] = None) -> str:
     """Assemble the full Markdown briefing."""
     as_of = as_of or date.today().isoformat()
 
@@ -122,7 +141,7 @@ def build_report(ranked: list[dict], news_by_symbol: Optional[dict] = None,
 {_why_blocks(ranked)}
 
 ## 3. Earnings roundup
-_Not yet wired_ — no earnings collector yet (planned: Finnhub / Nasdaq calendar).
+{_earnings_md(earnings)}
 
 ## 4. Notable developments
 {_developments_section(news_by_symbol)}

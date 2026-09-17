@@ -24,15 +24,15 @@ def _mem_conn():
 def test_insert_and_read_back():
     conn = _mem_conn()
     n = store.upsert_price_snapshots(conn, [
-        _snap("AAPL", "2024-01-02T12:00:00+00:00", 190.0),
-        _snap("MSFT", "2024-01-02T12:00:00+00:00", 400.0),
+        _snap("NVDA", "2024-01-02T12:00:00+00:00", 190.0),
+        _snap("PLTR", "2024-01-02T12:00:00+00:00", 400.0),
     ])
     assert n == 2
     latest = store.latest_snapshots(conn)
-    assert {r["symbol"] for r in latest} == {"AAPL", "MSFT"}
-    # Sector tagging happens at write time.
-    aapl = next(r for r in latest if r["symbol"] == "AAPL")
-    assert aapl["sector"] == "Technology"
+    assert {r["symbol"] for r in latest} == {"NVDA", "PLTR"}
+    # Sector tagging happens at write time (from config.SECTORS).
+    nvda = next(r for r in latest if r["symbol"] == "NVDA")
+    assert nvda["sector"] == "Semiconductors"
 
 
 def test_same_day_upsert_dedupes():
