@@ -42,7 +42,11 @@ Being built incrementally per the build plan (Section 6). Current progress:
 - [x] **Sparklines**: `sparkline.py` — inline-SVG trend lines drawn from the
       stored price history, shown per ticker in the movers table
       (`tests/test_sparkline.py`).
-- [ ] Later — earnings collector (Finnhub) to fill report section 3
+- [x] **Earnings collector**: `collectors/earnings.py` — Finnhub earnings
+      calendar (beats/misses vs. estimates), filling report section 3
+      (`tests/test_earnings.py`). Needs `FINNHUB_API_KEY`; no-ops without it.
+- [x] **Daily stance**: `stance.py` — per-holding rules-based read
+      (config-tunable thresholds) (`tests/test_stance.py`).
 
 ## Layout
 

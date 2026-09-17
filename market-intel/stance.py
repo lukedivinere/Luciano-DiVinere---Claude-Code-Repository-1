@@ -14,6 +14,11 @@ from __future__ import annotations
 
 from typing import Optional
 
+import config
+
+CONSTRUCTIVE_RATIO = getattr(config, "STANCE_CONSTRUCTIVE_RATIO", 0.72)
+WATCH_RATIO = getattr(config, "STANCE_WATCH_RATIO", 0.42)
+
 # One-line disclaimer surfaced with the stance section.
 STANCE_DISCLAIMER = (
     "Stance is a mechanical read of the rules-based screen, not a "
@@ -50,7 +55,7 @@ def classify(record: dict) -> dict:
         }
 
     # Clean, strong setup (and not trading below its own short MA).
-    if ratio >= 0.8 and not f["below_ma"]:
+    if ratio >= CONSTRUCTIVE_RATIO and not f["below_ma"]:
         return {
             "stance": "Constructive",
             "lean": "Momentum, trend and volume are aligned",
@@ -58,7 +63,7 @@ def classify(record: dict) -> dict:
         }
 
     # Genuinely weak: below its moving average or fading momentum.
-    if f["below_ma"] or f["weak_momo"] or ratio < 0.3:
+    if f["below_ma"] or f["weak_momo"]:
         return {
             "stance": "Cautious",
             "lean": "Trend / momentum look weak",
@@ -67,7 +72,7 @@ def classify(record: dict) -> dict:
         }
 
     # Mixed but holding up (e.g. above its MA but not a full uptrend stack).
-    if ratio >= 0.45:
+    if ratio >= WATCH_RATIO:
         return {
             "stance": "Watch",
             "lean": "Partly constructive, mixed signals",
@@ -88,6 +93,13 @@ def build_stance(record: dict, news_items: Optional[list] = None) -> dict:
     top_news = None
     if news_items:
         best = max(news_items, key=lambda a: a.get("relevance_score", 0))
+        # A quiet name with real news today is worth watching.
+        if verdict["stance"] == "Neutral":
+            verdict = {
+                "stance": "Watch",
+                "lean": "Quiet on the screen, but in the news today",
+                "note": "No strong technical signal, but there's fresh news worth reading.",
+            }
         top_news = {
             "title": best.get("title", ""),
             "source": best.get("source", ""),

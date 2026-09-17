@@ -47,6 +47,11 @@ SECTORS = {
 # Show a per-holding daily "stance" section (rules-based signal, not advice).
 DAILY_STANCE_ENABLED = True
 
+# Stance thresholds — fraction of the max screen score. Tune as you watch
+# real output: raise to make "Constructive" harder to earn, lower to loosen.
+STANCE_CONSTRUCTIVE_RATIO = 0.72   # >= this (and not below MA) -> Constructive
+STANCE_WATCH_RATIO = 0.42          # >= this -> Watch (mixed but holding up)
+
 # Market indices for the report's snapshot section (Yahoo ^ symbols).
 INDICES = {
     "^GSPC": "S&P 500",

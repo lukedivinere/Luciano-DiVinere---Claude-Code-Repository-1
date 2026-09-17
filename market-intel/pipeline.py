@@ -21,6 +21,7 @@ import report
 import stance as stance_mod
 import store
 import webreport
+from collectors import earnings as earnings_collector
 from collectors import indices as index_collector
 from collectors import news as news_collector
 from collectors import prices as price_collector
@@ -34,6 +35,7 @@ def run(
     collect_prices: Optional[Callable[[list[str]], dict]] = None,
     collect_news: Optional[Callable[[str], list]] = None,
     collect_indices: Optional[Callable[[], dict]] = None,
+    collect_earnings: Optional[Callable[[list[str]], dict]] = None,
     as_of: Optional[str] = None,
     write_report: bool = True,
 ) -> dict:
@@ -54,6 +56,7 @@ def run(
     collect_prices = collect_prices or price_collector.collect_many
     collect_news = collect_news or news_collector.get_news
     collect_indices = collect_indices or index_collector.collect_indices
+    collect_earnings = collect_earnings or earnings_collector.get_earnings
 
     conn = store.connect(db_path)
 
@@ -89,14 +92,18 @@ def run(
     stances = (stance_mod.build_stances(ranked, news_by_symbol)
                if getattr(config, "DAILY_STANCE_ENABLED", False) else None)
 
+    # 4d. Earnings roundup (best-effort; empty without a Finnhub key).
+    earnings = collect_earnings(symbols).get("by_symbol", {})
+
     # 5. Build (and optionally write) the report in both Markdown and HTML.
     markdown = report.build_report(ranked, news_by_symbol, as_of=as_of,
-                                   indices=index_snapshots)
+                                   indices=index_snapshots, earnings=earnings)
     html_page = webreport.build_html(ranked, news_by_symbol, as_of=as_of,
                                      indices=index_snapshots,
                                      history_by_symbol=history_by_symbol,
                                      stances=stances,
-                                     stance_disclaimer=stance_mod.STANCE_DISCLAIMER)
+                                     stance_disclaimer=stance_mod.STANCE_DISCLAIMER,
+                                     earnings=earnings)
     report_path = html_path = None
     if write_report:
         report_path = report.save_report(markdown, report_dir, as_of=as_of)

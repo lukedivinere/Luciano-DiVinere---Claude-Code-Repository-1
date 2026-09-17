@@ -163,6 +163,62 @@ def _stance_section(stances: Optional[list], disclaimer: str) -> str:
     )
 
 
+def _fmt_money(v) -> str:
+    """Compact money formatting for revenue figures."""
+    if v is None:
+        return "—"
+    try:
+        v = float(v)
+    except (TypeError, ValueError):
+        return "—"
+    for unit, size in (("B", 1e9), ("M", 1e6), ("K", 1e3)):
+        if abs(v) >= size:
+            return f"${v / size:.2f}{unit}"
+    return f"${v:.0f}"
+
+
+_EARN_BADGE = {"beat": "st-good", "miss": "st-warn", "inline": "st-neutral",
+               "reported": "st-neutral", "upcoming": "st-watch"}
+_EARN_LABEL = {"beat": "Beat", "miss": "Miss", "inline": "In line",
+               "reported": "Reported", "upcoming": "Upcoming"}
+
+
+def _earnings_section(earnings: Optional[dict]) -> str:
+    if not earnings:
+        return ('<p class="muted">No earnings in the recent/upcoming window '
+                '(or Finnhub key not set).</p>')
+    cards = []
+    for sym in sorted(earnings):
+        e = earnings[sym]
+        badge = _EARN_BADGE.get(e["status"], "st-neutral")
+        label = _EARN_LABEL.get(e["status"], e["status"].title())
+
+        def _surprise(pct):
+            if pct is None:
+                return ""
+            cls = "up" if pct > 0 else "down" if pct < 0 else "flat"
+            return f' <span class="num {cls}">({_signed(pct)}%)</span>'
+
+        eps = (f'EPS <b>{_esc(e["eps_actual"])}</b> vs {_esc(e["eps_estimate"])} est'
+               f'{_surprise(e["eps_surprise_pct"])}' if e["eps_actual"] is not None
+               else f'EPS est {_esc(e["eps_estimate"])}')
+        rev = (f'Rev <b>{_fmt_money(e["rev_actual"])}</b> vs {_fmt_money(e["rev_estimate"])} est'
+               f'{_surprise(e["rev_surprise_pct"])}' if e["rev_actual"] is not None
+               else f'Rev est {_fmt_money(e["rev_estimate"])}')
+
+        cards.append(
+            '<article class="dev">'
+            '<div class="dev-head">'
+            f'<span class="chip">{_esc(sym)}</span>'
+            f'<span class="badge {badge}">{_esc(label)}</span>'
+            f'<span class="muted">{_esc(e["date"])} {_esc(e["hour"])}</span>'
+            "</div>"
+            f'<p class="dev-summary">{eps}<br>{rev}</p>'
+            "</article>"
+        )
+    return "".join(cards)
+
+
 def _movers_rows(ranked: list[dict], history_by_symbol: Optional[dict] = None) -> str:
     history_by_symbol = history_by_symbol or {}
     rows = []
@@ -361,7 +417,8 @@ def build_html(ranked: list[dict], news_by_symbol: Optional[dict] = None,
                as_of: Optional[str] = None, indices: Optional[dict] = None,
                history_by_symbol: Optional[dict] = None,
                stances: Optional[list] = None,
-               stance_disclaimer: str = "") -> str:
+               stance_disclaimer: str = "",
+               earnings: Optional[dict] = None) -> str:
     """Render the full standalone HTML briefing page."""
     as_of = as_of or date.today().isoformat()
 
@@ -410,7 +467,7 @@ def build_html(ranked: list[dict], news_by_symbol: Optional[dict] = None,
   {_why_blocks(ranked)}
 
   <h2>Earnings roundup</h2>
-  <p class="muted">Not yet wired — earnings collector (Finnhub) is the next planned addition.</p>
+  {_earnings_section(earnings)}
 
   <h2>Notable developments</h2>
   {_developments(news_by_symbol)}

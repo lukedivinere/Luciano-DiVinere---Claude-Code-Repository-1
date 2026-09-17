@@ -106,6 +106,18 @@ def test_stance_section_renders():
     assert "stance-card" in html
 
 
+def test_earnings_section_renders():
+    earnings = {"NVDA": {"symbol": "NVDA", "date": "2026-08-27", "hour": "after close",
+                         "status": "beat", "eps_actual": 0.68, "eps_estimate": 0.64,
+                         "eps_surprise_pct": 6.3, "rev_actual": 30040000000,
+                         "rev_estimate": 28700000000, "rev_surprise_pct": 4.7}}
+    html = webreport.build_html(_ranked(), {}, as_of="2026-08-27", earnings=earnings)
+    assert "Earnings roundup" in html
+    assert ">Beat<" in html
+    assert "$30.04B" in html            # revenue money-formatted
+    assert "(+6.3%)" in html            # eps surprise shown
+
+
 def test_empty_renders_safely():
     html = webreport.build_html([], {}, as_of="2024-06-03")
     assert "No data collected." in html
