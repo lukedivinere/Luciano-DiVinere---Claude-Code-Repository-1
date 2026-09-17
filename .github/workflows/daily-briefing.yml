@@ -1,10 +1,13 @@
 name: Daily Market Briefing
 
-# Runs on weekdays before the US market open. Cron is in UTC — 12:00 UTC is
-# ~07:00/08:00 ET depending on daylight saving. Adjust to your timezone.
+# Rebuilds through the trading day so the page is current whenever you open
+# it. Cron is UTC and best-effort (GitHub may delay under load). 08:00-23:59
+# UTC weekdays spans roughly pre-market (~4am ET) through after-hours (~8pm
+# ET) across daylight-saving shifts. Public repos get free Actions minutes.
 on:
   schedule:
-    - cron: "0 12 * * 1-5"
+    - cron: "*/30 8-23 * * 1-5"   # every 30 min, extended-hours window
+    - cron: "0 0,1 * * 2-6"       # tail end of US after-hours (00:00-01:00 UTC)
   workflow_dispatch: {}   # allow manual runs from the Actions tab
 
 # Needed for the GitHub Pages deploy job.
@@ -37,7 +40,7 @@ jobs:
 
       - name: Run offline test suite
         run: |
-          for t in prices store news ranking report pipeline delivery indices webreport sparkline stance earnings; do
+          for t in prices store news ranking report pipeline delivery indices webreport sparkline stance earnings market; do
             python tests/test_$t.py
           done
 

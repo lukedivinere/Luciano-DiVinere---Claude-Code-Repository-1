@@ -22,6 +22,7 @@ from datetime import date
 from typing import Optional
 from urllib.parse import urlparse
 
+import market
 import sparkline
 
 DISCLAIMER = (
@@ -219,8 +220,20 @@ def _earnings_section(earnings: Optional[dict]) -> str:
     return "".join(cards)
 
 
-def _movers_rows(ranked: list[dict], history_by_symbol: Optional[dict] = None) -> str:
+def _extended_cell(ext: Optional[dict]) -> str:
+    """After-hours / pre-market move cell — only meaningful in those sessions."""
+    if not ext or not market.is_extended(ext.get("session", "")):
+        return '<td class="num muted">—</td>'
+    pct = ext.get("extended_change_pct")
+    if pct is None:
+        return '<td class="num muted">—</td>'
+    return f'<td class="num {_chg_class(pct)}">{_arrow(pct)} {_signed(pct)}</td>'
+
+
+def _movers_rows(ranked: list[dict], history_by_symbol: Optional[dict] = None,
+                 extended_by_symbol: Optional[dict] = None) -> str:
     history_by_symbol = history_by_symbol or {}
+    extended_by_symbol = extended_by_symbol or {}
     rows = []
     for i, r in enumerate(ranked, 1):
         series = history_by_symbol.get(r["symbol"]) or []
@@ -238,6 +251,7 @@ def _movers_rows(ranked: list[dict], history_by_symbol: Optional[dict] = None) -
             f'<span class="bar"><span class="bar-fill" style="width:{pct_of_max:.0f}%"></span></span></td>'
             f'<td class="num">${_esc(r["price"])}</td>'
             f'<td class="num {_chg_class(pct)}">{_arrow(pct)} {_signed(pct)}</td>'
+            f'{_extended_cell(extended_by_symbol.get(r["symbol"]))}'
             f'<td class="num">{_esc(r["volume_ratio"])}×</td>'
             f'<td class="num">{_esc(r["rsi"])}</td>'
             "</tr>"
@@ -331,7 +345,10 @@ body { margin:0; background:var(--bg); color:var(--fg);
   border-radius:0 0 18px 18px; padding:28px 24px 24px; margin:0 -16px 24px;
   box-shadow:var(--shadow); }
 .hero h1 { margin:0; font-size:1.5rem; letter-spacing:-.01em; }
-.hero .date { opacity:.85; margin:4px 0 18px; font-size:.9rem; }
+.hero .date { opacity:.85; margin:4px 0 4px; font-size:.9rem; }
+.hero .updated { opacity:.9; margin:0 0 16px; font-size:.82rem; display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
+.hero .sess { background:rgba(255,255,255,.18); border:1px solid rgba(255,255,255,.25);
+  padding:1px 9px; border-radius:999px; font-weight:600; }
 .stats { display:flex; flex-wrap:wrap; gap:10px; }
 .stat { background:rgba(255,255,255,.12); border:1px solid rgba(255,255,255,.16);
   border-radius:12px; padding:10px 14px; min-width:100px; }
@@ -418,9 +435,21 @@ def build_html(ranked: list[dict], news_by_symbol: Optional[dict] = None,
                history_by_symbol: Optional[dict] = None,
                stances: Optional[list] = None,
                stance_disclaimer: str = "",
-               earnings: Optional[dict] = None) -> str:
+               earnings: Optional[dict] = None,
+               extended_by_symbol: Optional[dict] = None,
+               updated_at: str = "",
+               session_label: str = "") -> str:
     """Render the full standalone HTML briefing page."""
     as_of = as_of or date.today().isoformat()
+
+    freshness = ""
+    if updated_at or session_label:
+        parts = []
+        if updated_at:
+            parts.append(f"Updated {_esc(updated_at)}")
+        if session_label:
+            parts.append(f'<span class="sess">{_esc(session_label)}</span>')
+        freshness = f'<p class="updated">{" · ".join(parts)}</p>'
 
     stance_block = ""
     if stances:
@@ -434,8 +463,8 @@ def build_html(ranked: list[dict], news_by_symbol: Optional[dict] = None,
             '<div class="card"><table><thead><tr>'
             "<th>#</th><th>Ticker</th><th>Sector</th><th>Trend</th><th>Score</th>"
             "<th class='num'>Price</th><th class='num'>Chg%</th>"
-            "<th class='num'>Vol×</th><th class='num'>RSI</th>"
-            f"</tr></thead><tbody>{_movers_rows(ranked, history_by_symbol)}</tbody></table></div>"
+            "<th class='num'>After hrs</th><th class='num'>Vol×</th><th class='num'>RSI</th>"
+            f"</tr></thead><tbody>{_movers_rows(ranked, history_by_symbol, extended_by_symbol)}</tbody></table></div>"
         )
     else:
         movers = '<p class="muted">No data collected.</p>'
@@ -453,6 +482,7 @@ def build_html(ranked: list[dict], news_by_symbol: Optional[dict] = None,
   <header class="hero">
     <h1>Daily Market Intelligence Briefing</h1>
     <p class="date">{_esc(as_of)}</p>
+    {freshness}
     {_stat_tiles(ranked)}
   </header>
 

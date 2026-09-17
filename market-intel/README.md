@@ -47,6 +47,11 @@ Being built incrementally per the build plan (Section 6). Current progress:
       (`tests/test_earnings.py`). Needs `FINNHUB_API_KEY`; no-ops without it.
 - [x] **Daily stance**: `stance.py` — per-holding rules-based read
       (config-tunable thresholds) (`tests/test_stance.py`).
+- [x] **Extended hours + freshness**: `market.py` session helper; price
+      collector adds best-effort pre/post-market price; the page shows an
+      "After hrs" move column and an "Updated … · session" badge. The
+      workflow rebuilds every ~30 min through the extended-hours window so
+      the page is current whenever opened (`tests/test_market.py`).
 
 ## Layout
 
@@ -78,7 +83,7 @@ market-intel/
 
 ```bash
 cd market-intel
-for t in prices store news ranking report pipeline delivery indices webreport sparkline; do python tests/test_$t.py; done
+for t in prices store news ranking report pipeline delivery indices webreport sparkline stance earnings market; do python tests/test_$t.py; done
 ```
 
 ## Run the whole thing (needs Yahoo access)

@@ -25,6 +25,7 @@ import pandas as pd
 import yfinance as yf
 
 import config
+import market
 
 
 @dataclass
@@ -33,7 +34,7 @@ class PriceSnapshot:
 
     symbol: str
     as_of: str                 # UTC ISO timestamp of collection
-    current_price: float
+    current_price: float       # last REGULAR-session close (used by ranking)
     prev_close: float
     change_pct: float          # % change vs. previous close
     volume: int
@@ -42,9 +43,32 @@ class PriceSnapshot:
     ma_short: float            # MA over MA_SHORT_WINDOW
     ma_long: float             # MA over MA_LONG_WINDOW
     rsi: float
+    # Extended-hours (best-effort; default to safe/no-op values).
+    last_price: Optional[float] = None      # latest incl. pre/post market
+    session: str = ""                        # pre-market / open / after-hours / closed
+    extended_change_pct: Optional[float] = None  # last_price vs regular close
 
     def as_dict(self) -> dict:
         return asdict(self)
+
+
+def _extended(stock: "yf.Ticker", regular_close: float) -> tuple:
+    """Best-effort latest price incl. pre/post market. Never raises.
+
+    Returns (last_price, session, extended_change_pct). Falls back to the
+    regular close and a clock-based session when intraday data is missing.
+    """
+    try:
+        intr = stock.history(period="1d", interval="5m", prepost=True)
+        if intr is None or intr.empty:
+            return regular_close, market.session_for(), None
+        last_price = float(intr["Close"].dropna().iloc[-1])
+        last_ts = intr.index[-1].to_pydatetime()
+        session = market.session_for(last_ts) if last_ts.tzinfo else market.session_for()
+        ext = round((last_price - regular_close) / regular_close * 100, 2) if regular_close else None
+        return round(last_price, 2), session, ext
+    except Exception:  # noqa: BLE001 - extended data is optional
+        return regular_close, market.session_for(), None
 
 
 def calculate_rsi(close: pd.Series, period: int = config.RSI_PERIOD) -> pd.Series:
@@ -90,10 +114,13 @@ def collect(symbol: str) -> PriceSnapshot:
     ma_long = float(close.rolling(config.MA_LONG_WINDOW).mean().iloc[-1])
     rsi = float(calculate_rsi(close).iloc[-1])
 
+    reg_close = round(current_price, 2)
+    last_price, session, ext_pct = _extended(stock, reg_close)
+
     return PriceSnapshot(
         symbol=symbol,
         as_of=datetime.now(timezone.utc).isoformat(timespec="seconds"),
-        current_price=round(current_price, 2),
+        current_price=reg_close,
         prev_close=round(prev_close, 2),
         change_pct=round(change_pct, 2),
         volume=today_volume,
@@ -102,6 +129,9 @@ def collect(symbol: str) -> PriceSnapshot:
         ma_short=round(ma_short, 2),
         ma_long=round(ma_long, 2),
         rsi=round(rsi, 2),
+        last_price=last_price,
+        session=session,
+        extended_change_pct=ext_pct,
     )
 
 

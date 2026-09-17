@@ -12,10 +12,11 @@ that was collected, plus any prior day's stored snapshots.
 
 from __future__ import annotations
 
-from datetime import date
+from datetime import date, datetime, timezone
 from typing import Callable, Optional
 
 import config
+import market
 import ranking
 import report
 import stance as stance_mod
@@ -95,6 +96,16 @@ def run(
     # 4d. Earnings roundup (best-effort; empty without a Finnhub key).
     earnings = collect_earnings(symbols).get("by_symbol", {})
 
+    # 4e. Extended-hours (pre/post market) per symbol + freshness stamp.
+    extended_by_symbol = {
+        sym: {"last_price": s.get("last_price"),
+              "session": s.get("session"),
+              "extended_change_pct": s.get("extended_change_pct")}
+        for sym, s in snapshots.items()
+    }
+    updated_at = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
+    session_label = market.label_for()
+
     # 5. Build (and optionally write) the report in both Markdown and HTML.
     markdown = report.build_report(ranked, news_by_symbol, as_of=as_of,
                                    indices=index_snapshots, earnings=earnings)
@@ -103,7 +114,10 @@ def run(
                                      history_by_symbol=history_by_symbol,
                                      stances=stances,
                                      stance_disclaimer=stance_mod.STANCE_DISCLAIMER,
-                                     earnings=earnings)
+                                     earnings=earnings,
+                                     extended_by_symbol=extended_by_symbol,
+                                     updated_at=updated_at,
+                                     session_label=session_label)
     report_path = html_path = None
     if write_report:
         report_path = report.save_report(markdown, report_dir, as_of=as_of)
