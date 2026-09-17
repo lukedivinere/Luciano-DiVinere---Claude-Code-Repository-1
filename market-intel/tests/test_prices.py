@@ -29,10 +29,14 @@ def _fake_history(n=60, start=100.0, step=1.0, volume=1_000_000):
 
 
 class _FakeTicker:
-    def __init__(self, df):
+    def __init__(self, df, intraday=None):
         self._df = df
+        self._intraday = intraday
 
-    def history(self, period=None):
+    def history(self, period=None, interval=None, prepost=False):
+        # The intraday/prepost call passes interval; the daily call does not.
+        if interval is not None and self._intraday is not None:
+            return self._intraday
         return self._df
 
 
@@ -64,6 +68,25 @@ def test_collect_rising_series():
 
     # RSI of a strict uptrend (no down days) is 100.
     assert snap.rsi == 100.0
+
+
+def test_extended_hours_price():
+    daily = _fake_history()                       # last regular close = 159.0
+    # An after-hours intraday tick above the close, tz-aware ET evening.
+    idx = pd.date_range("2026-09-16 18:00", periods=1, freq="5min", tz="America/New_York")
+    intraday = pd.DataFrame({"Close": [162.0]}, index=idx)
+
+    original = prices.yf.Ticker
+    prices.yf.Ticker = lambda symbol: _FakeTicker(daily, intraday=intraday)
+    try:
+        snap = prices.collect("test")
+    finally:
+        prices.yf.Ticker = original
+
+    assert snap.current_price == 159.0            # regular close unchanged
+    assert snap.last_price == 162.0               # extended tick
+    assert snap.session == "after-hours"
+    assert snap.extended_change_pct == round((162 - 159) / 159 * 100, 2)
 
 
 def test_insufficient_history_raises():

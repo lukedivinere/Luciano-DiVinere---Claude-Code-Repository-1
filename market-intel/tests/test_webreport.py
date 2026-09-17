@@ -118,6 +118,27 @@ def test_earnings_section_renders():
     assert "(+6.3%)" in html            # eps surprise shown
 
 
+def test_freshness_and_after_hours():
+    ext = {"NVDA": {"last_price": 122.5, "session": "after-hours",
+                    "extended_change_pct": 2.1}}
+    html = webreport.build_html(
+        _ranked(), {}, as_of="2026-09-16",
+        extended_by_symbol=ext, updated_at="2026-09-16 22:05 UTC",
+        session_label="After hours",
+    )
+    assert "Updated 2026-09-16 22:05 UTC" in html
+    assert "After hours" in html
+    assert "<th class='num'>After hrs</th>" in html
+    assert "▲ +2.1" in html            # extended move shown with arrow
+
+
+def test_after_hours_hidden_during_regular_session():
+    # In an open session the extended cell is a dash, not a move.
+    ext = {"NVDA": {"last_price": 120.0, "session": "open", "extended_change_pct": 0.0}}
+    html = webreport.build_html(_ranked(), {}, as_of="2026-09-16", extended_by_symbol=ext)
+    assert "<th class='num'>After hrs</th>" in html
+
+
 def test_empty_renders_safely():
     html = webreport.build_html([], {}, as_of="2024-06-03")
     assert "No data collected." in html
