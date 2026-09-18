@@ -85,7 +85,7 @@ market-intel/
 
 ```bash
 cd market-intel
-for t in prices store news ranking report pipeline delivery indices webreport sparkline stance earnings market; do python tests/test_$t.py; done
+for t in prices store news ranking report pipeline delivery indices webreport sparkline stance earnings market portfolio; do python tests/test_$t.py; done
 ```
 
 ## Run the whole thing (needs Yahoo access)
