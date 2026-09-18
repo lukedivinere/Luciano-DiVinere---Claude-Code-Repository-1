@@ -53,6 +53,15 @@ def test_compute_totals_and_cash():
     assert out["rows"][0]["value"] >= out["rows"][1]["value"]
 
 
+def test_adjustment_applied_to_total():
+    h = dict(HOLDINGS)
+    h["adjustment"] = -50.0
+    out = portfolio.compute(h, PRICES)
+    exp_value = 3 * 214.0 + 8 * 172.0
+    assert out["adjustment"] == -50.0
+    assert out["total_assets"] == round(exp_value + 100.0 - 50.0, 2)  # +cash, +adjustment
+
+
 def test_missing_price_excluded_from_totals():
     prices = {"NVDA": {"current_price": 214.0, "prev_close": 212.0}}  # no PLTR
     out = portfolio.compute(HOLDINGS, prices)

@@ -230,6 +230,65 @@ def _extended_cell(ext: Optional[dict]) -> str:
     return f'<td class="num {_chg_class(pct)}">{_arrow(pct)} {_signed(pct)}</td>'
 
 
+def _money(v) -> str:
+    try:
+        v = float(v)
+    except (TypeError, ValueError):
+        return "—"
+    return f"${v:,.2f}" if v >= 0 else f"-${abs(v):,.2f}"
+
+
+def _smoney(v) -> str:
+    try:
+        v = float(v)
+    except (TypeError, ValueError):
+        return "—"
+    return f"+${v:,.2f}" if v > 0 else (f"-${abs(v):,.2f}" if v < 0 else "$0.00")
+
+
+def _portfolio_section(pf: Optional[dict]) -> str:
+    """Full-dollar portfolio P&L (holdings, value, gain/loss)."""
+    if not pf or not pf.get("rows"):
+        return ""
+    priced = [r for r in pf["rows"] if r.get("status") == "ok"]
+    if not priced:
+        return ""
+
+    tg, td = pf["total_gain"], pf["day_change"]
+    tiles = (
+        '<div class="pstats">'
+        f'<div class="pstat"><div class="k">Account total</div><div class="v">{_money(pf["total_assets"])}</div></div>'
+        f'<div class="pstat"><div class="k">Total gain/loss</div><div class="v {_chg_class(tg)}">{_arrow(tg)} {_smoney(tg)} '
+        f'<span class="sub">{_signed(pf["total_gain_pct"])}%</span></div></div>'
+        f'<div class="pstat"><div class="k">Today</div><div class="v {_chg_class(td)}">{_arrow(td)} {_smoney(td)}</div></div>'
+        f'<div class="pstat"><div class="k">Cash</div><div class="v">{_money(pf["cash"])}</div></div>'
+        "</div>"
+    )
+
+    body = []
+    for r in priced:
+        body.append(
+            "<tr>"
+            f'<td class="sym">{_esc(r["symbol"])}</td>'
+            f'<td class="num">{_esc(("%g" % r["qty"]))}</td>'
+            f'<td class="num">{_money(r["cost"])}</td>'
+            f'<td class="num">{_money(r["price"])}</td>'
+            f'<td class="num strong">{_money(r["value"])}</td>'
+            f'<td class="num {_chg_class(r["gain"])}">{_arrow(r["gain"])} {_smoney(r["gain"])}'
+            f'<span class="sub">{_signed(r["gain_pct"])}%</span></td>'
+            f'<td class="num {_chg_class(r["day_change"])}">{_arrow(r["day_change"])} {_smoney(r["day_change"])}</td>'
+            "</tr>"
+        )
+    table = (
+        '<div class="card"><table><thead><tr>'
+        "<th>Holding</th><th class='num'>Qty</th><th class='num'>Avg cost</th>"
+        "<th class='num'>Last</th><th class='num'>Value</th><th class='num'>Total G/L</th>"
+        "<th class='num'>Today</th>"
+        f"</tr></thead><tbody>{''.join(body)}</tbody></table></div>"
+    )
+    return tiles + table
+
+
 def _movers_rows(ranked: list[dict], history_by_symbol: Optional[dict] = None,
                  extended_by_symbol: Optional[dict] = None) -> str:
     history_by_symbol = history_by_symbol or {}
@@ -387,6 +446,14 @@ td.sector { color:var(--muted); font-size:.85rem; }
 .spark-cell { width:104px; }
 .spark { display:block; }
 .spark.up { color:var(--up); } .spark.down { color:var(--down); } .spark.flat { color:var(--muted); }
+.pstats { display:flex; flex-wrap:wrap; gap:12px; margin-bottom:14px; }
+.pstat { flex:1 1 150px; background:var(--card); border:1px solid var(--border);
+  border-radius:14px; padding:14px 16px; box-shadow:var(--shadow); }
+.pstat .k { font-size:.75rem; text-transform:uppercase; letter-spacing:.04em; color:var(--muted); }
+.pstat .v { font-size:1.3rem; font-weight:700; margin-top:3px; font-variant-numeric:tabular-nums; }
+.pstat .v .sub { font-size:.85rem; font-weight:600; }
+td.strong { font-weight:700; }
+td .sub { display:block; font-size:.74rem; opacity:.8; }
 td.score { min-width:120px; }
 .score-num { font-weight:600; margin-right:8px; }
 .bar { display:inline-block; width:60px; height:6px; background:var(--border);
@@ -443,7 +510,8 @@ def build_html(ranked: list[dict], news_by_symbol: Optional[dict] = None,
                extended_by_symbol: Optional[dict] = None,
                updated_at: str = "",
                session_label: str = "",
-               auto_refresh_secs: int = 0) -> str:
+               auto_refresh_secs: int = 0,
+               portfolio: Optional[dict] = None) -> str:
     """Render the full standalone HTML briefing page.
 
     auto_refresh_secs > 0 makes an open tab reload itself on that interval
@@ -472,6 +540,9 @@ def build_html(ranked: list[dict], news_by_symbol: Optional[dict] = None,
             "else{setTimeout(t,s);}}setTimeout(t,s);})();</script>"
             % int(auto_refresh_secs)
         )
+
+    portfolio_html = _portfolio_section(portfolio)
+    portfolio_block = f"<h2>Your portfolio</h2>\n{portfolio_html}" if portfolio_html else ""
 
     stance_block = ""
     if stances:
@@ -507,6 +578,8 @@ def build_html(ranked: list[dict], news_by_symbol: Optional[dict] = None,
     {freshness}
     {_stat_tiles(ranked)}
   </header>
+
+  {portfolio_block}
 
   <h2>Market snapshot</h2>
   {_index_tiles(indices)}

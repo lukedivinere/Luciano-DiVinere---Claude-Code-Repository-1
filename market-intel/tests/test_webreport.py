@@ -155,6 +155,23 @@ def test_no_auto_refresh_when_disabled():
     assert "auto-refresh" not in html
 
 
+def test_portfolio_section_renders_dollars():
+    import portfolio
+    holdings = {"cash": 100.0, "positions": {"NVDA": {"qty": 3, "cost": 200.0}}}
+    prices = {"NVDA": {"current_price": 214.0, "prev_close": 212.0}}
+    pnl = portfolio.compute(holdings, prices)
+    html = webreport.build_html(_ranked(), {}, as_of="2026-09-18", portfolio=pnl)
+    assert "Your portfolio" in html
+    assert "Account total" in html
+    assert "$642.00" in html            # 3 x $214 position value
+    assert "▲ +$42.00" in html          # gain 3 x (214-200)
+
+
+def test_no_portfolio_section_without_data():
+    html = webreport.build_html(_ranked(), {}, as_of="2026-09-18")
+    assert "Your portfolio" not in html
+
+
 def test_empty_renders_safely():
     html = webreport.build_html([], {}, as_of="2024-06-03")
     assert "No data collected." in html

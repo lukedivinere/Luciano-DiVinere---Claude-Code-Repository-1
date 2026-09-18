@@ -1,0 +1,22 @@
+{
+  "cash": 177.54,
+  "adjustment": -156.57,
+  "positions": {
+    "PLTR": {"qty": 8,    "cost": 151.77},
+    "NVDA": {"qty": 3,    "cost": 201.14},
+    "HOOD": {"qty": 8,    "cost": 92.06},
+    "UBER": {"qty": 7,    "cost": 74.99},
+    "ACHR": {"qty": 133,  "cost": 5.24},
+    "RKLB": {"qty": 6,    "cost": 79.14},
+    "ENPH": {"qty": 5,    "cost": 71.84},
+    "NNOX": {"qty": 350,  "cost": 2.90},
+    "AIQ":  {"qty": 12,   "cost": 64.66},
+    "DRAM": {"qty": 4,    "cost": 63.91},
+    "IBIT": {"qty": 10,   "cost": 40.49},
+    "QQQM": {"qty": 1,    "cost": 292.61},
+    "ROBO": {"qty": 2,    "cost": 78.29},
+    "SCHG": {"qty": 10,   "cost": 30.42},
+    "SPYM": {"qty": 9.5,  "cost": 90.27},
+    "XLF":  {"qty": 7,    "cost": 57.25}
+  }
+}

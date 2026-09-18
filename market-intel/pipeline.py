@@ -17,6 +17,7 @@ from typing import Callable, Optional
 
 import config
 import market
+import portfolio as portfolio_mod
 import ranking
 import report
 import stance as stance_mod
@@ -103,6 +104,17 @@ def run(
               "extended_change_pct": s.get("extended_change_pct")}
         for sym, s in snapshots.items()
     }
+    # 4f. Portfolio P&L from live prices (holdings from secret or holdings.json).
+    holdings = portfolio_mod.load()
+    pnl = None
+    if portfolio_mod.has_holdings(holdings):
+        price_by_symbol = {
+            sym: {"current_price": s.get("current_price"),
+                  "prev_close": s.get("prev_close")}
+            for sym, s in snapshots.items()
+        }
+        pnl = portfolio_mod.compute(holdings, price_by_symbol)
+
     updated_at = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
     current_session = market.session_for()
     session_label = market.LABEL[current_session]
@@ -122,7 +134,8 @@ def run(
                                      extended_by_symbol=extended_by_symbol,
                                      updated_at=updated_at,
                                      session_label=session_label,
-                                     auto_refresh_secs=auto_refresh_secs)
+                                     auto_refresh_secs=auto_refresh_secs,
+                                     portfolio=pnl)
     report_path = html_path = None
     if write_report:
         report_path = report.save_report(markdown, report_dir, as_of=as_of)

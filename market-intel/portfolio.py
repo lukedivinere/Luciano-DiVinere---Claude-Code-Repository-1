@@ -30,16 +30,33 @@ def parse_portfolio(raw) -> dict:
         except (ValueError, TypeError):
             return {"positions": {}, "cash": 0.0}
     positions = raw.get("positions", {}) or {}
-    try:
-        cash = float(raw.get("cash", 0) or 0)
-    except (TypeError, ValueError):
-        cash = 0.0
-    return {"positions": positions, "cash": cash}
+
+    def _num(key):
+        try:
+            return float(raw.get(key, 0) or 0)
+        except (TypeError, ValueError):
+            return 0.0
+
+    # `adjustment` covers things like pending activity so the total can match
+    # a broker statement.
+    return {"positions": positions, "cash": _num("cash"), "adjustment": _num("adjustment")}
 
 
 def from_env(var: str = "PORTFOLIO_JSON") -> dict:
     """Load and parse the portfolio from an environment variable."""
     return parse_portfolio(os.environ.get(var, ""))
+
+
+def load(path: str = "holdings.json", env_var: str = "PORTFOLIO_JSON") -> dict:
+    """Load holdings, preferring the env secret, then a committed JSON file."""
+    raw = os.environ.get(env_var, "")
+    if raw:
+        return parse_portfolio(raw)
+    try:
+        with open(path, encoding="utf-8") as f:
+            return parse_portfolio(f.read())
+    except (OSError, ValueError):
+        return {"positions": {}, "cash": 0.0, "adjustment": 0.0}
 
 
 def compute(portfolio: dict, price_by_symbol: dict) -> dict:
@@ -51,6 +68,7 @@ def compute(portfolio: dict, price_by_symbol: dict) -> dict:
     """
     portfolio = parse_portfolio(portfolio)
     cash = portfolio["cash"]
+    adjustment = portfolio.get("adjustment", 0.0)
 
     rows = []
     tot_value = 0.0
@@ -94,13 +112,14 @@ def compute(portfolio: dict, price_by_symbol: dict) -> dict:
         tot_basis += basis
         tot_day += day_change
 
-    total_assets = tot_value + cash
+    total_assets = tot_value + cash + adjustment
     total_gain = tot_value - tot_basis
     rows.sort(key=lambda r: r.get("value", 0), reverse=True)
 
     return {
         "rows": rows,
         "cash": round(cash, 2),
+        "adjustment": round(adjustment, 2),
         "positions_value": round(tot_value, 2),
         "total_assets": round(total_assets, 2),
         "total_basis": round(tot_basis, 2),
