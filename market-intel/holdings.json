@@ -1,6 +1,6 @@
 {
-  "cash": 177.54,
-  "adjustment": -156.57,
+  "cash": 620.97,
+  "adjustment": -523.37,
   "positions": {
     "PLTR": {"qty": 8,    "cost": 151.77},
     "NVDA": {"qty": 3,    "cost": 201.14},
@@ -17,6 +17,7 @@
     "ROBO": {"qty": 2,    "cost": 78.29},
     "SCHG": {"qty": 10,   "cost": 30.42},
     "SPYM": {"qty": 9.5,  "cost": 90.27},
-    "XLF":  {"qty": 7,    "cost": 57.25}
+    "XLF":  {"qty": 11,   "cost": 56.66},
+    "GLW":  {"qty": 2,    "cost": 150.40}
   }
 }

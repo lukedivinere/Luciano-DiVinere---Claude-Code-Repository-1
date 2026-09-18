@@ -56,6 +56,7 @@ COMPANY_TERMS = {
     "ENPH": ["enphase", "enph", "solar", "microinverter", "battery", "residential solar"],
     "NNOX": ["nano-x", "nnox", "nanox", "medical imaging", "fda clearance", "x-ray"],
     "IBIT": ["bitcoin", "ibit", "btc", "crypto", "etf inflows", "spot bitcoin"],
+    "GLW": ["corning", "glw", "gorilla glass", "optical fiber", "display glass", "wendell weeks"],
 }
 
 MARKET_CATALYST_TERMS = [
