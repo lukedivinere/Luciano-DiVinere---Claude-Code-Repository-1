@@ -19,7 +19,7 @@ FINNHUB_API_KEY = os.environ.get("FINNHUB_API_KEY", "")
 # The stocks / ETFs YOU hold (from your portfolio). Edit freely.
 TICKERS = [
     # Individual stocks
-    "NVDA", "PLTR", "HOOD", "UBER", "ACHR", "RKLB", "ENPH", "NNOX",
+    "NVDA", "PLTR", "HOOD", "UBER", "ACHR", "RKLB", "ENPH", "NNOX", "GLW",
     # ETFs / funds
     "AIQ", "DRAM", "IBIT", "QQQM", "ROBO", "SCHG", "SPYM", "XLF",
 ]
@@ -34,6 +34,7 @@ SECTORS = {
     "RKLB": "Aerospace / Space",
     "ENPH": "Clean Energy",
     "NNOX": "Healthcare / Imaging",
+    "GLW": "Technology / Materials",
     "AIQ": "ETF · AI",
     "DRAM": "ETF · Memory chips",
     "IBIT": "ETF · Bitcoin",
