@@ -104,7 +104,11 @@ def run(
         for sym, s in snapshots.items()
     }
     updated_at = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
-    session_label = market.label_for()
+    current_session = market.session_for()
+    session_label = market.LABEL[current_session]
+    # Auto-refresh the open page only while the market is active (open or
+    # extended hours); no point reloading overnight or on weekends.
+    auto_refresh_secs = 300 if current_session != "closed" else 0
 
     # 5. Build (and optionally write) the report in both Markdown and HTML.
     markdown = report.build_report(ranked, news_by_symbol, as_of=as_of,
@@ -117,7 +121,8 @@ def run(
                                      earnings=earnings,
                                      extended_by_symbol=extended_by_symbol,
                                      updated_at=updated_at,
-                                     session_label=session_label)
+                                     session_label=session_label,
+                                     auto_refresh_secs=auto_refresh_secs)
     report_path = html_path = None
     if write_report:
         report_path = report.save_report(markdown, report_dir, as_of=as_of)

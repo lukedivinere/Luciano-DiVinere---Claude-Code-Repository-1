@@ -50,8 +50,10 @@ Being built incrementally per the build plan (Section 6). Current progress:
 - [x] **Extended hours + freshness**: `market.py` session helper; price
       collector adds best-effort pre/post-market price; the page shows an
       "After hrs" move column and an "Updated … · session" badge. The
-      workflow rebuilds every ~30 min through the extended-hours window so
+      workflow rebuilds every ~5 min through the extended-hours window so
       the page is current whenever opened (`tests/test_market.py`).
+- [x] **Hands-free live updates**: during market/extended hours the page
+      auto-refreshes itself every 5 min (visible tab only); off overnight.
 
 ## Layout
 

@@ -6,8 +6,8 @@ name: Daily Market Briefing
 # ET) across daylight-saving shifts. Public repos get free Actions minutes.
 on:
   schedule:
-    - cron: "*/30 8-23 * * 1-5"   # every 30 min, extended-hours window
-    - cron: "0 0,1 * * 2-6"       # tail end of US after-hours (00:00-01:00 UTC)
+    - cron: "*/5 8-23 * * 1-5"    # every 5 min, extended-hours window (best-effort)
+    - cron: "*/10 0-1 * * 2-6"    # tail end of US after-hours (00:00-01:00 UTC)
   workflow_dispatch: {}   # allow manual runs from the Actions tab
 
 # Needed for the GitHub Pages deploy job.

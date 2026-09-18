@@ -139,6 +139,22 @@ def test_after_hours_hidden_during_regular_session():
     assert "<th class='num'>After hrs</th>" in html
 
 
+def test_auto_refresh_script_present_when_enabled():
+    html = webreport.build_html(_ranked(), {}, as_of="2026-09-16",
+                                updated_at="2026-09-16 15:00 UTC",
+                                session_label="Market open", auto_refresh_secs=300)
+    assert "location.reload()" in html           # reload script injected
+    assert "300*1000" in html                     # 5-minute interval
+    assert "auto-refresh 5m" in html              # visible badge
+
+
+def test_no_auto_refresh_when_disabled():
+    html = webreport.build_html(_ranked(), {}, as_of="2026-09-16",
+                                session_label="Market closed", auto_refresh_secs=0)
+    assert "location.reload()" not in html
+    assert "auto-refresh" not in html
+
+
 def test_empty_renders_safely():
     html = webreport.build_html([], {}, as_of="2024-06-03")
     assert "No data collected." in html

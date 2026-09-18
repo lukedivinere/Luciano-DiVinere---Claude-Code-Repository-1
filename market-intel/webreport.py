@@ -349,6 +349,10 @@ body { margin:0; background:var(--bg); color:var(--fg);
 .hero .updated { opacity:.9; margin:0 0 16px; font-size:.82rem; display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
 .hero .sess { background:rgba(255,255,255,.18); border:1px solid rgba(255,255,255,.25);
   padding:1px 9px; border-radius:999px; font-weight:600; }
+.hero .live { color:#7bffb0; font-weight:600; }
+.hero .live::first-letter { animation:pulse 2s ease-in-out infinite; }
+@keyframes pulse { 0%,100%{opacity:1;} 50%{opacity:.35;} }
+@media (prefers-reduced-motion: reduce) { .hero .live::first-letter { animation:none; } }
 .stats { display:flex; flex-wrap:wrap; gap:10px; }
 .stat { background:rgba(255,255,255,.12); border:1px solid rgba(255,255,255,.16);
   border-radius:12px; padding:10px 14px; min-width:100px; }
@@ -438,8 +442,13 @@ def build_html(ranked: list[dict], news_by_symbol: Optional[dict] = None,
                earnings: Optional[dict] = None,
                extended_by_symbol: Optional[dict] = None,
                updated_at: str = "",
-               session_label: str = "") -> str:
-    """Render the full standalone HTML briefing page."""
+               session_label: str = "",
+               auto_refresh_secs: int = 0) -> str:
+    """Render the full standalone HTML briefing page.
+
+    auto_refresh_secs > 0 makes an open tab reload itself on that interval
+    (only while the tab is visible), so the page stays current hands-free.
+    """
     as_of = as_of or date.today().isoformat()
 
     freshness = ""
@@ -449,7 +458,20 @@ def build_html(ranked: list[dict], news_by_symbol: Optional[dict] = None,
             parts.append(f"Updated {_esc(updated_at)}")
         if session_label:
             parts.append(f'<span class="sess">{_esc(session_label)}</span>')
+        if auto_refresh_secs > 0:
+            parts.append(f'<span class="live">● auto-refresh {auto_refresh_secs // 60}m</span>')
         freshness = f'<p class="updated">{" · ".join(parts)}</p>'
+
+    # Client-side auto-refresh: reload only when the tab is visible, so a
+    # backgrounded tab doesn't hammer the server. Restarts after each reload.
+    refresh_script = ""
+    if auto_refresh_secs > 0:
+        refresh_script = (
+            "<script>(function(){var s=%d*1000;function t(){"
+            "if(document.visibilityState==='visible'){location.reload();}"
+            "else{setTimeout(t,s);}}setTimeout(t,s);})();</script>"
+            % int(auto_refresh_secs)
+        )
 
     stance_block = ""
     if stances:
@@ -510,6 +532,7 @@ def build_html(ranked: list[dict], news_by_symbol: Optional[dict] = None,
 
   <footer>{_esc(DISCLAIMER)}</footer>
 </div>
+{refresh_script}
 </body>
 </html>
 """
