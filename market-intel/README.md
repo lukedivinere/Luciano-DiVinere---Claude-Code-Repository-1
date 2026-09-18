@@ -54,6 +54,9 @@ Being built incrementally per the build plan (Section 6). Current progress:
       the page is current whenever opened (`tests/test_market.py`).
 - [x] **Hands-free live updates**: during market/extended hours the page
       auto-refreshes itself every 5 min (visible tab only); off overnight.
+- [x] **Portfolio P&L**: `portfolio.py` computes value + gain/loss from live
+      prices; holdings load from `PORTFOLIO_JSON` secret or `holdings.json`.
+      Rendered as a "Your portfolio" section (`tests/test_portfolio.py`).
 
 ## Layout
 
@@ -85,7 +88,7 @@ market-intel/
 
 ```bash
 cd market-intel
-for t in prices store news ranking report pipeline delivery indices webreport sparkline stance earnings market; do python tests/test_$t.py; done
+for t in prices store news ranking report pipeline delivery indices webreport sparkline stance earnings market portfolio; do python tests/test_$t.py; done
 ```
 
 ## Run the whole thing (needs Yahoo access)
