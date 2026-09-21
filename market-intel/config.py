@@ -21,7 +21,7 @@ TICKERS = [
     # Individual stocks
     "NVDA", "PLTR", "HOOD", "UBER", "ACHR", "RKLB", "ENPH", "NNOX", "GLW",
     # ETFs / funds
-    "AIQ", "DRAM", "IBIT", "QQQM", "ROBO", "SCHG", "SPYM", "XLF",
+    "AIQ", "DRAM", "IBIT", "QQQM", "ROBO", "SCHG", "SPYM", "XLF", "SOXL", "SOXQ",
 ]
 
 # Sector / type grouping — used by the ranking/report layers to tag and group.
@@ -43,6 +43,8 @@ SECTORS = {
     "SCHG": "ETF · Large-cap growth",
     "SPYM": "ETF · S&P 500",
     "XLF": "ETF · Financials",
+    "SOXL": "ETF · Semiconductors (3x)",
+    "SOXQ": "ETF · Semiconductors",
 }
 
 # Show a per-holding daily "stance" section (rules-based signal, not advice).

@@ -57,6 +57,8 @@ COMPANY_TERMS = {
     "NNOX": ["nano-x", "nnox", "nanox", "medical imaging", "fda clearance", "x-ray"],
     "IBIT": ["bitcoin", "ibit", "btc", "crypto", "etf inflows", "spot bitcoin"],
     "GLW": ["corning", "glw", "gorilla glass", "optical fiber", "display glass", "wendell weeks"],
+    "SOXL": ["semiconductor", "chip", "soxl", "sox index", "philadelphia semiconductor"],
+    "SOXQ": ["semiconductor", "chip", "soxq", "sox index", "philadelphia semiconductor"],
 }
 
 MARKET_CATALYST_TERMS = [
