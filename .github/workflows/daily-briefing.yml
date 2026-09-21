@@ -40,7 +40,7 @@ jobs:
 
       - name: Run offline test suite
         run: |
-          for t in prices store news ranking report pipeline delivery indices webreport sparkline stance earnings market portfolio; do
+          for t in prices store news ranking report pipeline delivery indices webreport sparkline stance earnings market portfolio explain; do
             python tests/test_$t.py
           done
 

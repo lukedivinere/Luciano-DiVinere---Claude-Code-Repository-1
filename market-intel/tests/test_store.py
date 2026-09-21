@@ -72,6 +72,18 @@ def test_news_dedupe():
     assert cur.fetchone()["c"] == 1
 
 
+def test_explanation_cache():
+    conn = _mem_conn()
+    assert store.get_explanation(conn, "NVDA", "2026-09-21", "k1") is None
+    store.put_explanation(conn, "NVDA", "2026-09-21", "k1", "Up on earnings beat.")
+    assert store.get_explanation(conn, "NVDA", "2026-09-21", "k1") == "Up on earnings beat."
+    # Different news key -> cache miss (regenerate).
+    assert store.get_explanation(conn, "NVDA", "2026-09-21", "k2") is None
+    # Same day, new news -> overwrite.
+    store.put_explanation(conn, "NVDA", "2026-09-21", "k2", "Up on an analyst upgrade.")
+    assert store.get_explanation(conn, "NVDA", "2026-09-21", "k2") == "Up on an analyst upgrade."
+
+
 if __name__ == "__main__":
     passed = 0
     for name, fn in sorted(globals().items()):

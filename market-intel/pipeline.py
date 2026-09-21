@@ -16,6 +16,7 @@ from datetime import date, datetime, timezone
 from typing import Callable, Optional
 
 import config
+import explain as explain_mod
 import market
 import portfolio as portfolio_mod
 import ranking
@@ -94,6 +95,27 @@ def run(
     stances = (stance_mod.build_stances(ranked, news_by_symbol)
                if getattr(config, "DAILY_STANCE_ENABLED", False) else None)
 
+    # 4c-ii. "Why it moved" explanations for notable movers with news (LLM;
+    # cached per symbol/day; no-ops without ANTHROPIC_API_KEY).
+    explanations: dict[str, str] = {}
+    if getattr(config, "EXPLAIN_ENABLED", False):
+        threshold = getattr(config, "EXPLAIN_MOVE_THRESHOLD", 2.5)
+        for r in ranked:
+            sym, chg = r["symbol"], r["change_pct"]
+            items = news_by_symbol.get(sym)
+            if abs(chg) < threshold or not items:
+                continue
+            news_key = (items[0].get("title", "") or "")[:120]
+            cached = store.get_explanation(conn, sym, as_of, news_key)
+            if cached is not None:
+                if cached:
+                    explanations[sym] = cached
+                continue
+            text = explain_mod.generate(sym, chg, items)
+            if text:
+                store.put_explanation(conn, sym, as_of, news_key, text)
+                explanations[sym] = text
+
     # 4d. Earnings roundup (best-effort; empty without a Finnhub key).
     earnings = collect_earnings(symbols).get("by_symbol", {})
 
@@ -135,7 +157,8 @@ def run(
                                      updated_at=updated_at,
                                      session_label=session_label,
                                      auto_refresh_secs=auto_refresh_secs,
-                                     portfolio=pnl)
+                                     portfolio=pnl,
+                                     explanations=explanations)
     report_path = html_path = None
     if write_report:
         report_path = report.save_report(markdown, report_dir, as_of=as_of)

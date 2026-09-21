@@ -55,6 +55,13 @@ DAILY_STANCE_ENABLED = True
 STANCE_CONSTRUCTIVE_RATIO = 0.72   # >= this (and not below MA) -> Constructive
 STANCE_WATCH_RATIO = 0.42          # >= this -> Watch (mixed but holding up)
 
+# "Why it moved" explainer (LLM). Generates a one-sentence, news-grounded
+# likely reason for a holding's daily move. Needs ANTHROPIC_API_KEY; no-ops
+# without it. Uses a cheap model since it runs frequently and is cached.
+EXPLAIN_ENABLED = True
+EXPLAIN_MODEL = "claude-haiku-4-5"
+EXPLAIN_MOVE_THRESHOLD = 2.5        # only explain moves of at least this % (abs)
+
 # Market indices for the report's snapshot section (Yahoo ^ symbols).
 INDICES = {
     "^GSPC": "S&P 500",

@@ -56,6 +56,14 @@ CREATE TABLE IF NOT EXISTS news_items (
 
 CREATE INDEX IF NOT EXISTS idx_snapshots_symbol_date
     ON price_snapshots (symbol, trade_date);
+
+CREATE TABLE IF NOT EXISTS explanations (
+    symbol      TEXT NOT NULL,
+    trade_date  TEXT NOT NULL,
+    news_key    TEXT,              -- identifies the news the reason was based on
+    text        TEXT,
+    PRIMARY KEY (symbol, trade_date)
+);
 """
 
 
@@ -165,6 +173,32 @@ def price_history(conn: sqlite3.Connection, symbol: str, days: int = 30) -> list
     rows = [dict(r) for r in cur.fetchall()]
     rows.reverse()  # chronological
     return rows
+
+
+def get_explanation(conn: sqlite3.Connection, symbol: str, trade_date: str,
+                    news_key: str) -> Optional[str]:
+    """Return a cached 'why it moved' text if it matches the same news, else None."""
+    cur = conn.execute(
+        "SELECT text FROM explanations WHERE symbol=? AND trade_date=? AND news_key=?",
+        (symbol.upper(), trade_date, news_key),
+    )
+    row = cur.fetchone()
+    return row["text"] if row else None
+
+
+def put_explanation(conn: sqlite3.Connection, symbol: str, trade_date: str,
+                    news_key: str, text: str) -> None:
+    """Cache a 'why it moved' explanation (one per symbol per trade date)."""
+    conn.execute(
+        """
+        INSERT INTO explanations (symbol, trade_date, news_key, text)
+        VALUES (?, ?, ?, ?)
+        ON CONFLICT(symbol, trade_date) DO UPDATE SET
+            news_key=excluded.news_key, text=excluded.text
+        """,
+        (symbol.upper(), trade_date, news_key, text),
+    )
+    conn.commit()
 
 
 def latest_snapshots(conn: sqlite3.Connection) -> list[dict]:
