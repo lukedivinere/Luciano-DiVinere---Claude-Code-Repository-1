@@ -172,6 +172,19 @@ def test_no_portfolio_section_without_data():
     assert "Your portfolio" not in html
 
 
+def test_why_it_moved_rendered_in_stance():
+    import stance
+    ranked = _ranked()
+    stances = stance.build_stances(ranked, {})
+    html = webreport.build_html(
+        ranked, {}, as_of="2026-09-21", stances=stances,
+        stance_disclaimer=stance.STANCE_DISCLAIMER,
+        explanations={"NVDA": "Up on a strong earnings beat and raised guidance."},
+    )
+    assert "Why it moved" in html
+    assert "Up on a strong earnings beat and raised guidance." in html
+
+
 def test_empty_renders_safely():
     html = webreport.build_html([], {}, as_of="2024-06-03")
     assert "No data collected." in html

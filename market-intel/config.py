@@ -21,7 +21,7 @@ TICKERS = [
     # Individual stocks
     "NVDA", "PLTR", "HOOD", "UBER", "ACHR", "RKLB", "ENPH", "NNOX", "GLW",
     # ETFs / funds
-    "AIQ", "DRAM", "IBIT", "QQQM", "ROBO", "SCHG", "SPYM", "XLF",
+    "AIQ", "DRAM", "IBIT", "QQQM", "ROBO", "SCHG", "SPYM", "XLF", "SOXL", "SOXQ",
 ]
 
 # Sector / type grouping — used by the ranking/report layers to tag and group.
@@ -43,6 +43,8 @@ SECTORS = {
     "SCHG": "ETF · Large-cap growth",
     "SPYM": "ETF · S&P 500",
     "XLF": "ETF · Financials",
+    "SOXL": "ETF · Semiconductors (3x)",
+    "SOXQ": "ETF · Semiconductors",
 }
 
 # Show a per-holding daily "stance" section (rules-based signal, not advice).
@@ -52,6 +54,13 @@ DAILY_STANCE_ENABLED = True
 # real output: raise to make "Constructive" harder to earn, lower to loosen.
 STANCE_CONSTRUCTIVE_RATIO = 0.72   # >= this (and not below MA) -> Constructive
 STANCE_WATCH_RATIO = 0.42          # >= this -> Watch (mixed but holding up)
+
+# "Why it moved" explainer (LLM). Generates a one-sentence, news-grounded
+# likely reason for a holding's daily move. Needs ANTHROPIC_API_KEY; no-ops
+# without it. Uses a cheap model since it runs frequently and is cached.
+EXPLAIN_ENABLED = True
+EXPLAIN_MODEL = "claude-haiku-4-5"
+EXPLAIN_MOVE_THRESHOLD = 2.5        # only explain moves of at least this % (abs)
 
 # Market indices for the report's snapshot section (Yahoo ^ symbols).
 INDICES = {

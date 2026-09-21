@@ -121,13 +121,18 @@ _STANCE_CLASS = {
 }
 
 
-def _stance_section(stances: Optional[list], disclaimer: str) -> str:
+def _stance_section(stances: Optional[list], disclaimer: str,
+                    explanations: Optional[dict] = None) -> str:
     if not stances:
         return ""
+    explanations = explanations or {}
     cards = []
     for s in stances:
         badge_cls = _STANCE_CLASS.get(s["stance"], "st-neutral")
         pct = s["change_pct"]
+        why = explanations.get(s["symbol"])
+        why_html = (f'<p class="why"><span class="why-k">Why it moved</span> {_esc(why)}</p>'
+                    if why else "")
         news_html = ""
         if s.get("news"):
             n = s["news"]
@@ -155,6 +160,7 @@ def _stance_section(stances: Optional[list], disclaimer: str) -> str:
             "</div>"
             f'<div class="stance-lean">{_esc(s["lean"])}</div>'
             f'<p class="stance-note">{_esc(s["note"])}</p>'
+            f"{why_html}"
             f"{news_html}"
             "</article>"
         )
@@ -490,6 +496,9 @@ details ul { margin:10px 0 2px; }
 .badge.st-warn { background:var(--down-bg); color:var(--down); }
 .stance-lean { font-weight:600; margin:12px 0 4px; }
 .stance-note { margin:0 0 12px; color:var(--fg); opacity:.9; font-size:.92rem; }
+.why { margin:0 0 12px; padding:8px 10px; background:var(--card-2); border-radius:8px; font-size:.9rem; }
+.why-k { display:inline-block; font-size:.7rem; text-transform:uppercase; letter-spacing:.04em;
+  color:var(--accent-ink); font-weight:700; margin-right:6px; }
 .stance-news { border-top:1px dashed var(--border); padding-top:10px; }
 .stance-news-k { font-size:.72rem; text-transform:uppercase; letter-spacing:.05em; color:var(--muted); margin-bottom:2px; }
 .stance-news-t { font-size:.92rem; }
@@ -511,7 +520,8 @@ def build_html(ranked: list[dict], news_by_symbol: Optional[dict] = None,
                updated_at: str = "",
                session_label: str = "",
                auto_refresh_secs: int = 0,
-               portfolio: Optional[dict] = None) -> str:
+               portfolio: Optional[dict] = None,
+               explanations: Optional[dict] = None) -> str:
     """Render the full standalone HTML briefing page.
 
     auto_refresh_secs > 0 makes an open tab reload itself on that interval
@@ -548,7 +558,7 @@ def build_html(ranked: list[dict], news_by_symbol: Optional[dict] = None,
     if stances:
         stance_block = (
             "<h2>Daily read — your holdings</h2>"
-            + _stance_section(stances, stance_disclaimer)
+            + _stance_section(stances, stance_disclaimer, explanations)
         )
 
     if ranked:
