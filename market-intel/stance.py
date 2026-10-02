@@ -91,8 +91,12 @@ def build_stance(record: dict, news_items: Optional[list] = None) -> dict:
     verdict = classify(record)
 
     top_news = None
+    links: list[dict] = []
     if news_items:
-        best = max(news_items, key=lambda a: a.get("relevance_score", 0))
+        ranked_news = sorted(
+            news_items, key=lambda a: a.get("relevance_score", 0), reverse=True
+        )
+        best = ranked_news[0]
         # A quiet name with real news today is worth watching.
         if verdict["stance"] == "Neutral":
             verdict = {
@@ -107,6 +111,17 @@ def build_stance(record: dict, news_items: Optional[list] = None) -> dict:
             "summary": best.get("description", ""),
             "url": best.get("url", ""),
         }
+        # Up to 4 distinct article links (by URL) to show per holding.
+        seen: set[str] = set()
+        for a in ranked_news:
+            url = (a.get("url") or "").strip()
+            title = (a.get("title") or "").strip()
+            if not url or not title or url in seen:
+                continue
+            seen.add(url)
+            links.append({"title": title, "source": a.get("source", ""), "url": url})
+            if len(links) >= 4:
+                break
 
     return {
         "symbol": record["symbol"],
@@ -121,6 +136,7 @@ def build_stance(record: dict, news_items: Optional[list] = None) -> dict:
         "reasons": record.get("reasons", [])[:3],
         "concerns": record.get("concerns", []),
         "news": top_news,
+        "links": links,
     }
 
 

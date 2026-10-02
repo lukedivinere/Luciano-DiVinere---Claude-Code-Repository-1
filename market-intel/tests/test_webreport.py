@@ -185,6 +185,39 @@ def test_why_it_moved_rendered_in_stance():
     assert "Up on a strong earnings beat and raised guidance." in html
 
 
+def test_related_article_links_rendered_per_holding():
+    import stance
+    ranked = _ranked()
+    news = {"NVDA": [
+        {"title": "NVDA beats earnings", "source": "Reuters",
+         "url": "https://ex.com/a", "relevance_score": 12},
+        {"title": "NVDA lands new data-center deal", "source": "Bloomberg",
+         "url": "https://ex.com/b", "relevance_score": 10},
+        {"title": "Analysts raise NVDA targets", "source": "CNBC",
+         "url": "https://ex.com/c", "relevance_score": 9},
+    ]}
+    stances = stance.build_stances(ranked, news)
+    html = webreport.build_html(ranked, news, as_of="2026-10-02", stances=stances,
+                                stance_disclaimer=stance.STANCE_DISCLAIMER)
+    assert "Related articles" in html
+    # Secondary article links appear (not just the featured headline).
+    assert 'href="https://ex.com/b"' in html
+    assert 'href="https://ex.com/c"' in html
+    # Every holding gets a per-ticker news link as a fallback.
+    assert 'href="https://finance.yahoo.com/quote/NVDA/news"' in html
+    assert "More NVDA news →" in html
+
+
+def test_per_ticker_news_link_present_without_news():
+    import stance
+    ranked = _ranked()
+    stances = stance.build_stances(ranked, {})
+    html = webreport.build_html(ranked, {}, as_of="2026-10-02", stances=stances,
+                                stance_disclaimer=stance.STANCE_DISCLAIMER)
+    # No articles today, but the holding still has a clickable news link.
+    assert 'href="https://finance.yahoo.com/quote/NVDA/news"' in html
+
+
 def test_empty_renders_safely():
     html = webreport.build_html([], {}, as_of="2024-06-03")
     assert "No data collected." in html

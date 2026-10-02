@@ -150,6 +150,33 @@ def _stance_section(stances: Optional[list], disclaimer: str,
             news_html = ('<div class="stance-news"><div class="stance-news-k">Today\'s news</div>'
                          '<p class="muted">No clearly relevant news today.</p></div>')
 
+        # "Related articles": up to 3 more links beyond the featured headline,
+        # then always a per-ticker news link so every holding has somewhere to
+        # click even on a quiet news day.
+        sym = s["symbol"]
+        featured_url = (s.get("news") or {}).get("url", "") if s.get("news") else ""
+        items_html = []
+        for link in (s.get("links") or []):
+            if link.get("url") == featured_url:
+                continue  # already shown as "Today's news"
+            url = _safe_url(link.get("url", ""))
+            if not url:
+                continue
+            title = _esc(link.get("title", ""))
+            src = _esc(link.get("source", ""))
+            src_html = f' <span class="muted">· {src}</span>' if src else ""
+            items_html.append(f'<li><a href="{_esc(url)}" rel="noopener noreferrer">{title}</a>{src_html}</li>')
+            if len(items_html) >= 3:
+                break
+        more_url = f"https://finance.yahoo.com/quote/{_esc(sym)}/news"
+        items_html.append(
+            f'<li><a href="{more_url}" rel="noopener noreferrer">More {_esc(sym)} news →</a></li>'
+        )
+        links_html = (
+            '<div class="stance-links"><div class="stance-news-k">Related articles</div>'
+            f'<ul class="link-list">{"".join(items_html)}</ul></div>'
+        )
+
         cards.append(
             '<article class="stance-card">'
             '<div class="stance-top">'
@@ -162,6 +189,7 @@ def _stance_section(stances: Optional[list], disclaimer: str,
             f'<p class="stance-note">{_esc(s["note"])}</p>'
             f"{why_html}"
             f"{news_html}"
+            f"{links_html}"
             "</article>"
         )
     return (
@@ -502,6 +530,9 @@ details ul { margin:10px 0 2px; }
 .stance-news { border-top:1px dashed var(--border); padding-top:10px; }
 .stance-news-k { font-size:.72rem; text-transform:uppercase; letter-spacing:.05em; color:var(--muted); margin-bottom:2px; }
 .stance-news-t { font-size:.92rem; }
+.stance-links { border-top:1px dashed var(--border); padding-top:10px; margin-top:10px; }
+.link-list { list-style:none; margin:4px 0 0; padding:0; }
+.link-list li { font-size:.9rem; padding:3px 0; line-height:1.35; }
 a { color:var(--accent-ink); text-decoration:none; }
 a:hover { text-decoration:underline; }
 .sources { font-size:.9rem; }
