@@ -95,8 +95,9 @@ def run(
     stances = (stance_mod.build_stances(ranked, news_by_symbol)
                if getattr(config, "DAILY_STANCE_ENABLED", False) else None)
 
-    # 4c-ii. "Why it moved" explanations for notable movers with news (LLM;
-    # cached per symbol/day; no-ops without ANTHROPIC_API_KEY).
+    # 4c-ii. "Why it's priced" explanations for every holding that has relevant
+    # news (threshold 0.0 in config; LLM, cached per symbol/day; no-ops without
+    # ANTHROPIC_API_KEY). Each card then carries a current good/bad news read.
     explanations: dict[str, str] = {}
     if getattr(config, "EXPLAIN_ENABLED", False):
         threshold = getattr(config, "EXPLAIN_MOVE_THRESHOLD", 2.5)

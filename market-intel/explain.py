@@ -19,11 +19,13 @@ import config
 MODEL = getattr(config, "EXPLAIN_MODEL", "claude-haiku-4-5")
 
 SYSTEM = (
-    "You explain the likely reason for a stock or ETF's daily price move using "
-    "ONLY the news headlines provided. Reply with ONE short sentence in plain "
-    "language. If the headlines do not clearly explain the move, say the move "
-    "isn't explained by today's news. Never give advice or predictions, and "
-    "never invent facts that are not in the headlines."
+    "You explain, in ONE short plain-language sentence, why a stock or ETF is "
+    "priced where it is today, using ONLY the news headlines provided. Make "
+    "clear whether the news reads as good or bad for the price (e.g. 'up on …', "
+    "'down on …'). If the day's move is small or the headlines do not clearly "
+    "explain the price, say there is no major stock-specific news today and it "
+    "is tracking the broader market/sector. Never give advice or predictions, "
+    "and never invent facts that are not in the headlines."
 )
 
 
@@ -50,12 +52,17 @@ def generate(symbol: str, change_pct: float, news_items: list,
     heads = "\n".join(
         f"- {n.get('title', '')} ({n.get('source', 'n/a')})" for n in news_items[:4]
     )
-    direction = "up" if change_pct > 0 else "down"
+    if change_pct > 0:
+        move = f"up {change_pct:.1f}%"
+    elif change_pct < 0:
+        move = f"down {abs(change_pct):.1f}%"
+    else:
+        move = "roughly flat (0.0%)"
     prompt = (
-        f"{symbol} is {direction} {abs(change_pct):.1f}% today.\n"
+        f"{symbol} is {move} today.\n"
         f"Headlines:\n{heads}\n\n"
-        "In one sentence, what is the most likely reason for the move, "
-        "based only on these headlines?"
+        "In one sentence, why is it priced where it is today — and is the news "
+        "good or bad for the price — based only on these headlines?"
     )
 
     try:
