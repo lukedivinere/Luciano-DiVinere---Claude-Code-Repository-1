@@ -131,7 +131,7 @@ def _stance_section(stances: Optional[list], disclaimer: str,
         badge_cls = _STANCE_CLASS.get(s["stance"], "st-neutral")
         pct = s["change_pct"]
         why = explanations.get(s["symbol"])
-        why_html = (f'<p class="why"><span class="why-k">Why it moved</span> {_esc(why)}</p>'
+        why_html = (f'<p class="why"><span class="why-k">Why it\'s priced here</span> {_esc(why)}</p>'
                     if why else "")
         news_html = ""
         if s.get("news"):

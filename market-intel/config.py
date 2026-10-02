@@ -55,12 +55,15 @@ DAILY_STANCE_ENABLED = True
 STANCE_CONSTRUCTIVE_RATIO = 0.72   # >= this (and not below MA) -> Constructive
 STANCE_WATCH_RATIO = 0.42          # >= this -> Watch (mixed but holding up)
 
-# "Why it moved" explainer (LLM). Generates a one-sentence, news-grounded
-# likely reason for a holding's daily move. Needs ANTHROPIC_API_KEY; no-ops
-# without it. Uses a cheap model since it runs frequently and is cached.
+# "Why it's priced" explainer (LLM). Generates a one-sentence, news-grounded
+# read on why each holding is priced where it is today. Needs ANTHROPIC_API_KEY;
+# no-ops without it. Uses a cheap model since it runs frequently and is cached
+# per symbol/day, so the cost is a handful of calls per trading day.
 EXPLAIN_ENABLED = True
 EXPLAIN_MODEL = "claude-haiku-4-5"
-EXPLAIN_MOVE_THRESHOLD = 2.5        # only explain moves of at least this % (abs)
+# 0.0 = explain EVERY holding that has relevant news (not just big movers), so
+# each card gets a current good/bad news read. Raise it to limit to bigger moves.
+EXPLAIN_MOVE_THRESHOLD = 0.0
 
 # Market indices for the report's snapshot section (Yahoo ^ symbols).
 INDICES = {

@@ -181,7 +181,7 @@ def test_why_it_moved_rendered_in_stance():
         stance_disclaimer=stance.STANCE_DISCLAIMER,
         explanations={"NVDA": "Up on a strong earnings beat and raised guidance."},
     )
-    assert "Why it moved" in html
+    assert "Why it's priced here" in html
     assert "Up on a strong earnings beat and raised guidance." in html
 
 
