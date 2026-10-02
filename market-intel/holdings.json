@@ -1,6 +1,6 @@
 {
-  "cash": 97.60,
-  "adjustment": -66.12,
+  "cash": 35.73,
+  "adjustment": 0,
   "positions": {
     "PLTR": {"qty": 8,    "cost": 151.77},
     "NVDA": {"qty": 3,    "cost": 201.14},
