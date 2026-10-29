@@ -122,10 +122,12 @@ _STANCE_CLASS = {
 
 
 def _stance_section(stances: Optional[list], disclaimer: str,
-                    explanations: Optional[dict] = None) -> str:
+                    explanations: Optional[dict] = None,
+                    earnings: Optional[dict] = None) -> str:
     if not stances:
         return ""
     explanations = explanations or {}
+    earnings = earnings or {}
     cards = []
     for s in stances:
         badge_cls = _STANCE_CLASS.get(s["stance"], "st-neutral")
@@ -177,6 +179,8 @@ def _stance_section(stances: Optional[list], disclaimer: str,
             f'<ul class="link-list">{"".join(items_html)}</ul></div>'
         )
 
+        earn_html = _earnings_card_block(earnings.get(sym))
+
         cards.append(
             '<article class="stance-card">'
             '<div class="stance-top">'
@@ -189,6 +193,7 @@ def _stance_section(stances: Optional[list], disclaimer: str,
             f'<p class="stance-note">{_esc(s["note"])}</p>'
             f"{why_html}"
             f"{news_html}"
+            f"{earn_html}"
             f"{links_html}"
             "</article>"
         )
@@ -252,6 +257,37 @@ def _earnings_section(earnings: Optional[dict]) -> str:
             "</article>"
         )
     return "".join(cards)
+
+
+def _earnings_card_block(e: Optional[dict]) -> str:
+    """Compact 'Latest earnings' block for a single holding's stance card."""
+    if not e:
+        return ""
+    badge = _EARN_BADGE.get(e["status"], "st-neutral")
+    label = _EARN_LABEL.get(e["status"], e["status"].title())
+
+    def _surprise(pct):
+        if pct is None:
+            return ""
+        cls = "up" if pct > 0 else "down" if pct < 0 else "flat"
+        return f' <span class="num {cls}">({_signed(pct)}%)</span>'
+
+    parts = []
+    if e.get("eps_actual") is not None:
+        parts.append(f'EPS <b>{_esc(e["eps_actual"])}</b> vs {_esc(e["eps_estimate"])} est'
+                     f'{_surprise(e.get("eps_surprise_pct"))}')
+    elif e.get("eps_estimate") is not None:
+        parts.append(f'EPS est {_esc(e["eps_estimate"])}')
+    if e.get("rev_actual") is not None:
+        parts.append(f'Rev <b>{_fmt_money(e["rev_actual"])}</b> vs {_fmt_money(e["rev_estimate"])} est'
+                     f'{_surprise(e.get("rev_surprise_pct"))}')
+    body = "<br>".join(parts) if parts else "Reported"
+    date_hour = f'{_esc(e.get("date", ""))} {_esc(e.get("hour", ""))}'.strip()
+    return (
+        '<div class="stance-earn"><div class="stance-news-k">Latest earnings</div>'
+        f'<p class="dev-summary"><span class="badge {badge}">{_esc(label)}</span> '
+        f'<span class="muted">{date_hour}</span><br>{body}</p></div>'
+    )
 
 
 def _extended_cell(ext: Optional[dict]) -> str:
@@ -531,6 +567,7 @@ details ul { margin:10px 0 2px; }
 .stance-news-k { font-size:.72rem; text-transform:uppercase; letter-spacing:.05em; color:var(--muted); margin-bottom:2px; }
 .stance-news-t { font-size:.92rem; }
 .stance-links { border-top:1px dashed var(--border); padding-top:10px; margin-top:10px; }
+.stance-earn { border-top:1px dashed var(--border); padding-top:10px; margin-top:10px; }
 .link-list { list-style:none; margin:4px 0 0; padding:0; }
 .link-list li { font-size:.9rem; padding:3px 0; line-height:1.35; }
 a { color:var(--accent-ink); text-decoration:none; }
@@ -589,7 +626,7 @@ def build_html(ranked: list[dict], news_by_symbol: Optional[dict] = None,
     if stances:
         stance_block = (
             "<h2>Daily read — your holdings</h2>"
-            + _stance_section(stances, stance_disclaimer, explanations)
+            + _stance_section(stances, stance_disclaimer, explanations, earnings)
         )
 
     if ranked:

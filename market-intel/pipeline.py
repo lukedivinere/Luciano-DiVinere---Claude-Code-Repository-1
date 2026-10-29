@@ -39,6 +39,7 @@ def run(
     collect_news: Optional[Callable[[str], list]] = None,
     collect_indices: Optional[Callable[[], dict]] = None,
     collect_earnings: Optional[Callable[[list[str]], dict]] = None,
+    collect_recent_earnings: Optional[Callable[[list[str]], dict]] = None,
     as_of: Optional[str] = None,
     write_report: bool = True,
 ) -> dict:
@@ -60,6 +61,8 @@ def run(
     collect_news = collect_news or news_collector.get_news
     collect_indices = collect_indices or index_collector.collect_indices
     collect_earnings = collect_earnings or earnings_collector.get_earnings
+    collect_recent_earnings = (collect_recent_earnings
+                               or earnings_collector.get_recent_earnings)
 
     conn = store.connect(db_path)
 
@@ -117,8 +120,13 @@ def run(
                 store.put_explanation(conn, sym, as_of, news_key, text)
                 explanations[sym] = text
 
-    # 4d. Earnings roundup (best-effort; empty without a Finnhub key).
-    earnings = collect_earnings(symbols).get("by_symbol", {})
+    # 4d. Earnings: each stock's most recent reported quarter (Yahoo, no key)
+    # merged with the Finnhub calendar (which adds revenue + upcoming when a
+    # FINNHUB_API_KEY is set). Prefer the Finnhub row when it has actuals.
+    earnings = collect_recent_earnings(symbols).get("by_symbol", {})
+    for sym, rec in collect_earnings(symbols).get("by_symbol", {}).items():
+        if rec.get("status") != "upcoming":
+            earnings[sym] = rec
 
     # 4e. Extended-hours (pre/post market) per symbol + freshness stamp.
     extended_by_symbol = {
