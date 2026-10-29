@@ -218,6 +218,34 @@ def test_per_ticker_news_link_present_without_news():
     assert 'href="https://finance.yahoo.com/quote/NVDA/news"' in html
 
 
+def test_per_holding_earnings_on_stance_card():
+    import stance
+    ranked = _ranked()
+    stances = stance.build_stances(ranked, {})
+    earnings = {"NVDA": {"symbol": "NVDA", "date": "2026-08-27", "hour": "",
+                         "status": "beat", "eps_actual": 0.68, "eps_estimate": 0.64,
+                         "eps_surprise_pct": 6.3, "rev_actual": None,
+                         "rev_estimate": None, "rev_surprise_pct": None}}
+    html = webreport.build_html(ranked, {}, as_of="2026-10-02", stances=stances,
+                                stance_disclaimer=stance.STANCE_DISCLAIMER,
+                                earnings=earnings)
+    assert "Latest earnings" in html
+    assert "2026-08-27" in html
+    assert "EPS <b>0.68</b> vs 0.64 est" in html
+    assert "(+6.3%)" in html
+    assert ">Beat<" in html
+
+
+def test_no_earnings_block_without_earnings_for_symbol():
+    import stance
+    ranked = _ranked()
+    stances = stance.build_stances(ranked, {})
+    html = webreport.build_html(ranked, {}, as_of="2026-10-02", stances=stances,
+                                stance_disclaimer=stance.STANCE_DISCLAIMER,
+                                earnings={})
+    assert "Latest earnings" not in html   # ETFs / no-data holdings show nothing
+
+
 def test_empty_renders_safely():
     html = webreport.build_html([], {}, as_of="2024-06-03")
     assert "No data collected." in html

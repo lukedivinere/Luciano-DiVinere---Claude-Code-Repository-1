@@ -124,3 +124,111 @@ def get_earnings(symbols: Optional[list[str]] = None, *,
         return {"by_symbol": {}, "error": str(exc)}
 
     return {"by_symbol": parse_calendar(payload, symbols), "error": None}
+
+
+# --- Recent reported earnings (Yahoo, no API key) --------------------------
+# Finnhub's calendar needs a key and a narrow date window. To show each stock's
+# MOST RECENT reported quarter on its card with zero configuration, we pull
+# per-symbol earnings history from Yahoo (via yfinance, same source the price
+# collector already uses). ETFs have no earnings, so they simply return nothing.
+
+
+def _num(v):
+    """Coerce to float, treating None / non-numeric / NaN as None."""
+    try:
+        f = float(v)
+    except (TypeError, ValueError):
+        return None
+    return None if f != f else f  # f != f is True only for NaN
+
+
+def _record_from_row(symbol: str, row: dict) -> dict:
+    """Build our normalized record from one reported Yahoo earnings row."""
+    eps_a = _num(row.get("eps_actual"))
+    eps_e = _num(row.get("eps_estimate"))
+    surprise = _num(row.get("surprise_pct"))
+    if surprise is None:
+        surprise = _surprise_pct(eps_a, eps_e)
+
+    if eps_a is None:
+        status = "upcoming"
+    elif eps_e is None:
+        status = "reported"
+    elif eps_a > eps_e:
+        status = "beat"
+    elif eps_a < eps_e:
+        status = "miss"
+    else:
+        status = "inline"
+
+    return {
+        "symbol": symbol.upper(),
+        "date": row.get("date", ""),
+        "hour": "",
+        "status": status,
+        "eps_actual": eps_a,
+        "eps_estimate": eps_e,
+        "eps_surprise_pct": surprise,
+        "rev_actual": None,
+        "rev_estimate": None,
+        "rev_surprise_pct": None,
+    }
+
+
+def _latest_reported(symbol: str, rows: list, today: date) -> Optional[dict]:
+    """Pick the most recent row that has actuals and a date on/before today."""
+    reported = [
+        r for r in (rows or [])
+        if _num(r.get("eps_actual")) is not None and (r.get("date") or "") <= today.isoformat()
+    ]
+    if not reported:
+        return None
+    best = max(reported, key=lambda r: r.get("date", ""))
+    return _record_from_row(symbol, best)
+
+
+def _default_recent_fetch(symbol: str) -> list:
+    """Per-symbol earnings history from Yahoo via yfinance (no key)."""
+    import yfinance as yf
+
+    df = yf.Ticker(symbol).get_earnings_dates(limit=12)
+    if df is None or getattr(df, "empty", True):
+        return []
+    rows = []
+    for idx, r in df.iterrows():
+        try:
+            d = idx.date().isoformat()
+        except AttributeError:
+            d = str(idx)[:10]
+        rows.append({
+            "date": d,
+            "eps_estimate": r.get("EPS Estimate"),
+            "eps_actual": r.get("Reported EPS"),
+            "surprise_pct": r.get("Surprise(%)"),
+        })
+    return rows
+
+
+def get_recent_earnings(symbols: Optional[list[str]] = None, *,
+                        fetch: Optional[Callable[[str], list]] = None,
+                        today: Optional[date] = None) -> dict:
+    """Most recent reported earnings per symbol (Yahoo). No key required.
+
+    Returns {"by_symbol": {...}, "error": None|str}. Symbols with no earnings
+    (ETFs, or fetch failures) are simply omitted — never fatal.
+    """
+    symbols = symbols or config.TICKERS
+    today = today or date.today()
+    fetch = fetch or _default_recent_fetch
+    by_symbol: dict[str, dict] = {}
+    last_error = None
+    for sym in symbols:
+        try:
+            rows = fetch(sym)
+        except Exception as exc:  # noqa: BLE001 - one bad symbol never fails the run
+            last_error = str(exc)
+            continue
+        rec = _latest_reported(sym, rows, today)
+        if rec:
+            by_symbol[sym.upper()] = rec
+    return {"by_symbol": by_symbol, "error": last_error}

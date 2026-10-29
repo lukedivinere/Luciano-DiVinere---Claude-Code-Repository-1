@@ -74,6 +74,54 @@ def test_get_earnings_isolates_fetch_error():
     assert "429" in out["error"]
 
 
+# --- Recent reported earnings (Yahoo, no key) ------------------------------
+
+def _recent_rows(symbol):
+    # Shaped like yfinance get_earnings_dates rows, normalized by _default fetch.
+    if symbol == "NVDA":
+        return [
+            {"date": "2026-11-18", "eps_estimate": 1.20, "eps_actual": None,   # upcoming
+             "surprise_pct": None},
+            {"date": "2026-08-27", "eps_estimate": 0.64, "eps_actual": 0.68,   # most recent reported
+             "surprise_pct": 6.3},
+            {"date": "2026-05-28", "eps_estimate": 0.55, "eps_actual": 0.61,
+             "surprise_pct": 10.9},
+        ]
+    if symbol == "QQQM":      # an ETF: no earnings history
+        return []
+    return []
+
+
+def test_recent_earnings_picks_latest_reported():
+    import datetime
+    out = earnings.get_recent_earnings(
+        ["NVDA", "QQQM"], fetch=_recent_rows, today=datetime.date(2026, 10, 2))
+    assert out["error"] is None
+    assert "QQQM" not in out["by_symbol"]              # ETF omitted
+    nvda = out["by_symbol"]["NVDA"]
+    assert nvda["date"] == "2026-08-27"               # upcoming row skipped
+    assert nvda["status"] == "beat"
+    assert nvda["eps_actual"] == 0.68 and nvda["eps_estimate"] == 0.64
+    assert nvda["eps_surprise_pct"] == 6.3
+    assert nvda["rev_actual"] is None                 # Yahoo path has no revenue
+
+
+def test_recent_earnings_handles_nan_and_bad_symbol():
+    def fetch(sym):
+        if sym == "NVDA":
+            return [{"date": "2026-08-27", "eps_estimate": float("nan"),
+                     "eps_actual": 0.68, "surprise_pct": float("nan")}]
+        raise RuntimeError("delisted")
+    import datetime
+    out = earnings.get_recent_earnings(["NVDA", "BAD"], fetch=fetch,
+                                       today=datetime.date(2026, 10, 2))
+    nvda = out["by_symbol"]["NVDA"]
+    assert nvda["eps_estimate"] is None               # NaN coerced to None
+    assert nvda["status"] == "reported"               # no estimate -> reported
+    assert "BAD" not in out["by_symbol"]
+    assert "delisted" in out["error"]
+
+
 if __name__ == "__main__":
     passed = 0
     for name, fn in sorted(globals().items()):
