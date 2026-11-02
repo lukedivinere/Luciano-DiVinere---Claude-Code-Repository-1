@@ -39,6 +39,11 @@ def _fake_recent_earnings(symbols):
     return {"by_symbol": {}, "error": None}
 
 
+def _fake_expected(symbols, prices, history=None, **kw):
+    # Keep the suite offline: no yfinance options call.
+    return {}
+
+
 def test_pipeline_end_to_end():
     with tempfile.TemporaryDirectory() as d:
         db = os.path.join(d, "t.db")
@@ -51,6 +56,7 @@ def test_pipeline_end_to_end():
             collect_news=_fake_news,
             collect_indices=_fake_indices,
             collect_recent_earnings=_fake_recent_earnings,
+            collect_expected_moves=_fake_expected,
             as_of="2024-06-03",
         )
 
@@ -73,6 +79,7 @@ def test_pipeline_persists_across_runs():
                      collect_prices=_fake_prices, collect_news=_fake_news,
                      collect_indices=_fake_indices,
                      collect_recent_earnings=_fake_recent_earnings,
+                     collect_expected_moves=_fake_expected,
                      as_of="2024-06-03", write_report=False)
         # Day 2: no fresh collection (simulate outage) — ranking still works
         # off the stored snapshot.
@@ -82,6 +89,7 @@ def test_pipeline_persists_across_runs():
             collect_news=lambda s: [],
             collect_indices=_fake_indices,
             collect_recent_earnings=_fake_recent_earnings,
+            collect_expected_moves=_fake_expected,
             as_of="2024-06-04", write_report=False,
         )
         assert result["collected"] == 0

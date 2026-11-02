@@ -65,6 +65,16 @@ EXPLAIN_MODEL = "claude-haiku-4-5"
 # each card gets a current good/bad news read. Raise it to limit to bigger moves.
 EXPLAIN_MOVE_THRESHOLD = 0.0
 
+# Market-implied "expected next-session move" per holding. Shows a probability
+# band (±range) from the options market's at-the-money implied volatility, with
+# a recent-volatility fallback. This is a VOLATILITY range, never a prediction
+# of direction or advice. Set False to hide it.
+EXPECTED_MOVE_ENABLED = True
+EXPECTED_MOVE_DISCLAIMER = (
+    "Expected range is a volatility band (what the market is pricing for how "
+    "far it could move), not a prediction of direction and not advice."
+)
+
 # Market indices for the report's snapshot section (Yahoo ^ symbols).
 INDICES = {
     "^GSPC": "S&P 500",
