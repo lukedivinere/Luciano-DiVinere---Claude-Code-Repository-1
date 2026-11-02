@@ -246,6 +246,52 @@ def test_no_earnings_block_without_earnings_for_symbol():
     assert "Latest earnings" not in html   # ETFs / no-data holdings show nothing
 
 
+def test_expected_move_block_options_source():
+    import stance
+    ranked = _ranked()
+    stances = stance.build_stances(ranked, {})
+    expected = {"NVDA": {"source": "options", "price": 120.0, "move_abs": 3.6,
+                         "move_pct": 3.0, "low": 116.4, "high": 123.6,
+                         "iv_pct": 48.0, "expiry": "2026-11-06"}}
+    html = webreport.build_html(
+        ranked, {}, as_of="2026-11-02", stances=stances,
+        stance_disclaimer=stance.STANCE_DISCLAIMER,
+        expected_by_symbol=expected,
+        expected_disclaimer="Expected range is a volatility band, not advice.")
+    assert "Expected next session" in html
+    assert "±3.0%" in html
+    assert "$116.40" in html and "$123.60" in html
+    assert "options-implied" in html and "exp 2026-11-06" in html
+    assert "not advice" in html
+
+
+def test_expected_move_shows_overnight_in_extended_session():
+    import stance
+    ranked = _ranked()
+    stances = stance.build_stances(ranked, {})
+    expected = {"NVDA": {"source": "historical", "price": 120.0, "move_abs": 2.4,
+                         "move_pct": 2.0, "low": 117.6, "high": 122.4,
+                         "iv_pct": None, "expiry": None}}
+    ext = {"NVDA": {"session": "after-hours", "extended_change_pct": 1.3}}
+    html = webreport.build_html(
+        ranked, {}, as_of="2026-11-02", stances=stances,
+        stance_disclaimer=stance.STANCE_DISCLAIMER,
+        expected_by_symbol=expected, extended_by_symbol=ext)
+    assert "based on recent volatility" in html
+    assert "Overnight (after-hours)" in html
+    assert "▲ +1.3%" in html
+
+
+def test_no_expected_block_without_data():
+    import stance
+    ranked = _ranked()
+    stances = stance.build_stances(ranked, {})
+    html = webreport.build_html(ranked, {}, as_of="2026-11-02", stances=stances,
+                                stance_disclaimer=stance.STANCE_DISCLAIMER,
+                                expected_by_symbol={})
+    assert "Expected next session" not in html
+
+
 def test_empty_renders_safely():
     html = webreport.build_html([], {}, as_of="2024-06-03")
     assert "No data collected." in html

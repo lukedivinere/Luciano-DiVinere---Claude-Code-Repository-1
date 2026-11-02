@@ -25,6 +25,7 @@ import stance as stance_mod
 import store
 import webreport
 from collectors import earnings as earnings_collector
+from collectors import expected as expected_collector
 from collectors import indices as index_collector
 from collectors import news as news_collector
 from collectors import prices as price_collector
@@ -40,6 +41,7 @@ def run(
     collect_indices: Optional[Callable[[], dict]] = None,
     collect_earnings: Optional[Callable[[list[str]], dict]] = None,
     collect_recent_earnings: Optional[Callable[[list[str]], dict]] = None,
+    collect_expected_moves: Optional[Callable[..., dict]] = None,
     as_of: Optional[str] = None,
     write_report: bool = True,
 ) -> dict:
@@ -63,6 +65,8 @@ def run(
     collect_earnings = collect_earnings or earnings_collector.get_earnings
     collect_recent_earnings = (collect_recent_earnings
                                or earnings_collector.get_recent_earnings)
+    collect_expected_moves = (collect_expected_moves
+                              or expected_collector.get_expected_moves)
 
     conn = store.connect(db_path)
 
@@ -135,6 +139,17 @@ def run(
               "extended_change_pct": s.get("extended_change_pct")}
         for sym, s in snapshots.items()
     }
+
+    # 4e-ii. Market-implied expected next-session move per symbol (options IV,
+    # with a recent-volatility fallback). A volatility band, not a forecast.
+    expected_by_symbol: dict = {}
+    if getattr(config, "EXPECTED_MOVE_ENABLED", False):
+        price_for_expected = {
+            sym: {"current_price": s.get("current_price")}
+            for sym, s in snapshots.items()
+        }
+        expected_by_symbol = collect_expected_moves(
+            list(snapshots.keys()), price_for_expected, history_by_symbol)
     # 4f. Portfolio P&L from live prices (holdings from secret or holdings.json).
     holdings = portfolio_mod.load()
     pnl = None
@@ -167,7 +182,10 @@ def run(
                                      session_label=session_label,
                                      auto_refresh_secs=auto_refresh_secs,
                                      portfolio=pnl,
-                                     explanations=explanations)
+                                     explanations=explanations,
+                                     expected_by_symbol=expected_by_symbol,
+                                     expected_disclaimer=getattr(
+                                         config, "EXPECTED_MOVE_DISCLAIMER", ""))
     report_path = html_path = None
     if write_report:
         report_path = report.save_report(markdown, report_dir, as_of=as_of)

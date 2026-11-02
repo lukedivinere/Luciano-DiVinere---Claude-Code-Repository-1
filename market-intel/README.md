@@ -61,6 +61,11 @@ Being built incrementally per the build plan (Section 6). Current progress:
       (Anthropic API, cheap model, cached per day) writes a one-sentence,
       news-grounded likely reason, shown on the holding's stance card. Needs
       `ANTHROPIC_API_KEY`; no-ops without it (`tests/test_explain.py`).
+- [x] **Expected next-session move**: `collectors/expected.py` — a per-holding
+      volatility band (±range) from the options market's at-the-money implied
+      volatility, with a recent-volatility fallback when a name has no options.
+      Framed as a probability band, never a prediction of direction or advice
+      (`tests/test_expected.py`).
 
 ## Layout
 
@@ -92,7 +97,7 @@ market-intel/
 
 ```bash
 cd market-intel
-for t in prices store news ranking report pipeline delivery indices webreport sparkline stance earnings market portfolio explain; do python tests/test_$t.py; done
+for t in prices store news ranking report pipeline delivery indices webreport sparkline stance earnings market portfolio explain expected; do python tests/test_$t.py; done
 ```
 
 ## Run the whole thing (needs Yahoo access)

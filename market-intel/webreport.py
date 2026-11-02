@@ -123,11 +123,16 @@ _STANCE_CLASS = {
 
 def _stance_section(stances: Optional[list], disclaimer: str,
                     explanations: Optional[dict] = None,
-                    earnings: Optional[dict] = None) -> str:
+                    earnings: Optional[dict] = None,
+                    expected: Optional[dict] = None,
+                    extended: Optional[dict] = None,
+                    expected_disclaimer: str = "") -> str:
     if not stances:
         return ""
     explanations = explanations or {}
     earnings = earnings or {}
+    expected = expected or {}
+    extended = extended or {}
     cards = []
     for s in stances:
         badge_cls = _STANCE_CLASS.get(s["stance"], "st-neutral")
@@ -180,6 +185,8 @@ def _stance_section(stances: Optional[list], disclaimer: str,
         )
 
         earn_html = _earnings_card_block(earnings.get(sym))
+        exp_html = _expected_block(expected.get(sym), extended.get(sym),
+                                   expected_disclaimer)
 
         cards.append(
             '<article class="stance-card">'
@@ -192,6 +199,7 @@ def _stance_section(stances: Optional[list], disclaimer: str,
             f'<div class="stance-lean">{_esc(s["lean"])}</div>'
             f'<p class="stance-note">{_esc(s["note"])}</p>'
             f"{why_html}"
+            f"{exp_html}"
             f"{news_html}"
             f"{earn_html}"
             f"{links_html}"
@@ -287,6 +295,41 @@ def _earnings_card_block(e: Optional[dict]) -> str:
         '<div class="stance-earn"><div class="stance-news-k">Latest earnings</div>'
         f'<p class="dev-summary"><span class="badge {badge}">{_esc(label)}</span> '
         f'<span class="muted">{date_hour}</span><br>{body}</p></div>'
+    )
+
+
+def _expected_block(exp: Optional[dict], ext: Optional[dict],
+                    disclaimer: str = "") -> str:
+    """'Expected next session' volatility band for one holding's card."""
+    if not exp:
+        return ""
+    pct = exp.get("move_pct")
+    low, high = exp.get("low"), exp.get("high")
+    if pct is None or low is None or high is None:
+        return ""
+    if exp.get("source") == "options":
+        src = "options-implied"
+        if exp.get("expiry"):
+            src += f", exp {exp['expiry']}"
+        if exp.get("iv_pct") is not None:
+            src += f", IV {exp['iv_pct']:.0f}%"
+    else:
+        src = "based on recent volatility"
+    range_line = (f'≈ <b>±{pct:.1f}%</b> next session → '
+                  f'~${low:,.2f}–${high:,.2f} '
+                  f'<span class="muted">({_esc(src)})</span>')
+    overnight = ""
+    if ext and market.is_extended(ext.get("session", "")):
+        ecp = ext.get("extended_change_pct")
+        if ecp is not None:
+            overnight = (
+                '<br><span class="muted">Overnight (after-hours): </span>'
+                f'<span class="num {_chg_class(ecp)}">{_arrow(ecp)} {_signed(ecp)}%</span>'
+            )
+    note = f'<p class="exp-note muted">{_esc(disclaimer)}</p>' if disclaimer else ""
+    return (
+        '<div class="stance-exp"><div class="stance-news-k">Expected next session</div>'
+        f'<p class="dev-summary">{range_line}{overnight}</p>{note}</div>'
     )
 
 
@@ -568,6 +611,8 @@ details ul { margin:10px 0 2px; }
 .stance-news-t { font-size:.92rem; }
 .stance-links { border-top:1px dashed var(--border); padding-top:10px; margin-top:10px; }
 .stance-earn { border-top:1px dashed var(--border); padding-top:10px; margin-top:10px; }
+.stance-exp { border-top:1px dashed var(--border); padding-top:10px; margin-top:10px; }
+.exp-note { font-size:.74rem; margin:4px 0 0; }
 .link-list { list-style:none; margin:4px 0 0; padding:0; }
 .link-list li { font-size:.9rem; padding:3px 0; line-height:1.35; }
 a { color:var(--accent-ink); text-decoration:none; }
@@ -589,7 +634,9 @@ def build_html(ranked: list[dict], news_by_symbol: Optional[dict] = None,
                session_label: str = "",
                auto_refresh_secs: int = 0,
                portfolio: Optional[dict] = None,
-               explanations: Optional[dict] = None) -> str:
+               explanations: Optional[dict] = None,
+               expected_by_symbol: Optional[dict] = None,
+               expected_disclaimer: str = "") -> str:
     """Render the full standalone HTML briefing page.
 
     auto_refresh_secs > 0 makes an open tab reload itself on that interval
@@ -626,7 +673,9 @@ def build_html(ranked: list[dict], news_by_symbol: Optional[dict] = None,
     if stances:
         stance_block = (
             "<h2>Daily read — your holdings</h2>"
-            + _stance_section(stances, stance_disclaimer, explanations, earnings)
+            + _stance_section(stances, stance_disclaimer, explanations, earnings,
+                              expected_by_symbol, extended_by_symbol,
+                              expected_disclaimer)
         )
 
     if ranked:
