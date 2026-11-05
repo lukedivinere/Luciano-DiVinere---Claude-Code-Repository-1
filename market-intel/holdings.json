@@ -1,5 +1,5 @@
 {
-  "cash": 35.73,
+  "cash": 100.53,
   "adjustment": 0,
   "positions": {
     "PLTR": {"qty": 8,    "cost": 151.77},
@@ -16,10 +16,10 @@
     "IBIT": {"qty": 10,   "cost": 40.49},
     "QQQM": {"qty": 1,    "cost": 292.61},
     "ROBO": {"qty": 2,    "cost": 78.29},
-    "SCHG": {"qty": 10,   "cost": 30.42},
+    "SCHG": {"qty": 19,   "cost": 32.62},
     "SOXL": {"qty": 2,    "cost": 136.62},
     "SOXQ": {"qty": 2,    "cost": 96.44},
-    "SPYM": {"qty": 9.5,  "cost": 90.27},
+    "SPYM": {"qty": 17.5, "cost": 90.13},
     "XLF":  {"qty": 11,   "cost": 56.66}
   }
 }
