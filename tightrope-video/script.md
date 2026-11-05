@@ -1,6 +1,6 @@
 # High Wire — Script
 
-Vertical video (9:16), ~30 seconds, one calm narrator. 77 words.
+Vertical video (9:16), ~30 seconds, one calm narrator. 79 words.
 
 ## 1. Narration (word for word)
 
