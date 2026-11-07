@@ -12,7 +12,8 @@
     "validate": "tsx scripts/validate-content.ts",
     "e2e": "node tests/e2e/smoke.mjs",
     "check": "npm run typecheck && npm test && npm run validate",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "e2e:grade": "node tests/e2e/grade-all.mjs"
   },
   "dependencies": {
     "@codemirror/lang-html": "^6.4.9",

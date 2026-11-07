@@ -15,7 +15,7 @@ const URL = `http://localhost:${PORT}/`;
 const SHOTS = !!process.env.SHOTS;
 mkdirSync('test-results', { recursive: true });
 
-const server = spawn('npx', ['vite', '--port', String(PORT), '--strictPort'], { stdio: ['ignore', 'pipe', 'pipe'] });
+const server = spawn(process.execPath, ['node_modules/vite/bin/vite.js', '--port', String(PORT), '--strictPort'], { stdio: ['ignore', 'pipe', 'pipe'] });
 await new Promise((resolve, reject) => {
   const t = setTimeout(() => reject(new Error('vite did not start')), 60000);
   server.stdout.on('data', (d) => { if (String(d).includes('Local')) { clearTimeout(t); resolve(); } });

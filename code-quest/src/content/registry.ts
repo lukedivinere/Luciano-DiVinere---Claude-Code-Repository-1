@@ -3,5 +3,6 @@
 import type { World } from '../engine/types';
 import { world1 } from './world1-beginner';
 import { world2 } from './world2-intermediate';
+import { world3 } from './world3-expert';
 
-export const WORLDS: World[] = [world1, world2];
+export const WORLDS: World[] = [world1, world2, world3];
