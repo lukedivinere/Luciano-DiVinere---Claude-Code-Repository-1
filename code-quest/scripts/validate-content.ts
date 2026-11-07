@@ -10,6 +10,7 @@ import { WORLDS } from '../src/content/registry';
 import { CONCEPTS } from '../src/content/concepts';
 import { levelMinutes, worldMinutes } from '../src/engine/content';
 import { gradeExerciseNode, runPythonNode } from './nodeGrader';
+import { runJs } from '../src/runners/harness/jsHarness';
 import type { Exercise, GradeResult } from '../src/engine/types';
 
 const only = process.argv.find((a) => a.startsWith('--only='))?.slice(7);
@@ -68,6 +69,10 @@ for (const world of WORLDS) {
       if (card.example.lang === 'python') {
         const r = await runPythonNode(card.example.code, card.example.sampleInput ?? []);
         if (r.error && !card.example.crashes) errors.push(`${card.id}: example crashes: ${r.error.type}: ${r.error.message}`);
+      }
+      if (card.example.lang === 'javascript' && !card.example.dom) {
+        const r = await runJs(card.example.code);
+        if (r.error && !card.example.crashes) errors.push(`${card.id}: JS example crashes: ${r.error.type}: ${r.error.message}`);
       }
     }
     if (level.kind !== 'boss' && level.quiz.length < 3) errors.push(`${level.id}: quiz needs at least 3 questions`);

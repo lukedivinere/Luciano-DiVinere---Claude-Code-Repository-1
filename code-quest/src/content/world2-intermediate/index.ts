@@ -9,6 +9,14 @@ import l07 from './levels/07-string-manipulation';
 import l08 from './levels/08-comprehensions';
 import l09 from './levels/09-classes';
 import l10 from './levels/10-debug-inventory';
+import l11 from './levels/11-hello-js';
+import l12 from './levels/12-js-control';
+import l13 from './levels/13-js-functions';
+import l14 from './levels/14-js-arrays';
+import l15 from './levels/15-js-objects';
+import l16 from './levels/16-dom';
+import bossA from './levels/17-boss-python';
+import bossB from './levels/18-boss-web';
 
 export const world2: World = {
   id: 'w2',
@@ -18,5 +26,5 @@ export const world2: World = {
   theme: { accent: '#5ec8ff', bg: 'linear-gradient(135deg, #10304a, #141833)' },
   languages: ['python', 'javascript'],
   minMinutes: 60,
-  levels: [l01, l02, l03, l04, l05, l06, l07, l08, l09, l10],
+  levels: [l01, l02, l03, l04, l05, l06, l07, l08, l09, l10, l11, l12, l13, l14, l15, l16, bossA, bossB],
 };
