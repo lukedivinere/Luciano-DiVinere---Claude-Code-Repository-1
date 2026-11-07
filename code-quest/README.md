@@ -27,6 +27,8 @@ Then open **http://localhost:5173** in Chrome, Edge or Firefox.
 
 `npm install` also copies the Python runtime (Pyodide, ~15 MB) and SQLite (sql.js) into `public/`, so after that the app works with no internet connection. The first time you run Python it takes a few seconds to start; after that it's fast.
 
+**On a Mac, no Terminal typing needed after the first install:** double-click **`Start Code Quest.command`** in the `code-quest` folder. It starts the game and opens it in your browser. Keep the Terminal window it opens; close it to stop the game. (First time only: if macOS says it can't verify the file, right-click it → **Open** → **Open**.) To start the game automatically when you log in, add that file in **System Settings → General → Login Items → +**.
+
 To build a static version you can open from any web server:
 
 ```bash
