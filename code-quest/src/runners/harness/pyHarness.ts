@@ -7,10 +7,30 @@
 //   cq_grade(code, tests_json)  -> JSON {results: [...], fatal}
 
 export const PY_HARNESS = String.raw`
-import sys, io, json, traceback, builtins, importlib, math
+import sys, io, json, traceback, builtins, importlib, math, time
 
 class _CQInputExhausted(Exception):
     pass
+
+class _CQTimeout(BaseException):
+    pass
+
+CQ_TIME_LIMIT = 3.0  # seconds per run of the learner's code
+
+def _cq_tracer(deadline):
+    counter = [0]
+    def local(frame, event, arg):
+        if event == 'line':
+            counter[0] += 1
+            if counter[0] % 500 == 0 and time.monotonic() > deadline:
+                raise _CQTimeout('Your code ran for too long and was stopped.')
+        return local
+    def glob(frame, event, arg):
+        fn = frame.f_code.co_filename
+        if fn == 'main.py' or fn == '<string>':
+            return local
+        return None
+    return glob
 
 def _cq_make_input(values, out, echo):
     queue = list(values)
@@ -36,6 +56,8 @@ def _cq_error(e):
     name = type(e).__name__
     if isinstance(e, _CQInputExhausted):
         name = 'InputExhausted'
+    if isinstance(e, _CQTimeout):
+        name = 'Timeout'
     msg = str(e)
     if isinstance(e, SyntaxError):
         msg = e.msg
@@ -47,7 +69,10 @@ def _cq_exec(code, stdin, echo, setup=None):
     old_out, old_input = sys.stdout, builtins.input
     sys.stdout = out
     builtins.input = _cq_make_input(stdin or [], out, echo)
+    g['__cq_input__'] = builtins.input
     err = None
+    old_trace = sys.gettrace()
+    sys.settrace(_cq_tracer(time.monotonic() + CQ_TIME_LIMIT))
     try:
         import random
         importlib.reload(random)
@@ -60,6 +85,7 @@ def _cq_exec(code, stdin, echo, setup=None):
     except BaseException as e:
         err = _cq_error(e)
     finally:
+        sys.settrace(old_trace)
         sys.stdout = old_out
         builtins.input = old_input
     return out.getvalue(), err, g
@@ -96,6 +122,13 @@ def _cq_show(v):
         return repr(v)
     except Exception:
         return '<unprintable>'
+
+def _cq_RUN(src, stdin=None):
+    # Used inside check tests: run (modified) learner code, return its output.
+    out, err, _ = _cq_exec(src, stdin or [], echo=False)
+    if err:
+        raise AssertionError('Your code crashed when run with different values: ' + err['type'] + ': ' + err['message'])
+    return out
 
 def cq_run(code, stdin_json):
     stdout, err, _ = _cq_exec(code, json.loads(stdin_json), echo=True)
@@ -147,8 +180,11 @@ def cq_grade(code, tests_json):
                     g['__cq_stdout__'] = stdout
                     g['CODE'] = code
                     g['OUTPUT'] = stdout
-                    old_out = sys.stdout
+                    g['RUN'] = _cq_RUN
+                    old_out, old_in = sys.stdout, builtins.input
                     sys.stdout = io.StringIO()
+                    builtins.input = g['__cq_input__']  # remaining test input
+                    sys.settrace(_cq_tracer(time.monotonic() + CQ_TIME_LIMIT))
                     try:
                         exec(t['code'], g)
                         r['passed'] = True
@@ -157,7 +193,9 @@ def cq_grade(code, tests_json):
                         if msg:
                             r['got'] = msg
                     finally:
+                        sys.settrace(None)
                         sys.stdout = old_out
+                        builtins.input = old_in
             else:
                 r['got'] = 'Unknown test kind ' + kind
         except BaseException as e:

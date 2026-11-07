@@ -31,11 +31,14 @@ export type Test =
       /** Custom assertion code run after the learner code, in the same scope.
        *  Python: use `assert`. JS: use `assert(cond, msg)`; `await` allowed.
        *  Both get CODE (the learner's source) and OUTPUT (what it printed).
+       *  Python checks also get RUN(src, stdin) -> output, to re-run modified code.
        *  DOM: runs inside the page, `document` available. */
       kind: 'check';
       name: string;
       code: string;
       setup?: string;
+      /** Python only: values fed to input() while the learner code runs. */
+      stdin?: string[];
       explain: string;
     }
   | {

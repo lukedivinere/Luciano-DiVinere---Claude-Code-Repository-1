@@ -79,12 +79,13 @@ export const call = (fn: string, args: unknown[], expected: unknown, explain: st
   explain,
 });
 
-export const check = (name: string, code: string, explain: string, setup?: string): Test => ({
+export const check = (name: string, code: string, explain: string, setup?: string, stdin?: string[]): Test => ({
   kind: 'check',
   name,
   code,
   explain,
   ...(setup ? { setup } : {}),
+  ...(stdin ? { stdin } : {}),
 });
 
 export const rows = (name: string, expected: (string | number | null)[][], explain: string, ordered = false): Test => ({

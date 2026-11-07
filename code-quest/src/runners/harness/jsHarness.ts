@@ -118,6 +118,18 @@ export async function runJs(code: string, stdin: string[] = []): Promise<RunOutp
   return { stdout: inst.stdout.join('\n'), error };
 }
 
+/** Used inside check tests: run (modified) learner code and return its console output. */
+async function rerun(src: string): Promise<string> {
+  const { inst, error } = await instantiate(src);
+  await new Promise((r) => setTimeout(r, 20));
+  if (error) {
+    const e = new Error(`Your code crashed when run with different values: ${error.type}: ${error.message}`);
+    e.name = 'AssertionError';
+    throw e;
+  }
+  return inst.stdout.join('\n');
+}
+
 export async function gradeJs(code: string, tests: Test[]): Promise<GradeResult> {
   try {
     new AsyncFunction(code);
@@ -160,7 +172,10 @@ export async function gradeJs(code: string, tests: Test[]): Promise<GradeResult>
         if (error) r.error = error;
         else {
           const out = JSON.stringify(inst.stdout.join('\n'));
-          await inst.evalIn(`(async () => { const OUTPUT = ${out}; const CODE = ${JSON.stringify(code)}; ${t.code}\n})()`);
+          (globalThis as Record<string, unknown>).__cqRUN = rerun;
+          await inst.evalIn(
+            `(async () => { const OUTPUT = ${out}; const CODE = ${JSON.stringify(code)}; const RUN = globalThis.__cqRUN; ${t.code}\n})()`,
+          );
           r.passed = true;
         }
       } else {

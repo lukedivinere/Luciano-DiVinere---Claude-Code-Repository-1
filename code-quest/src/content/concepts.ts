@@ -25,6 +25,7 @@ export const CONCEPTS: Record<string, string> = {
   functions: 'Functions',
   return: 'return values',
   debugging: 'Debugging',
+  random: 'Random numbers & import',
   // World 2
   dicts: 'Dictionaries',
   'nested-data': 'Nested data',
