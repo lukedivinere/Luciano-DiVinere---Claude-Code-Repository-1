@@ -93,7 +93,7 @@ export interface LearnCard {
   /** Markdown, under 150 words. New terms in **bold** with definitions. */
   body: string;
   analogy: string;
-  example: { lang: Lang; code: string; sampleInput?: string[]; dom?: { html: string }; sqlSetup?: string };
+  example: { lang: Lang; code: string; sampleInput?: string[]; dom?: { html: string }; sqlSetup?: string; /** true if the example crashes on purpose to show an error */ crashes?: boolean };
   /** Optional "Same / Different" comparison between languages. */
   compare?: { left: { lang: Lang; code: string }; right: { lang: Lang; code: string }; same: string[]; different: string[] };
 }

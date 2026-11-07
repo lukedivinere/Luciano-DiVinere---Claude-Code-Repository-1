@@ -2,5 +2,6 @@
 // exporting a World, import it here, and append it to WORLDS.
 import type { World } from '../engine/types';
 import { world1 } from './world1-beginner';
+import { world2 } from './world2-intermediate';
 
-export const WORLDS: World[] = [world1];
+export const WORLDS: World[] = [world1, world2];

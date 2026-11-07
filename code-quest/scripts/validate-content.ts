@@ -59,7 +59,7 @@ for (const world of WORLDS) {
     for (const c of [...level.teaches, ...level.requires]) if (!CONCEPTS[c]) errors.push(`${level.id}: unknown concept "${c}"`);
     for (const c of level.requires) if (!taught.has(c)) errors.push(`${level.id}: requires "${c}" before it is taught`);
     level.teaches.forEach((c) => taught.add(c));
-    if (only && level.id !== only) continue;
+    if (only && !level.id.startsWith(only)) continue;
     process.stdout.write(`  ${level.id} ${level.title} (${levelMinutes(level)} min) `);
     for (const card of level.learn) {
       dup(card.id);
@@ -67,7 +67,7 @@ for (const world of WORLDS) {
       if (words > 150) warnings.push(`${card.id}: Learn text is ${words} words (target < 150)`);
       if (card.example.lang === 'python') {
         const r = await runPythonNode(card.example.code, card.example.sampleInput ?? []);
-        if (r.error && !/error|bug|broken/i.test(card.title)) errors.push(`${card.id}: example crashes: ${r.error.type}: ${r.error.message}`);
+        if (r.error && !card.example.crashes) errors.push(`${card.id}: example crashes: ${r.error.type}: ${r.error.message}`);
       }
     }
     if (level.kind !== 'boss' && level.quiz.length < 3) errors.push(`${level.id}: quiz needs at least 3 questions`);
