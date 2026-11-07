@@ -5,8 +5,8 @@
   "type": "module",
   "scripts": {
     "postinstall": "node scripts/copy-assets.mjs",
-    "dev": "vite",
-    "build": "tsc --noEmit && vite build",
+    "dev": "node scripts/copy-assets.mjs && vite",
+    "build": "node scripts/copy-assets.mjs && tsc --noEmit && vite build",
     "preview": "vite preview",
     "test": "vitest run",
     "validate": "tsx scripts/validate-content.ts",

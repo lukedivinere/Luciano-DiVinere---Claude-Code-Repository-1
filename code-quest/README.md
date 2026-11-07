@@ -37,6 +37,16 @@ npm run build
 npm run preview
 ```
 
+## Troubleshooting
+
+| Problem | Fix |
+|---|---|
+| Browser says **"localhost refused to connect"** | The game only runs while `npm run dev` is running in a Terminal window. Start it again and keep the window open. |
+| `npm install` fails with **`EACCES`** / "cache folder contains root-owned files" | Run `sudo chown -R $(id -u):$(id -g) ~/.npm` (asks for your Mac password; typing shows nothing), then `npm install` again. Or skip it with `npm install --cache ~/npm-cache-temp`. |
+| `npm install` says **"N vulnerabilities"** | Safe to ignore for a game that runs only on your own computer. Don't run `npm audit fix --force`; it can upgrade tools to incompatible versions. |
+| npm warns **"install scripts not yet covered by allowScripts"** | Fine to ignore. `npm run dev` copies the Python runtime itself. If `npm run dev` then errors about **esbuild**, run `npm rebuild esbuild`. |
+| Python never finishes loading | Run `node scripts/copy-assets.mjs`, then restart `npm run dev`. |
+
 ## Your progress
 
 Progress is saved automatically in your browser (`localStorage`): XP, completed items, streak, badges, review cards, time spent and the code you wrote for every exercise. Use **⚙️ Settings → Export backup** to move it to another browser or computer, and **Import backup** to restore it.
