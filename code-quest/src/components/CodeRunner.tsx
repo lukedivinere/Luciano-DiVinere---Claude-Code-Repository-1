@@ -47,7 +47,7 @@ export function CodeRunner({ lang, code, onChange, sampleInput, dom, sqlSetup, o
               ↺ Reset
             </button>
           )}
-          <PyStatus />
+          <PyStatus lang={lang} />
         </div>
         {usesInput && (
           <label className="stdin">

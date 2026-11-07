@@ -131,7 +131,7 @@ export function ExerciseView({ ex, level, onNext }: { ex: Exercise; level: Level
           >
             ↺ Reset
           </button>
-          <PyStatus />
+          <PyStatus lang={ex.lang} />
         </div>
         {usesInput && (
           <label className="stdin">
