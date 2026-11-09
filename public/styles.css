@@ -183,6 +183,7 @@ body {
   animation: bob 6s ease-in-out infinite;
 }
 .orb.listening { animation: spin 3.4s linear infinite; }
+.orb.holding { transition: transform .55s ease-out; transform: scale(1.06); }
 .orb:active { transform: scale(.97); }
 .orb-core {
   position: relative; z-index: 2;
@@ -211,13 +212,22 @@ body {
 .orb.listening .r2 { animation-delay: .73s; }
 .orb.listening .r3 { animation-delay: 1.46s; }
 
+/* holding (charging up toward Auto-ID) — rings draw inward, opposite of the
+   outward-expanding "listening" rings, so the two states read differently */
+.orb.holding .orb-ring { animation: chargeRing .55s ease-out forwards; }
+.orb.holding .r2 { animation-delay: .1s; }
+.orb.holding .r3 { animation-delay: .2s; }
+
 @keyframes ring { 0% { transform: scale(.55); opacity: .85 } 100% { transform: scale(1.9); opacity: 0 } }
+@keyframes chargeRing { 0% { transform: scale(.55); opacity: 0 } 100% { transform: scale(1); opacity: .6 } }
 @keyframes bob { 0%, 100% { transform: translateY(0) } 50% { transform: translateY(-9px) } }
 @keyframes spin { to { transform: rotate(360deg) } }
 
 @media (prefers-reduced-motion: reduce) {
   .orb, .orb.listening { animation: none; }
   .orb.listening .orb-ring { animation: none; opacity: .3; }
+  .orb.holding { transition: none; }
+  .orb.holding .orb-ring { animation: none; opacity: .5; }
 }
 
 /* poster headline */

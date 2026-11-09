@@ -462,7 +462,37 @@ function stopAuto() {
 }
 
 // ---- orb + upload triggers -------------------------------------------------
-orb.addEventListener("click", () => { if (!autoOn) idOnce(); });
+// Shazam-style: a quick tap runs one ID. Holding the orb down (~550ms) turns
+// Auto-ID on and leaves it on after you let go — tap again (while it's running)
+// to turn it off. `heldAuto` tracks whether the press in progress already
+// crossed the hold threshold, so the trailing click it still fires doesn't
+// also trigger a one-off idOnce() on top of the loop that just started.
+const HOLD_MS = 550;
+let holdTimer = null;
+let heldAuto = false;
+
+function cancelHold() {
+  if (holdTimer) { clearTimeout(holdTimer); holdTimer = null; }
+  orb.classList.remove("holding");
+}
+
+orb.addEventListener("pointerdown", () => {
+  if (autoOn) return; // already looping — a plain tap below will stop it
+  orb.classList.add("holding");
+  holdTimer = setTimeout(() => {
+    holdTimer = null;
+    heldAuto = true;
+    orb.classList.remove("holding");
+    startAuto();
+  }, HOLD_MS);
+});
+["pointerup", "pointerleave", "pointercancel"].forEach((evt) => orb.addEventListener(evt, cancelHold));
+
+orb.addEventListener("click", () => {
+  if (heldAuto) { heldAuto = false; return; } // trailing click from the hold that just started the loop
+  if (autoOn) { stopAuto(); return; }          // tap while looping = turn it off
+  idOnce();
+});
 $("#upload-fallback").addEventListener("click", () => $("#file").click());
 $("#file").addEventListener("change", async (e) => {
   const f = e.target.files[0];
