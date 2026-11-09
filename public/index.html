@@ -10,16 +10,18 @@
     <link rel="stylesheet" href="/styles.css" />
   </head>
   <body>
-    <!-- FIRST-RUN: pick your music service --------------------------------->
+    <!-- FIRST-RUN: pick your music apps -------------------------------------->
     <div id="service-picker" class="service-picker" hidden>
       <div class="sp-card">
         <span class="brand">iDROP</span>
-        <h2 id="sp-title">Which music app do you use?</h2>
+        <h2 id="sp-title">Which music apps do you use?</h2>
         <p class="muted" id="sp-sub">
-          When a track you ID turns out to be already released, we'll drop you straight
-          into your app. Pick one — you can change it any time in the menu.
+          When a track you ID turns out to be already released, we'll give you a link to open
+          it in each app you check below. Check as many as you use, then continue — you can
+          change this any time in the menu.
         </p>
         <div id="sp-grid" class="sp-grid"></div>
+        <button id="sp-continue" class="btn primary sp-continue" disabled>Continue</button>
       </div>
     </div>
 
@@ -162,7 +164,7 @@
 
       <div class="result-actions">
         <button id="result-again" class="btn">ID another</button>
-        <a id="result-open" class="btn primary" target="_blank" rel="noopener" hidden></a>
+        <div id="result-open-group" class="result-open-group" hidden></div>
         <button id="result-watch" class="btn ghost">☆ Watch for release</button>
         <button id="result-contribute" class="btn ghost">Name it →</button>
       </div>

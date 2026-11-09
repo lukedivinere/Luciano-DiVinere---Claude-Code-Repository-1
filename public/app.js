@@ -27,11 +27,12 @@ function maskContact(v) {
   return s.length > 4 ? `${s.slice(0, 2)}•••${s.slice(-2)}` : s;
 }
 
-// ---- preferred music service -----------------------------------------------
-// Chosen once on first launch, stored on this device. When a track turns out to be
-// ALREADY RELEASED we send the user straight into their own service instead of
-// offering "watch for release" (there's nothing to wait for).
-const SERVICE_KEY = "crate-service";
+// ---- preferred music services -----------------------------------------------
+// Chosen once on first launch (check as many as you use), stored on this device.
+// When a track turns out to be ALREADY RELEASED we send the user straight into
+// each app they picked instead of offering "watch for release" (nothing to wait on).
+const SERVICES_KEY = "crate-services";
+const LEGACY_SERVICE_KEY = "crate-service"; // pre-multiselect: a single id
 // exact = the field on a released `best` that holds a direct link; search = fallback.
 const SERVICES = [
   { id: "spotify",     label: "Spotify",       exact: "spotify",    search: (q) => `https://open.spotify.com/search/${q}` },
@@ -43,16 +44,31 @@ const SERVICES = [
   { id: "tidal",       label: "Tidal",         exact: null,         search: (q) => `https://tidal.com/search?q=${q}` },
   { id: "beatport",    label: "Beatport",      exact: null,         search: (q) => `https://www.beatport.com/search?q=${q}` },
 ];
-function getService() { try { return localStorage.getItem(SERVICE_KEY) || ""; } catch { return ""; } }
-function setService(id) { try { localStorage.setItem(SERVICE_KEY, id); } catch {} }
-function serviceDef(id) { return SERVICES.find((s) => s.id === (id || getService())) || SERVICES[0]; }
+function getServices() {
+  try {
+    const raw = localStorage.getItem(SERVICES_KEY);
+    if (raw) return JSON.parse(raw).filter((id) => SERVICES.some((s) => s.id === id));
+    const legacy = localStorage.getItem(LEGACY_SERVICE_KEY); // one-time migration
+    if (legacy && SERVICES.some((s) => s.id === legacy)) { setServices([legacy]); return [legacy]; }
+    return [];
+  } catch { return []; }
+}
+function setServices(ids) {
+  try { localStorage.setItem(SERVICES_KEY, JSON.stringify([...new Set(ids)])); } catch {}
+}
+function serviceDefs() {
+  const chosen = getServices();
+  return SERVICES.filter((s) => chosen.includes(s.id));
+}
 // Where to send the user for a released track, on THEIR service: exact link if the
 // match carried one, otherwise a search on that service.
-function openLink(best, svc = serviceDef()) {
+function openLink(best, svc) {
   const q = encodeURIComponent(`${best.artist} ${best.title}`);
   const exact = svc.exact && best[svc.exact];
   return { label: svc.label, url: exact || svc.search(q), exact: !!exact };
 }
+// One link per service the user picked at onboarding.
+function openLinks(best) { return serviceDefs().map((svc) => openLink(best, svc)); }
 // A track is ALREADY RELEASED when the released-catalog matcher (AudD) named it.
 function isReleased(best) { return !!best && best.unreleased === false; }
 
@@ -154,31 +170,43 @@ $("#theme-toggle").addEventListener("click", () =>
 );
 
 // ---- music-service picker (first run + change from menu) -------------------
+// Check as many as you use, then Continue — not a single pick anymore.
 function renderServiceGrid() {
   const grid = $("#sp-grid");
-  const current = getService();
+  const chosen = new Set(getServices());
   grid.innerHTML = SERVICES.map((s) =>
-    `<button class="sp-opt${s.id === current ? " active" : ""}" data-svc="${s.id}">${esc(s.label)}</button>`
+    `<button class="sp-opt${chosen.has(s.id) ? " active" : ""}" data-svc="${s.id}" aria-pressed="${chosen.has(s.id)}">${esc(s.label)}</button>`
   ).join("");
   grid.querySelectorAll("[data-svc]").forEach((b) =>
-    b.addEventListener("click", () => { setService(b.dataset.svc); closeServicePicker(); reflectService(); })
+    b.addEventListener("click", () => {
+      const sel = new Set(getServices());
+      sel.has(b.dataset.svc) ? sel.delete(b.dataset.svc) : sel.add(b.dataset.svc);
+      setServices([...sel]);
+      b.classList.toggle("active");
+      b.setAttribute("aria-pressed", b.classList.contains("active"));
+      $("#sp-continue").disabled = sel.size === 0;
+    })
   );
+  $("#sp-continue").disabled = chosen.size === 0;
 }
 function openServicePicker(firstRun) {
   renderServiceGrid();
-  $("#sp-title").textContent = firstRun ? "Which music app do you use?" : "Change your music service";
+  $("#sp-title").textContent = firstRun ? "Which music apps do you use?" : "Change your music apps";
   $("#service-picker").hidden = false;
 }
 function closeServicePicker() { $("#service-picker").hidden = true; }
-// Keep the menu label in sync with the chosen service.
-function reflectService() {
+// Keep the menu label in sync with the chosen services.
+function reflectServices() {
   const el = $("#nav-service-current");
-  if (el) el.textContent = getService() ? ` · ${serviceDef().label}` : "";
+  if (!el) return;
+  const defs = serviceDefs();
+  el.textContent = defs.length ? ` · ${defs.map((d) => d.label).join(", ")}` : "";
 }
 $("#nav-service").addEventListener("click", () => { closeNav(); openServicePicker(false); });
-// First launch: no service chosen yet → ask before anything else.
-if (!getService()) openServicePicker(true);
-reflectService();
+$("#sp-continue").addEventListener("click", () => { closeServicePicker(); reflectServices(); });
+// First launch: no services chosen yet → ask before anything else.
+if (!getServices().length) openServicePicker(true);
+reflectServices();
 
 // Deep-link support: #history / #drops / #enroll / #trending / #contribute
 function openByHash() {
@@ -586,15 +614,17 @@ function renderResult(result, blob, opts = {}) {
   // Already released → send them into their own music app; there's nothing to
   // "watch for release" on. Unknown / unreleased → keep the watch option.
   const watchBtn = $("#result-watch");
-  const openBtn = $("#result-open");
+  const openGroup = $("#result-open-group");
   if (isReleased(best)) {
-    const link = openLink(best);
-    openBtn.href = link.url;
-    openBtn.textContent = `Open in ${link.label}`;
-    openBtn.hidden = false;
+    const links = openLinks(best);
+    openGroup.innerHTML = links
+      .map((l) => `<a class="btn primary" href="${esc(l.url)}" target="_blank" rel="noopener">Open in ${esc(l.label)}</a>`)
+      .join("");
+    openGroup.hidden = links.length === 0;
     watchBtn.hidden = true;
   } else {
-    openBtn.hidden = true;
+    openGroup.hidden = true;
+    openGroup.innerHTML = "";
     watchBtn.hidden = false;
     watchBtn.textContent = "☆ Watch for release";
     watchBtn.classList.remove("watching");
@@ -664,7 +694,7 @@ async function renderHistory() {
         <audio controls preload="none" data-audio></audio>
         <div class="hrow">
           ${isReleased(best)
-            ? `<a class="btn mini primary" href="${esc(openLink(best).url)}" target="_blank" rel="noopener">Open in ${esc(openLink(best).label)}</a>`
+            ? openLinks(best).map((l) => `<a class="btn mini primary" href="${esc(l.url)}" target="_blank" rel="noopener">Open in ${esc(l.label)}</a>`).join("")
             : `<button class="btn mini ghost ${it.watching ? "watching" : ""}" data-watch>${it.watching ? "★ Watching" : "☆ Watch for release"}</button>`}
           <button class="btn mini ghost" data-recheck>Re-check now</button>
         </div>

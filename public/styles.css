@@ -166,6 +166,12 @@ body {
 }
 .sp-opt:hover { border-color: var(--accent); }
 .sp-opt.active { border-color: var(--accent); background: var(--surface2); color: var(--accent); }
+.sp-continue { width: 100%; margin-top: 18px; }
+
+/* the group's children flow as ordinary .result-actions flex items — the div
+   itself is only there so JS has one element to target with innerHTML */
+.result-open-group { display: contents; }
+.result-open-group[hidden] { display: none; }
 
 .stage {
   flex: 1;
