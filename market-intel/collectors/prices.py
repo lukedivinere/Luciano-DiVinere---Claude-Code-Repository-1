@@ -17,6 +17,8 @@ reports observed market data.
 
 from __future__ import annotations
 
+import math
+
 from dataclasses import dataclass, asdict
 from datetime import datetime, timezone
 from typing import Optional
@@ -99,8 +101,17 @@ def collect(symbol: str) -> PriceSnapshot:
             f"(need >= {config.MIN_HISTORY_ROWS} rows, got {len(hist)})"
         )
 
+    # Yahoo sometimes returns a partial/blank bar for today (NaN close or
+    # volume, especially pre-market). Drop those rows so one bad bar can't
+    # poison the indicators and crash the database insert downstream.
+    hist = hist.dropna(subset=["Close"])
+    if len(hist) < config.MIN_HISTORY_ROWS:
+        raise ValueError(
+            f"Not enough clean historical data for {symbol} "
+            f"(need >= {config.MIN_HISTORY_ROWS} rows, got {len(hist)})"
+        )
     close = hist["Close"]
-    volume = hist["Volume"]
+    volume = hist["Volume"].fillna(0)
 
     current_price = float(close.iloc[-1])
     prev_close = float(close.iloc[-2])
@@ -113,6 +124,11 @@ def collect(symbol: str) -> PriceSnapshot:
     ma_short = float(close.rolling(config.MA_SHORT_WINDOW).mean().iloc[-1])
     ma_long = float(close.rolling(config.MA_LONG_WINDOW).mean().iloc[-1])
     rsi = float(calculate_rsi(close).iloc[-1])
+
+    for name, val in (("current_price", current_price), ("prev_close", prev_close),
+                      ("ma_short", ma_short), ("ma_long", ma_long), ("rsi", rsi)):
+        if math.isnan(val):
+            raise ValueError(f"{symbol}: {name} is NaN (incomplete data from source)")
 
     reg_close = round(current_price, 2)
     last_price, session, ext_pct = _extended(stock, reg_close)

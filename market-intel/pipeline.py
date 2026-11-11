@@ -31,6 +31,10 @@ from collectors import news as news_collector
 from collectors import prices as price_collector
 
 
+_REQUIRED_FIELDS = ("current_price", "prev_close", "change_pct", "volume",
+                    "avg_volume", "volume_ratio", "ma_short", "ma_long", "rsi")
+
+
 def run(
     symbols: Optional[list[str]] = None,
     *,
@@ -74,6 +78,15 @@ def run(
     price_result = collect_prices(symbols)
     snapshots = price_result.get("snapshots", {})
     errors = price_result.get("errors", {})
+    # Belt-and-braces: drop any snapshot missing a required number so one bad
+    # ticker is skipped instead of failing the database insert for everyone.
+    for sym in list(snapshots):
+        bad = [k for k in _REQUIRED_FIELDS
+               if not isinstance(snapshots[sym].get(k), (int, float))
+               or snapshots[sym][k] != snapshots[sym][k]]  # NaN != NaN
+        if bad:
+            errors[sym] = f"incomplete data ({', '.join(bad)})"
+            del snapshots[sym]
     if snapshots:
         store.upsert_price_snapshots(conn, snapshots.values())
 

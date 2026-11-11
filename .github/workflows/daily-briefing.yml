@@ -59,6 +59,15 @@ jobs:
         # valid page — don't fail the build over it, just flag it.
         run: python run_daily.py --method email || echo "::warning::briefing generated with incomplete data this run"
 
+      # If the script crashed before writing the page, fail here with a clear
+      # message instead of a cryptic "exit code 2" from the Pages upload.
+      - name: Check briefing page was written
+        run: |
+          test -f reports/index.html || {
+            echo "::error::run_daily.py did not write reports/index.html — expand the 'Generate briefing' step above for the Python traceback"
+            exit 1
+          }
+
       - name: Upload briefing artifact (download from the run)
         uses: actions/upload-artifact@v4
         with:
